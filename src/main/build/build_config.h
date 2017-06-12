@@ -46,6 +46,7 @@
 #define USE_PID_MWREWRITE
 #endif
 
+//#define SKIP_PID_MW23	// dammstanger	20170508
 #ifndef SKIP_PID_MW23
 #define USE_PID_MW23
 #endif

@@ -56,7 +56,7 @@ typedef struct {
     /* Scheduling */
     uint16_t dynamicPriority;       // measurement of how old task was last executed, used to avoid task starvation
     uint16_t taskAgeCycles;
-    uint32_t lastExecutedAt;        // last time of invocation
+    uint32_t lastExecutedAt;        // last time of invocation	上次调用的时间
     uint32_t lastSignaledAt;        // time of invocation event for event-driven tasks
 
     /* Statistics */

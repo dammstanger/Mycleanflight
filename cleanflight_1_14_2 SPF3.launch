@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="ilg.gnuarmeclipse.debug.gdbjtag.openocd.launchConfigurationType">
+<booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.doContinue" value="true"/>
+<booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.doDebugInRam" value="false"/>
+<booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.doFirstReset" value="true"/>
+<booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.doGdbServerAllocateConsole" value="true"/>
+<booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.doGdbServerAllocateTelnetConsole" value="false"/>
+<booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.doSecondReset" value="true"/>
+<booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.doStartGdbServer" value="true"/>
+<booleanAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.enableSemihosting" value="true"/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.firstResetType" value="init"/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.gdbClientOtherCommands" value="set mem inaccessible-by-default off"/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.gdbClientOtherOptions" value=""/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.gdbServerConnectionAddress" value=""/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.gdbServerExecutable" value="C:\Program Files\GNU MCU Eclipse\OpenOCD\0.10.0-1-20170607-2132-dev\bin\openocd.exe"/>
+<intAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.gdbServerGdbPortNumber" value="3333"/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.gdbServerLog" value=""/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.gdbServerOther" value="# script for stm32f3x family&#13;&#10;&#13;&#10;#&#13;&#10;# stm32 devices support both JTAG and SWD transports.&#13;&#10;#&#13;&#10;source [find target/swj-dp.tcl]&#13;&#10;source [find mem_helper.tcl]&#13;&#10;&#13;&#10;if { [info exists CHIPNAME] } {&#13;&#10;   set _CHIPNAME $CHIPNAME&#13;&#10;} else {&#13;&#10;   set _CHIPNAME stm32f3x&#13;&#10;}&#13;&#10;&#13;&#10;set _ENDIAN little&#13;&#10;&#13;&#10;# Work-area is a space in RAM used for flash programming&#13;&#10;# By default use 16kB&#13;&#10;if { [info exists WORKAREASIZE] } {&#13;&#10;   set _WORKAREASIZE $WORKAREASIZE&#13;&#10;} else {&#13;&#10;   set _WORKAREASIZE 0x4000&#13;&#10;}&#13;&#10;&#13;&#10;# JTAG speed should be &lt;= F_CPU/6. F_CPU after reset is 8MHz, so use F_JTAG = 1MHz&#13;&#10;#&#13;&#10;# Since we may be running of an RC oscilator, we crank down the speed a&#13;&#10;# bit more to be on the safe side. Perhaps superstition, but if are&#13;&#10;# running off a crystal, we can run closer to the limit. Note&#13;&#10;# that there can be a pretty wide band where things are more or less stable.&#13;&#10;adapter_khz 1000&#13;&#10;&#13;&#10;adapter_nsrst_delay 100&#13;&#10;if {[using_jtag]} {&#13;&#10; jtag_ntrst_delay 100&#13;&#10;}&#13;&#10;&#13;&#10;#jtag scan chain&#13;&#10;if { [info exists CPUTAPID] } {&#13;&#10;   set _CPUTAPID $CPUTAPID&#13;&#10;} else {&#13;&#10;   if { [using_jtag] } {&#13;&#10;      # See STM Document RM0316&#13;&#10;      # Section 29.6.3 - corresponds to Cortex-M4 r0p1&#13;&#10;      set _CPUTAPID 0x4ba00477&#13;&#10;   } {&#13;&#10;      set _CPUTAPID 0x2ba01477&#13;&#10;   }&#13;&#10;}&#13;&#10;&#13;&#10;swj_newdap $_CHIPNAME cpu -irlen 4 -ircapture 0x1 -irmask 0xf -expected-id $_CPUTAPID&#13;&#10;&#13;&#10;if {[using_jtag]} {&#13;&#10;   jtag newtap $_CHIPNAME bs -irlen 5&#13;&#10;}&#13;&#10;&#13;&#10;set _TARGETNAME $_CHIPNAME.cpu&#13;&#10;target create $_TARGETNAME cortex_m -endian $_ENDIAN -chain-position $_TARGETNAME&#13;&#10;&#13;&#10;$_TARGETNAME configure -work-area-phys 0x20000000 -work-area-size $_WORKAREASIZE -work-area-backup 0&#13;&#10;&#13;&#10;set _FLASHNAME $_CHIPNAME.flash&#13;&#10;flash bank $_FLASHNAME stm32f1x 0 0 0 0 $_TARGETNAME&#13;&#10;&#13;&#10;reset_config srst_nogate&#13;&#10;&#13;&#10;if {![using_hla]} {&#13;&#10;   # if srst is not fitted use SYSRESETREQ to&#13;&#10;   # perform a soft reset&#13;&#10;   cortex_m reset_config sysresetreq&#13;&#10;}&#13;&#10;&#13;&#10;proc stm32f3x_default_reset_start {} {&#13;&#10;&#9;# Reset clock is HSI (8 MHz)&#13;&#10;&#9;adapter_khz 1000&#13;&#10;}&#13;&#10;&#13;&#10;proc stm32f3x_default_examine_end {} {&#13;&#10;&#9;# Enable debug during low power modes (uses more power)&#13;&#10;&#9;mmw 0xe0042004 0x00000007 0 ;# DBGMCU_CR |= DBG_STANDBY | DBG_STOP | DBG_SLEEP&#13;&#10;&#13;&#10;&#9;# Stop watchdog counters during halt&#13;&#10;&#9;mmw 0xe0042008 0x00001800 0 ;# DBGMCU_APB1_FZ |= DBG_IWDG_STOP | DBG_WWDG_STOP&#13;&#10;}&#13;&#10;&#13;&#10;proc stm32f3x_default_reset_init {} {&#13;&#10;&#9;# Configure PLL to boost clock to HSI x 8 (64 MHz)&#13;&#10;&#9;mww 0x40021004 0x00380400   ;# RCC_CFGR = PLLMUL[3:1] | PPRE1[2]&#13;&#10;&#9;mmw 0x40021000 0x01000000 0 ;# RCC_CR |= PLLON&#13;&#10;&#9;mww 0x40022000 0x00000012   ;# FLASH_ACR = PRFTBE | LATENCY[1]&#13;&#10;&#9;sleep 10                    ;# Wait for PLL to lock&#13;&#10;&#9;mmw 0x40021004 0x00000002 0 ;# RCC_CFGR |= SW[1]&#13;&#10;&#13;&#10;&#9;# Boost JTAG frequency&#13;&#10;&#9;adapter_khz 8000&#13;&#10;}&#13;&#10;&#13;&#10;# Default hooks&#13;&#10;$_TARGETNAME configure -event examine-end { stm32f3x_default_examine_end }&#13;&#10;$_TARGETNAME configure -event reset-start { stm32f3x_default_reset_start }&#13;&#10;$_TARGETNAME configure -event reset-init { stm32f3x_default_reset_init }&#13;&#10;&#13;&#10;$_TARGETNAME configure -event trace-config {&#13;&#10;&#9;# Set TRACE_IOEN; TRACE_MODE is set to async; when using sync&#13;&#10;&#9;# change this value accordingly to configure trace pins&#13;&#10;&#9;# assignment&#13;&#10;&#9;mmw 0xe0042004 0x00000020 0&#13;&#10;}"/>
+<intAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.gdbServerTelnetPortNumber" value="4444"/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.otherInitCommands" value=""/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.otherRunCommands" value=""/>
+<stringAttribute key="ilg.gnuarmeclipse.debug.gdbjtag.openocd.secondResetType" value="halt"/>
+<stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.imageFileName" value=""/>
+<stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.imageOffset" value=""/>
+<stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.ipAddress" value="localhost"/>
+<stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.jtagDevice" value="GNU ARM OpenOCD"/>
+<booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.loadImage" value="true"/>
+<booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.loadSymbols" value="true"/>
+<stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.pcRegister" value=""/>
+<intAttribute key="org.eclipse.cdt.debug.gdbjtag.core.portNumber" value="3333"/>
+<booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.setPcRegister" value="false"/>
+<booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.setResume" value="false"/>
+<booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.setStopAt" value="true"/>
+<stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.stopAt" value="main"/>
+<stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.symbolsFileName" value=""/>
+<stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.symbolsOffset" value=""/>
+<booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.useFileForImage" value="false"/>
+<booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.useFileForSymbols" value="false"/>
+<booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.useProjBinaryForImage" value="true"/>
+<booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.useProjBinaryForSymbols" value="true"/>
+<booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.useRemoteTarget" value="true"/>
+<stringAttribute key="org.eclipse.cdt.dsf.gdb.DEBUG_NAME" value="D:\Coding\gcc-arm-none-eabi-6-2017-q1-update-win32\bin\arm-none-eabi-gdb.exe"/>
+<booleanAttribute key="org.eclipse.cdt.dsf.gdb.UPDATE_THREADLIST_ON_SUSPEND" value="false"/>
+<intAttribute key="org.eclipse.cdt.launch.ATTR_BUILD_BEFORE_LAUNCH_ATTR" value="2"/>
+<stringAttribute key="org.eclipse.cdt.launch.COREFILE_PATH" value=""/>
+<stringAttribute key="org.eclipse.cdt.launch.DEBUGGER_REGISTER_GROUPS" value=""/>
+<stringAttribute key="org.eclipse.cdt.launch.PROGRAM_NAME" value="obj\main\cleanflight_SPRACINGF3.elf"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROJECT_ATTR" value="cleanflight_1_14_2"/>
+<booleanAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_AUTO_ATTR" value="false"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_ID_ATTR" value=""/>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/cleanflight_1_14_2"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="4"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.ui.favoriteGroups">
+<listEntry value="org.eclipse.debug.ui.launchGroup.debug"/>
+</listAttribute>
+<stringAttribute key="process_factory_id" value="org.eclipse.cdt.dsf.gdb.GdbProcessFactory"/>
+</launchConfiguration>

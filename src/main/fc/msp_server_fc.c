@@ -590,9 +590,9 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
             unsigned scale_shift = (acc.acc_1G > 1024) ? 3 : 0;
 
             for (unsigned i = 0; i < 3; i++)
-                sbufWriteU16(dst, accSmooth[i] >> scale_shift);
+                sbufWriteU16(dst, accSmooth[i] >> scale_shift);		//
             for (unsigned i = 0; i < 3; i++)
-                sbufWriteU16(dst, gyroADC[i]);
+                sbufWriteU16(dst, gyroADC[i]);				//这里的值会发送给configurator 在Sensor一栏的Gyroscope中转换成deg/s
             for (unsigned i = 0; i < 3; i++)
                 sbufWriteU16(dst, magADC[i]);
             break;

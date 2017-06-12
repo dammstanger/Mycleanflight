@@ -33,7 +33,7 @@
 
 const uint32_t taskQueueArraySize = TASK_QUEUE_ARRAY_SIZE;
 const uint32_t taskCount = TASK_COUNT;
-cfTask_t* taskQueueArray[TASK_QUEUE_ARRAY_SIZE];
+cfTask_t* taskQueueArray[TASK_QUEUE_ARRAY_SIZE];		//比任务总数多一个
 
 cfTask_t cfTasks[] = {
     [TASK_SYSTEM] = {
@@ -50,6 +50,7 @@ cfTask_t cfTasks[] = {
         .desiredPeriod = TASK_PERIOD_HZ(8000),
         .staticPriority = TASK_PRIORITY_REALTIME,
     },
+
     [TASK_PID] = {
         .taskName = "PID",
         .checkFunc = taskPidCheck,
@@ -94,12 +95,12 @@ cfTask_t cfTasks[] = {
         .staticPriority = TASK_PRIORITY_MEDIUM,
     },
 
-    [TASK_BATTERY] = {
-        .taskName = "BATTERY",
-        .taskFunc = taskUpdateBattery,
-        .desiredPeriod = TASK_PERIOD_MS(20),
-        .staticPriority = TASK_PRIORITY_MEDIUM,
-    },
+//    [TASK_BATTERY] = {
+//        .taskName = "BATTERY",
+//        .taskFunc = taskUpdateBattery,
+//        .desiredPeriod = TASK_PERIOD_MS(20),
+//        .staticPriority = TASK_PRIORITY_MEDIUM,
+//    },
 
 
 #ifdef BEEPER
@@ -192,12 +193,12 @@ cfTask_t cfTasks[] = {
     },
 #endif
 
-#ifdef LED_STRIP
-    [TASK_LEDSTRIP] = {
-        .taskName = "LEDSTRIP",
-        .taskFunc = taskLedStrip,
-        .desiredPeriod = TASK_PERIOD_MS(10),
-        .staticPriority = TASK_PRIORITY_IDLE,
-    },
-#endif
+//#ifdef LED_STRIP
+//    [TASK_LEDSTRIP] = {
+//        .taskName = "LEDSTRIP",
+//        .taskFunc = taskLedStrip,
+//        .desiredPeriod = TASK_PERIOD_MS(10),
+//        .staticPriority = TASK_PRIORITY_IDLE,
+//    },
+//#endif
 };

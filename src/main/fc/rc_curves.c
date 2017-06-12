@@ -48,7 +48,7 @@ void generatePitchRollCurve(void)
 void generateYawCurve(void)
 {
      for (int i = 0; i < YAW_LOOKUP_LENGTH; i++) {
-        lookupYawRC[i] = (2500 + currentControlRateProfile->rcYawExpo8 * (i * i - 25)) * i / 25;
+        lookupYawRC[i] = (2500 + currentControlRateProfile->rcYawExpo8 * (i * i - 25)) * i / 25;		//rcYawExpo8 = 0 速率为线性
     }
 }
 

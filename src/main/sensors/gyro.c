@@ -80,7 +80,7 @@ static pt1Filter_t gyroFilterPt1[XYZ_AXIS_COUNT];
 PG_REGISTER_WITH_RESET_TEMPLATE(gyroConfig_t, gyroConfig, PG_GYRO_CONFIG, 0);
 
 PG_RESET_TEMPLATE(gyroConfig_t, gyroConfig,
-    .gyro_lpf = GYRO_LPF_256HZ,
+    .gyro_lpf = GYRO_LPF_188HZ,		//GYRO_LPF_256HZ,    dammstanger 20170515
 
     .gyro_soft_type = FILTER_PT1,
 
@@ -159,7 +159,7 @@ static void performAcclerationCalibration(uint8_t gyroMovementCalibrationThresho
                 gyroSetCalibrationCycles(CALIBRATING_GYRO_CYCLES);
                 return;
             }
-            gyroZero[axis] = (g[axis] + (CALIBRATING_GYRO_CYCLES / 2)) / CALIBRATING_GYRO_CYCLES;
+            gyroZero[axis] = (g[axis] + (CALIBRATING_GYRO_CYCLES / 2)) / CALIBRATING_GYRO_CYCLES;	//这里(CALIBRATING_GYRO_CYCLES / 2)的作用：取整时四舍五入
         }
     }
 
@@ -193,25 +193,27 @@ void gyroUpdate(void)
     if (gyroConfig()->gyro_soft_lpf_hz) {
         for (int axis = 0; axis < XYZ_AXIS_COUNT; axis++) {
 
+
             if (debugMode == DEBUG_GYRO)
                 debug[axis] = gyroADC[axis];
 
             if (gyroConfig()->gyro_soft_type == FILTER_BIQUAD)
                 gyroADCf[axis] = biquadFilterApply(&gyroFilterLPF[axis], (float) gyroADC[axis]);
             else
-                gyroADCf[axis] = pt1FilterApply(&gyroFilterPt1[axis], (float) gyroADC[axis]);
+                gyroADCf[axis] = pt1FilterApply(&gyroFilterPt1[axis], (float) gyroADC[axis]);		//默认使用pt1
 
             if (debugMode == DEBUG_NOTCH)
                 debug[axis] = lrintf(gyroADCf[axis]);
 
-            if (gyroConfig()->gyro_soft_notch_hz)
+            if (gyroConfig()->gyro_soft_notch_hz)													//默认开启陷波滤波器
                 gyroADCf[axis] = biquadFilterApply(&gyroFilterNotch[axis], gyroADCf[axis]);
 
-            gyroADC[axis] = lrintf(gyroADCf[axis]);
+            gyroADC[axis] = lrintf(gyroADCf[axis]);			//数据类型转换
         }
     } else {
         for (int axis = 0; axis < XYZ_AXIS_COUNT; axis++) {
-            gyroADCf[axis] = gyroADC[axis];
+            gyroADCf[axis] = gyroADC[axis];					//若无滤波，则直接传递原始值
         }
     }
+
 }

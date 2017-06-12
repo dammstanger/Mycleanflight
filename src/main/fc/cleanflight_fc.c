@@ -829,7 +829,7 @@ uint8_t gyroReadyCounter = 0;
 
 void taskGyro(void)
 {
-    gyroUpdate();
+	gyroUpdate();
     gyroUpdateAt += US_FROM_HZ(gyro.sampleFrequencyHz);
     gyroReadyCounter++;
 

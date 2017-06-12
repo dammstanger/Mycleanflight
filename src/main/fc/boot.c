@@ -288,7 +288,7 @@ void init(void)
     ensureEEPROMContainsValidData();
     readEEPROM();
 
-    systemState |= SYSTEM_STATE_CONFIG_LOADED;
+    systemState |= SYSTEM_STATE_CONFIG_LOADED;		//系统状态现在设为：配置已加载
 
 #ifdef STM32F303
     // start fpu
@@ -317,7 +317,8 @@ void init(void)
     // initialize IO (needed for all IO operations)
     IOInitGlobal();
 
-    debugMode = debugConfig()->debug_mode;
+//    debugMode = debugConfig()->debug_mode;		//调试模式
+    debugMode = DEBUG_GYRO;
 
 #ifdef USE_EXTI
     EXTIInit();
@@ -462,6 +463,7 @@ void init(void)
 
     pwmRxInit();
 
+    //电调输出的PWM通道初始化，包括IO口和定时器。
     // pwmInit() needs to be called as soon as possible for ESC compatibility reasons
     pwmIOConfiguration_t *pwmIOConfiguration = pwmInit(&pwm_params);
 
@@ -602,7 +604,8 @@ void init(void)
     mspInit();
     mspSerialInit();
 
-    const uint16_t pidPeriodUs = US_FROM_HZ(gyro.sampleFrequencyHz);
+//    const uint16_t pidPeriodUs = US_FROM_HZ(gyro.sampleFrequencyHz);
+    const uint16_t pidPeriodUs = 1000;
     pidSetTargetLooptime(pidPeriodUs * gyroConfig()->pid_process_denom);
     pidInitFilters(pidProfile());
 
@@ -785,7 +788,7 @@ void configureScheduler(void)
     rescheduleTask(TASK_GYRO, gyroPeriodUs);
     setTaskEnabled(TASK_GYRO, true);
 
-    rescheduleTask(TASK_PID, gyroPeriodUs);
+    rescheduleTask(TASK_PID, 1000);			//gyroPeriodUs dammstanger 20170607
     setTaskEnabled(TASK_PID, true);
 
     if (sensors(SENSOR_ACC)) {
@@ -799,7 +802,7 @@ void configureScheduler(void)
 #ifdef BEEPER
     setTaskEnabled(TASK_BEEPER, true);
 #endif
-    setTaskEnabled(TASK_BATTERY, feature(FEATURE_VBAT) || feature(FEATURE_AMPERAGE_METER));
+//    setTaskEnabled(TASK_BATTERY, feature(FEATURE_VBAT) || feature(FEATURE_AMPERAGE_METER));			//dammstanger	20170515
     setTaskEnabled(TASK_RX, true);
 #ifdef GPS
     setTaskEnabled(TASK_GPS, feature(FEATURE_GPS));
@@ -818,7 +821,7 @@ void configureScheduler(void)
     setTaskEnabled(TASK_SONAR, sensors(SENSOR_SONAR));
 #endif
 #if defined(BARO) || defined(SONAR)
-    setTaskEnabled(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR));
+    setTaskEnabled(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR));		//dammstanger	20170516
 #endif
 #ifdef DISPLAY
     setTaskEnabled(TASK_DISPLAY, feature(FEATURE_DISPLAY));
@@ -827,7 +830,7 @@ void configureScheduler(void)
     setTaskEnabled(TASK_TELEMETRY, feature(FEATURE_TELEMETRY));
 #endif
 #ifdef LED_STRIP
-    setTaskEnabled(TASK_LEDSTRIP, feature(FEATURE_LED_STRIP));
+//    setTaskEnabled(TASK_LEDSTRIP, feature(FEATURE_LED_STRIP));
 #endif
 #ifdef TRANSPONDER
     setTaskEnabled(TASK_TRANSPONDER, feature(FEATURE_TRANSPONDER));

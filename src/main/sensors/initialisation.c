@@ -704,7 +704,7 @@ bool sensorsAutodetect(void)
         return false;
     }
 
-    gyro.sampleFrequencyHz = gyroConfig()->gyro_sample_hz;
+    gyro.sampleFrequencyHz = gyroConfig()->gyro_sample_hz;		//就在这里。
 
     // this is safe because either mpu6050 or mpu3050 or lg3d20 sets it, and in case of fail, we never get here.
     gyro.init(&gyro, gyroConfig()->gyro_lpf);

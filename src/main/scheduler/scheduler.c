@@ -64,6 +64,7 @@ STATIC_UNIT_TESTED int queueSize(void)
 }
 #endif
 
+//检查队列中是否包含该任务。
 STATIC_UNIT_TESTED bool queueContains(cfTask_t *task)
 {
     for (unsigned int ii = 0; ii < taskQueueSize; ++ii) {
@@ -76,7 +77,7 @@ STATIC_UNIT_TESTED bool queueContains(cfTask_t *task)
 
 STATIC_UNIT_TESTED bool queueAdd(cfTask_t *task)
 {
-    if ((taskQueueSize >= taskCount) || queueContains(task)) {
+    if ((taskQueueSize >= taskCount) || queueContains(task)) {		//如果队列任务数已超过任务总数，或者队列中已经有该任务，
         return false;
     }
     for (unsigned int ii = 0; ii <= taskQueueSize; ++ii) {
@@ -119,6 +120,7 @@ STATIC_INLINE_UNIT_TESTED cfTask_t *queueNext(void)
     return taskQueueArray[++taskQueuePos]; // guaranteed to be NULL at end of queue
 }
 
+//系统任务
 void taskSystem(void)
 {
     // Calculate system load
@@ -150,7 +152,7 @@ void taskSystem(void)
 void getTaskInfo(const int taskId, cfTaskInfo_t * taskInfo)
 {
     taskInfo->taskName = cfTasks[taskId].taskName;
-    taskInfo->isEnabled = queueContains(&cfTasks[taskId]);
+    taskInfo->isEnabled = queueContains(&cfTasks[taskId]);		//如果由此任务，说明任务已使能
     taskInfo->desiredPeriod = cfTasks[taskId].desiredPeriod;
     taskInfo->staticPriority = cfTasks[taskId].staticPriority;
     taskInfo->maxExecutionTime = cfTasks[taskId].maxExecutionTime;
@@ -164,7 +166,7 @@ void rescheduleTask(const int taskId, uint32_t newPeriodMicros)
 {
     if (taskId == TASK_SELF || taskId < (int)taskCount) {
         cfTask_t *task = taskId == TASK_SELF ? currentTask : &cfTasks[taskId];
-        task->desiredPeriod = MAX(100, newPeriodMicros);  // Limit delay to 100us (10 kHz) to prevent scheduler clogging
+        task->desiredPeriod = MAX(100, newPeriodMicros);  // Limit delay to 100us (10 kHz) to prevent scheduler clogging 任务的周期限制在大于等于100us即10KHz上,
     }
 }
 
@@ -211,6 +213,7 @@ void scheduler(void)
             timeToNextRealtimeTask = MIN(timeToNextRealtimeTask, newTimeInterval);
         }
     }
+    //
     const bool outsideRealtimeGuardInterval = (timeToNextRealtimeTask > realtimeGuardInterval);
 
     // The task to be invoked
@@ -220,14 +223,14 @@ void scheduler(void)
     // Update task dynamic priorities
     uint16_t waitingTasks = 0;
     for (cfTask_t *task = queueFirst(); task != NULL; task = queueNext()) {
-        // Task has checkFunc - event driven
+        // Task has checkFunc - event driven	事件驱动的任务
         if (task->checkFunc != NULL) {
             // Increase priority for event driven tasks
             if (task->dynamicPriority > 0) {
                 task->taskAgeCycles = 1 + ((currentTime - task->lastSignaledAt) / task->desiredPeriod);
                 task->dynamicPriority = 1 + task->staticPriority * task->taskAgeCycles;
                 waitingTasks++;
-            } else if (task->checkFunc(currentTime - task->lastExecutedAt)) {
+            } else if (task->checkFunc(currentTime - task->lastExecutedAt)) {	//上次运行后首次被轮询，问任务自己是否需要运行
                 task->lastSignaledAt = currentTime;
                 task->taskAgeCycles = 1;
                 task->dynamicPriority = 1 + task->staticPriority;
@@ -244,11 +247,11 @@ void scheduler(void)
                 waitingTasks++;
             }
         }
-
+        //循环结束便有最需要的任务进入调度器
         if (task->dynamicPriority > selectedTaskDynamicPriority) {
             const bool taskCanBeChosenForScheduling =
                 (outsideRealtimeGuardInterval) ||
-                (task->taskAgeCycles > 1) ||
+                (task->taskAgeCycles > 1) ||			//距上次执行已有2个以上期望周期的时间了
                 (task->staticPriority == TASK_PRIORITY_REALTIME);
             if (taskCanBeChosenForScheduling) {
                 selectedTaskDynamicPriority = task->dynamicPriority;

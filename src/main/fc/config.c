@@ -310,7 +310,7 @@ void readEEPROM(void)
 {
     suspendRxSignal();
 
-    // Sanity check, read flash
+    // Sanity check完整性检查, read flash
     if (!loadEEPROM()) {
         failureMode(FAILURE_INVALID_EEPROM_CONTENTS);
     }
@@ -319,7 +319,7 @@ void readEEPROM(void)
 
     setControlRateProfile(rateProfileSelection()->defaultRateProfileIndex);
 
-    validateAndFixConfig();
+    validateAndFixConfig();		//验证并修理不合理的配置
     activateConfig();
 
     resumeRxSignal();

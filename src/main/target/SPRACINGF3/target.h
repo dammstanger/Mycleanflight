@@ -20,7 +20,7 @@
 #define TARGET_BOARD_IDENTIFIER "SRF3"
 
 #define DEFAULT_PID_PROCESS_DENOM 1
-#define DEFAULT_GYRO_SAMPLE_HZ 2000
+#define DEFAULT_GYRO_SAMPLE_HZ 1000		//2000
 
 #define LED0_GPIO   GPIOB
 #define LED0_PIN    Pin_3
@@ -31,7 +31,7 @@
 #define BEEP_PERIPHERAL RCC_AHBPeriph_GPIOC
 #define BEEPER_INVERTED
 
-#define USABLE_TIMER_CHANNEL_COUNT 17
+#define USABLE_TIMER_CHANNEL_COUNT 17 //17
 
 #define USE_MPU_DATA_READY_SIGNAL
 #define ENSURE_MPU_DATA_READY_IS_LOW
@@ -48,11 +48,11 @@
 #define USE_ACC_MPU6050
 #define ACC_MPU6050_ALIGN CW270_DEG
 
-#define BARO
+#define BARO						//dammstanger 20170515
 #define USE_BARO_MS5611
 
 #define MAG
-#define USE_MAG_AK8975
+// //#define USE_MAG_AK8975				//20170503
 #define USE_MAG_HMC5883
 #define MAG_HMC5883_ALIGN CW270_DEG
 
@@ -62,21 +62,21 @@
 #define BEEPER
 #define LED0
 
-#define SONAR
-#define SONAR_TRIGGER_PIN           Pin_0   // RC_CH7 (PB0) - only 3.3v ( add a 1K Ohms resistor )
-#define SONAR_TRIGGER_GPIO          GPIOB
-#define SONAR_ECHO_PIN              Pin_1   // RC_CH8 (PB1) - only 3.3v ( add a 1K Ohms resistor )
-#define SONAR_ECHO_GPIO             GPIOB
-#define SONAR_TRIGGER_IO            PB0
-#define SONAR_ECHO_IO               PB1
+//#define SONAR								//20170503
+//#define SONAR_TRIGGER_PIN           Pin_0   // RC_CH7 (PB0) - only 3.3v ( add a 1K Ohms resistor )
+//#define SONAR_TRIGGER_GPIO          GPIOB
+//#define SONAR_ECHO_PIN              Pin_1   // RC_CH8 (PB1) - only 3.3v ( add a 1K Ohms resistor )
+//#define SONAR_ECHO_GPIO             GPIOB
+//#define SONAR_TRIGGER_IO            PB0
+//#define SONAR_ECHO_IO               PB1
 
 
 #define USE_UART1
-#define USE_UART2
+#define USE_UART2				//20170503
 #define USE_UART3
-#define USE_SOFTSERIAL1
-#define USE_SOFTSERIAL2
-#define SERIAL_PORT_COUNT 5
+//#define USE_SOFTSERIAL1
+//#define USE_SOFTSERIAL2
+#define SERIAL_PORT_COUNT 3  //5
 
 #define USE_UART1_TX_DMA
 #define UART1_TX_PIN        GPIO_Pin_9  // PA9
@@ -100,12 +100,12 @@
 #define UART3_TX_PINSOURCE  GPIO_PinSource10
 #define UART3_RX_PINSOURCE  GPIO_PinSource11
 
-#define SOFTSERIAL_1_TIMER TIM3
-#define SOFTSERIAL_1_TIMER_RX_HARDWARE 4 // PWM 5
-#define SOFTSERIAL_1_TIMER_TX_HARDWARE 5 // PWM 6
-#define SOFTSERIAL_2_TIMER TIM3
-#define SOFTSERIAL_2_TIMER_RX_HARDWARE 6 // PWM 7
-#define SOFTSERIAL_2_TIMER_TX_HARDWARE 7 // PWM 8
+//#define SOFTSERIAL_1_TIMER TIM3
+//#define SOFTSERIAL_1_TIMER_RX_HARDWARE 4 // PWM 5
+//#define SOFTSERIAL_1_TIMER_TX_HARDWARE 5 // PWM 6
+//#define SOFTSERIAL_2_TIMER TIM3
+//#define SOFTSERIAL_2_TIMER_RX_HARDWARE 6 // PWM 7
+//#define SOFTSERIAL_2_TIMER_TX_HARDWARE 7 // PWM 8
 
 #define USE_I2C
 #define I2C_DEVICE (I2CDEV_1) // PB6/SCL, PB7/SDA
@@ -158,27 +158,27 @@
 #define WS2811_DMA_HANDLER_IDENTIFER    DMA1Channel2Descriptor
 
 
-#define DEFAULT_RX_FEATURE FEATURE_RX_PPM
+//#define DEFAULT_RX_FEATURE FEATURE_RX_PPM
 
 #define BLACKBOX
 #define ENABLE_BLACKBOX_LOGGING_ON_SPIFLASH_BY_DEFAULT
 
-#define DISPLAY
-#define GPS
-#define GTUNE
+//#define DISPLAY				//20170503
+//#define GPS				//20170503
+//#define GTUNE
 #define SERIAL_RX
-#define TELEMETRY
-#define TELEMETRY_IBUS
-#define USE_SERVOS
+//#define TELEMETRY
+//#define TELEMETRY_IBUS
+//#define USE_SERVOS
 #define USE_CLI
 #define USE_EXTI
 
-#define SPEKTRUM_BIND
+//#define SPEKTRUM_BIND
 // UART3,
 #define BIND_PORT  GPIOB
 #define BIND_PIN   Pin_11
 
-#define USE_SERIAL_4WAY_BLHELI_INTERFACE
+//#define USE_SERIAL_4WAY_BLHELI_INTERFACE
 
 // IO - stm32f303cc in 48pin package
 #define TARGET_IO_PORTA 0xffff

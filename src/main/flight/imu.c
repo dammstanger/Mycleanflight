@@ -456,6 +456,7 @@ void imuUpdateAccelerometer(rollAndPitchTrims_t *accelerometerTrims)
 void imuUpdateAttitude(void)
 {
     if (sensors(SENSOR_ACC) && isAccelUpdatedAtLeastOnce) {
+//	if(0){									//dammstanger 20170508
         imuCalculateEstimatedAttitude();
     } else {
         accSmooth[X] = 0;

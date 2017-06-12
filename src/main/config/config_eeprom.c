@@ -80,7 +80,7 @@ typedef struct {
 void initEEPROM(void)
 {
     // Verify that this architecture packs as expected.
-    BUILD_BUG_ON(offsetof(packingTest_t, byte) != 0);
+    BUILD_BUG_ON(offsetof(packingTest_t, byte) != 0);  //在编译时验证编译体系定义的数据类型的长度和存放位置是不是一致。
     BUILD_BUG_ON(offsetof(packingTest_t, word) != 1);
     BUILD_BUG_ON(sizeof(packingTest_t) != 5);
 
@@ -89,7 +89,7 @@ void initEEPROM(void)
     BUILD_BUG_ON(sizeof(configRecord_t) != 6);
 }
 
-static uint8_t updateChecksum(uint8_t chk, const void *data, uint32_t length)
+static uint8_t updateChecksum(uint8_t chk, const void *data, uint32_t length)		//校验和
 {
     const uint8_t *p = (const uint8_t *)data;
     const uint8_t *pend = p + length;
@@ -165,7 +165,7 @@ const configRecord_t *findEEPROM(const pgRegistry_t *reg, configRecordFlags_e cl
 //   but each PG is loaded/initialized exactly once and in defined order.
 bool loadEEPROM(void)
 {
-    PG_FOREACH(reg) {
+    PG_FOREACH(reg) {								//定义了一个循环
         configRecordFlags_e cls_start, cls_end;
         if (pgIsSystem(reg)) {
             cls_start = CR_CLASSICATION_SYSTEM;
