@@ -876,10 +876,10 @@ void taskPid(void)
         debug[0] = pidDeltaUs;
     }
 
-    subTaskPidController();
+    subTaskPidController();					//pidLuxFloat控制器就在这里，依据摇杆GPS位置生成目标角速度，
 
-    subTaskMotorUpdate();
-    subTaskMainSubprocesses();
+    subTaskMotorUpdate();					//mixtable()和writemotor()
+    subTaskMainSubprocesses();				//
 
     if (debugMode == DEBUG_GYRO_SYNC) {
         debug[2] = pidDeltaUs;
