@@ -1,4 +1,11 @@
 /*
+ * irrangefinder_ptk.h
+ *
+ *  Created on: 2017年6月15日
+ *      Author: DammStanger
+ */
+
+/*
  * This file is part of Cleanflight.
  *
  * Cleanflight is free software: you can redistribute it and/or modify
@@ -15,32 +22,21 @@
  * along with Cleanflight.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
 
-#include <platform.h>
+#pragma once
 
-#include "build/build_config.h"
 
-#include "system.h"
-#include "gpio.h"
 
-#include "sound_beeper.h"
 
-void initBeeperHardware(beeperConfig_t *config)
-{
-#ifndef BEEPER
-    UNUSED(config);
-#else
-    gpio_config_t gpioConfig = {
-        config->gpioPin,
-        config->gpioMode,
-        Speed_2MHz
-    };
+typedef struct ptkIrData_s {
+    uint8_t state;                  // PTKir thread state. Used for detecting cable disconnects and configuring attached devices
+    uint8_t baudrateIndex;          // index into auto-detecting or current baudrate
+    uint32_t errors;                // PTL error counter - crc error/lost of data/sync etc..
+    uint32_t timeouts;
+    uint32_t lasttime;           	// last time valid PTK data was received (millis)
+} ptkIrData_t;
 
-    RCC_APB2PeriphClockCmd(config->gpioPeripheral, ENABLE);
 
-    gpioInit(config->gpioPort, &gpioConfig);
-#endif
-}
+
+void ptkIrInit(void);
+void ptkWrtCmd(void);

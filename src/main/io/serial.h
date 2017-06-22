@@ -37,6 +37,7 @@ typedef enum {
     FUNCTION_MSP_CLIENT          = (1 << 9), // 512
     FUNCTION_TELEMETRY_IBUS      = (1 << 10), // 1024
     FUNCTION_PASSTHROUGH         = (1 << 11), // 2048
+	FUNCTION_IRRANGDF_PTK		 = (1 << 12), // 4096
 } serialPortFunction_e;
 
 typedef enum {

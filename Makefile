@@ -355,11 +355,13 @@ OSD_COMMON_SRC = \
 		   osd/osd_element.c \
 		   osd/osd_element_render.c
 
+#dammstanger 20170619  add io/irrangefinder.c 
 HIGHEND_SRC = \
 		   flight/gtune.c \
 		   flight/navigation.c \
 		   flight/gps_conversion.c \
 		   common/colorconversion.c \
+		   io/irrangefinder_ptk.c \
 		   io/gps.c \
 		   io/ledstrip.c \
 		   io/display.c \

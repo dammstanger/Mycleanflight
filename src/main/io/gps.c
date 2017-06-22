@@ -229,21 +229,21 @@ void gpsInit(void)
 
     gpsData.lastMessage = millis();
 
-    serialPortConfig_t *gpsPortConfig = findSerialPortConfig(FUNCTION_GPS);
+    serialPortConfig_t *gpsPortConfig = findSerialPortConfig(FUNCTION_GPS);		//FUNCTION_GPS 属于串口功能枚举 功能对应位为1
     if (!gpsPortConfig) {
-        featureClear(FEATURE_GPS);
+        featureClear(FEATURE_GPS);												//如果没有可用串口则关闭GPS功能
         return;
     }
 
-    while (gpsInitData[gpsData.baudrateIndex].baudrateIndex != gpsPortConfig->baudRates[BAUDRATE_GPS]) {
+    while (gpsInitData[gpsData.baudrateIndex].baudrateIndex != gpsPortConfig->baudRates[BAUDRATE_GPS]) {		//以串口波特率为准设置GPS波特率，如果没有则设为默认
         gpsData.baudrateIndex++;
-        if (gpsData.baudrateIndex >= GPS_INIT_DATA_ENTRY_COUNT) {
-            gpsData.baudrateIndex = DEFAULT_BAUD_RATE_INDEX;
+        if (gpsData.baudrateIndex >= GPS_INIT_DATA_ENTRY_COUNT) {		//如果超过了初始化数组中的默认波特率项数
+            gpsData.baudrateIndex = DEFAULT_BAUD_RATE_INDEX;			//则波特率设为默认=0=115200
             break;
         }
     }
 
-    portMode_t mode = MODE_RXTX;
+    portMode_t mode = MODE_RXTX;				//串口设置默认为首发双向模式
     // only RX is needed for NMEA-style GPS
     if (gpsConfig()->provider == GPS_NMEA)
 	    mode &= ~MODE_TX;

@@ -224,6 +224,12 @@ static void validateAndFixConfig(void)
         featureClear(FEATURE_RX_SERIAL | FEATURE_RX_MSP | FEATURE_RX_PPM);
     }
 
+    //dammstanger 20170621
+    if(!featureConfigured(FEATURE_IRRANGFD)){
+    	featureSet(FEATURE_IRRANGFD);
+    }
+
+
     // The retarded_arm setting is incompatible with pid_at_min_throttle because full roll causes the craft to roll over on the ground.
     // The pid_at_min_throttle implementation ignores yaw on the ground, but doesn't currently ignore roll when retarded_arm is enabled.
     if (armingConfig()->retarded_arm && mixerConfig()->pid_at_min_throttle) {
