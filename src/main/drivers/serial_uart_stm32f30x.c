@@ -162,7 +162,7 @@ uartPort_t *serialUART1(uint32_t baudRate, portMode_t mode, portOptions_t option
 uartPort_t *serialUART2(uint32_t baudRate, portMode_t mode, portOptions_t options)
 {
     uartPort_t *s;
-    static volatile uint8_t rx2Buffer[UART2_RX_BUFFER_SIZE];
+    static volatile uint8_t rx2Buffer[UART2_RX_BUFFER_SIZE];			//在此定义了缓存
     static volatile uint8_t tx2Buffer[UART2_TX_BUFFER_SIZE];
     NVIC_InitTypeDef NVIC_InitStructure;
     GPIO_InitTypeDef  GPIO_InitStructure;
@@ -310,13 +310,14 @@ uartPort_t *serialUART3(uint32_t baudRate, portMode_t mode, portOptions_t option
 }
 #endif
 
+//
 void usartIrqHandler(uartPort_t *s)
 {
     uint32_t ISR = s->USARTx->ISR;
 
     if (!s->rxDMAChannel && (ISR & USART_FLAG_RXNE)) {
         if (s->port.callback) {
-            s->port.callback(s->USARTx->RDR);
+            s->port.callback(s->USARTx->RDR);						//进入回调函数
         } else {
             s->port.rxBuffer[s->port.rxBufferHead++] = s->USARTx->RDR;
             if (s->port.rxBufferHead >= s->port.rxBufferSize) {

@@ -90,6 +90,7 @@
 #include "io/asyncfatfs/asyncfatfs.h"
 #include "io/transponder_ir.h"
 #include "io/vtx.h"
+#include "io/irrangefinder_ptk.h"
 
 #include "fc/msp_server_fc.h"
 #include "msp/msp.h"
@@ -315,7 +316,7 @@ void init(void)
     latchActiveFeatures();
 
     // initialize IO (needed for all IO operations)
-    IOInitGlobal();
+   IOInitGlobal();
 
 //    debugMode = debugConfig()->debug_mode;		//调试模式
     debugMode = DEBUG_GYRO;
@@ -461,7 +462,7 @@ void init(void)
     if (pwm_params.motorPwmRate > 500)
         pwm_params.idlePulse = 0; // brushed motors
 
-    pwmRxInit();
+    pwmRxInit();					//空函数
 
     //电调输出的PWM通道初始化，包括IO口和定时器。
     // pwmInit() needs to be called as soon as possible for ESC compatibility reasons
@@ -636,6 +637,13 @@ void init(void)
         sonarInit(sonarHardware);
     }
 #endif
+
+#ifdef IRRANGFD
+    if (feature(FEATURE_IRRANGFD)) {
+       	ptkIrInit();
+    }
+#endif
+
 
 #ifdef LED_STRIP
     ledStripInit();

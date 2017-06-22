@@ -58,7 +58,7 @@ void pgResetFn_serialConfig(serialConfig_t *serialConfig)
     }
 
     serialConfig->portConfigs[0].functionMask = FUNCTION_MSP_SERVER;
-
+    serialConfig->portConfigs[2].functionMask = FUNCTION_IRRANGDF_PTK;		//dammstaner 20170621
 #if defined(USE_VCP)
     // This allows MSP connection via USART & VCP so the board can be reconfigured.
     serialConfig->portConfigs[1].functionMask = FUNCTION_MSP_SERVER;

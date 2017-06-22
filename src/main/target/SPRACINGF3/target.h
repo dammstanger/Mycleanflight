@@ -62,6 +62,8 @@
 #define BEEPER
 #define LED0
 
+#define IRRANGFD
+
 //#define SONAR								//20170503
 //#define SONAR_TRIGGER_PIN           Pin_0   // RC_CH7 (PB0) - only 3.3v ( add a 1K Ohms resistor )
 //#define SONAR_TRIGGER_GPIO          GPIOB
@@ -164,7 +166,7 @@
 #define ENABLE_BLACKBOX_LOGGING_ON_SPIFLASH_BY_DEFAULT
 
 //#define DISPLAY				//20170503
-//#define GPS				//20170503
+#define GPS
 //#define GTUNE
 #define SERIAL_RX
 //#define TELEMETRY

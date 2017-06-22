@@ -56,7 +56,7 @@ typedef struct serialPort_s {
     uint32_t txBufferTail;
 
     // FIXME rename member to rxCallback
-    serialReceiveCallbackPtr callback;
+    serialReceiveCallbackPtr callback;		//定义一个函数指针变量
 } serialPort_t;
 
 struct serialPortVTable {

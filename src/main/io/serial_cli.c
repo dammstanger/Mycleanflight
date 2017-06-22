@@ -223,7 +223,7 @@ static const char * const featureNames[] = {
     "SERVO_TILT", "SOFTSERIAL", "GPS", "FAILSAFE",
     "SONAR", "TELEMETRY", "AMPERAGE_METER", "3D", "RX_PARALLEL_PWM",
     "RX_MSP", "RSSI_ADC", "LED_STRIP", "DISPLAY", "ONESHOT125",
-    "BLACKBOX", "CHANNEL_FORWARDING", "TRANSPONDER", "OSD", NULL
+    "BLACKBOX", "CHANNEL_FORWARDING", "TRANSPONDER", "OSD","IRRANGFD", NULL
 };
 
 // sync this with rxFailsafeChannelMode_e
@@ -1037,14 +1037,14 @@ static void cliSerial(char *cmdline)
 
     ptr = cmdline;
 
-    val = atoi(ptr++);
+    val = atoi(ptr++);								//将字符串转换成数字
     currentConfig = serialFindPortConfiguration(val);
     if (currentConfig) {
         portConfig.identifier = val;
         validArgumentCount++;
     }
 
-    ptr = strchr(ptr, ' ');
+    ptr = strchr(ptr, ' ');							//找到ptr中空格字符所在的位置。
     if (ptr) {
         val = atoi(++ptr);
         portConfig.functionMask = val & 0xFFFF;
@@ -1120,7 +1120,7 @@ static void cliSerialPassthrough(char *cmdline)
     while (tok != NULL) {
         switch(index) {
             case 0:
-                id = atoi(tok);
+                id = atoi(tok);				//把字符串转换成整数。
                 break;
             case 1:
                 baud = atoi(tok);

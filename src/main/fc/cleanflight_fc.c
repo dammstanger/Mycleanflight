@@ -76,6 +76,7 @@
 #include "io/asyncfatfs/asyncfatfs.h"
 #include "io/transponder_ir.h"
 #include "io/vtx.h"
+#include "io/irrangefinder_ptk.h"
 
 #include "msp/msp.h"
 #include "msp/msp_serial.h"
@@ -1007,6 +1008,7 @@ void taskProcessGPS(void)
 #ifdef MAG
 void taskUpdateCompass(void)
 {
+	ptkWrtCmd();
     if (sensors(SENSOR_MAG)) {
         updateCompass(&sensorTrims()->magZero);
     }
