@@ -108,6 +108,7 @@
 #include "sensors/battery.h"
 #include "sensors/boardalignment.h"
 #include "sensors/initialisation.h"
+#include "sensors/irrangefinder.h"
 
 #include "telemetry/telemetry.h"
 #include "blackbox/blackbox.h"
@@ -147,6 +148,7 @@ void rxInit(modeActivationCondition_t *modeActivationConditions);
 void navigationInit(pidProfile_t *pidProfile);
 const sonarHardware_t *sonarGetHardwareConfiguration(amperageMeter_e amperageMeter);
 void sonarInit(const sonarHardware_t *sonarHardware);
+void irrangfdInit(void);
 
 #ifdef STM32F303xC
 // from system_stm32f30x.c
@@ -319,7 +321,7 @@ void init(void)
    IOInitGlobal();
 
 //    debugMode = debugConfig()->debug_mode;		//调试模式
-    debugMode = DEBUG_GYRO;
+    debugMode = DEBUG_IRRANGFD;
 
 #ifdef USE_EXTI
     EXTIInit();
@@ -640,7 +642,7 @@ void init(void)
 
 #ifdef IRRANGFD
     if (feature(FEATURE_IRRANGFD)) {
-       	ptkIrInit();
+    	irrangfdInit();
     }
 #endif
 

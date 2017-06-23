@@ -25,8 +25,8 @@
 
 #pragma once
 
-
-
+#include "platform.h"
+#include "sensors/irrangefinder.h"
 
 typedef struct ptkIrData_s {
     uint8_t state;                  // PTKir thread state. Used for detecting cable disconnects and configuring attached devices
@@ -34,9 +34,10 @@ typedef struct ptkIrData_s {
     uint32_t errors;                // PTL error counter - crc error/lost of data/sync etc..
     uint32_t timeouts;
     uint32_t lasttime;           	// last time valid PTK data was received (millis)
+    uint16_t dist;					//RAW dis data
 } ptkIrData_t;
 
 
-
-void ptkIrInit(void);
+void ptkIrInit(irrangfd_t *irrangfd);
 void ptkWrtCmd(void);
+int32_t ptk_get_distance(void);

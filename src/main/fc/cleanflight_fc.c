@@ -65,6 +65,7 @@
 #include "sensors/voltage.h"
 #include "sensors/amperage.h"
 #include "sensors/battery.h"
+#include "sensors/irrangefinder.h"
 
 #include "io/beeper.h"
 #include "io/display.h"
@@ -1008,7 +1009,7 @@ void taskProcessGPS(void)
 #ifdef MAG
 void taskUpdateCompass(void)
 {
-	ptkWrtCmd();
+	irrangfdUpdate();
     if (sensors(SENSOR_MAG)) {
         updateCompass(&sensorTrims()->magZero);
     }
@@ -1018,6 +1019,18 @@ void taskUpdateCompass(void)
 #ifdef BARO
 void taskUpdateBaro(void)
 {
+	int32_t dist;
+	dist = irrangfdRead();
+    if (debugMode == DEBUG_IRRANGFD)
+    {
+        debug[1] = dist;
+    }
+	dist = irrangfdCalculateAltitude(dist, getCosTiltAngle());
+    if (debugMode == DEBUG_IRRANGFD)
+    {
+        debug[2] = dist;
+    }
+
     if (sensors(SENSOR_BARO)) {
         const uint32_t newDeadline = baroUpdate();
         if (newDeadline != 0) {
