@@ -23,6 +23,7 @@ typedef enum {
     DEBUG_GYRO,
     DEBUG_PIDLOOP,
     DEBUG_GYRO_SYNC,
+	DEBUG_IRRANGFD,
 #ifdef OSD
     DEBUG_OSD,
     DEBUG_OSD_WATCHDOG,

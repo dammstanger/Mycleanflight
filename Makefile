@@ -355,7 +355,8 @@ OSD_COMMON_SRC = \
 		   osd/osd_element.c \
 		   osd/osd_element_render.c
 
-#dammstanger 20170619  add io/irrangefinder.c 
+#dammstanger 20170619  add io/irrangefinder_ptk.c 
+#dammstanger 20170623  add sensors/irrangefinder.c 
 HIGHEND_SRC = \
 		   flight/gtune.c \
 		   flight/navigation.c \
@@ -374,6 +375,7 @@ HIGHEND_SRC = \
 		   telemetry/ibus.c \
 		   sensors/sonar.c \
 		   sensors/barometer.c \
+		   sensors/irrangefinder.c\
 		   blackbox/blackbox.c \
 		   blackbox/blackbox_io.c
 

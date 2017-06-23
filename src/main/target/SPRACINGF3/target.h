@@ -62,15 +62,16 @@
 #define BEEPER
 #define LED0
 
-#define IRRANGFD
+#define IRRANGFD							//dammstanger 20170622
+#define USE_PTK
 
-//#define SONAR								//20170503
-//#define SONAR_TRIGGER_PIN           Pin_0   // RC_CH7 (PB0) - only 3.3v ( add a 1K Ohms resistor )
-//#define SONAR_TRIGGER_GPIO          GPIOB
-//#define SONAR_ECHO_PIN              Pin_1   // RC_CH8 (PB1) - only 3.3v ( add a 1K Ohms resistor )
-//#define SONAR_ECHO_GPIO             GPIOB
-//#define SONAR_TRIGGER_IO            PB0
-//#define SONAR_ECHO_IO               PB1
+#define SONAR								//20170503
+#define SONAR_TRIGGER_PIN           Pin_0   // RC_CH7 (PB0) - only 3.3v ( add a 1K Ohms resistor )
+#define SONAR_TRIGGER_GPIO          GPIOB
+#define SONAR_ECHO_PIN              Pin_1   // RC_CH8 (PB1) - only 3.3v ( add a 1K Ohms resistor )
+#define SONAR_ECHO_GPIO             GPIOB
+#define SONAR_TRIGGER_IO            PB0
+#define SONAR_ECHO_IO               PB1
 
 
 #define USE_UART1
