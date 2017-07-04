@@ -28,7 +28,7 @@
 #define M_PI_FLOAT  3.14159265358979323846f
 
 #define BIQUAD_BANDWIDTH 1.9f           // bandwidth in octaves
-#define BIQUAD_Q (1.0f / sqrtf(2.0f))   // 2nd order Butterworth Q
+#define BIQUAD_Q (1.0f / sqrtf(2.0f))   // 2nd order Butterworth Q   巴特沃斯滤波器品质因数
 
 // NULL filter
 
@@ -107,8 +107,8 @@ static void biquadFilterInit(biquadFilter_t *filter, float filterFreq, uint32_t 
 }
 
 static float biquadFilterCalculateNotchQ(uint16_t filterHz, uint16_t cutoffHz) {
-    float octaves = log2f((float) filterHz  / (float) cutoffHz) * 2;
-    float x = powf(2, octaves);
+    float octaves = log2f((float) filterHz  / (float) cutoffHz) * 2;			//log2f计算以2为底的对数
+    float x = powf(2, octaves);								//powf计算2的octaves次方
     return sqrtf(x) / (x - 1);
 }
 

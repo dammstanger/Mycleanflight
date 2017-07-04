@@ -1061,7 +1061,8 @@ void taskCalculateAltitude(void)
 #endif
         ) {
         calculateEstimatedAltitude(currentTime);
-    }}
+    }
+}
 #endif
 
 #ifdef DISPLAY

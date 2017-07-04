@@ -291,6 +291,11 @@ void init(void)
     ensureEEPROMContainsValidData();
     readEEPROM();
 
+    //一些参数目前在GUI上没有找到修改项，但在profile中有该项，所以在此修改一下
+    pidProfile()->dterm_notch_hz = 80;
+    pidProfile()->dterm_notch_cutoff = 30;
+    //
+
     systemState |= SYSTEM_STATE_CONFIG_LOADED;		//系统状态现在设为：配置已加载
 
 #ifdef STM32F303
@@ -321,7 +326,7 @@ void init(void)
    IOInitGlobal();
 
 //    debugMode = debugConfig()->debug_mode;		//调试模式
-    debugMode = DEBUG_IRRANGFD;
+    debugMode = DEBUG_IRRANGFD;						//dammstanger 20170704
 
 #ifdef USE_EXTI
     EXTIInit();
@@ -607,8 +612,8 @@ void init(void)
     mspInit();
     mspSerialInit();
 
-//    const uint16_t pidPeriodUs = US_FROM_HZ(gyro.sampleFrequencyHz);
-    const uint16_t pidPeriodUs = 1000;
+    const uint16_t pidPeriodUs = US_FROM_HZ(gyro.sampleFrequencyHz);
+
     pidSetTargetLooptime(pidPeriodUs * gyroConfig()->pid_process_denom);
     pidInitFilters(pidProfile());
 

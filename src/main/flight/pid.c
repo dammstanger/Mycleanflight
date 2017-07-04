@@ -117,8 +117,8 @@ PG_RESET_TEMPLATE(pidProfile_t, pidProfile,
     .yaw_lpf_hz = 0,
     .dterm_filter_type = FILTER_BIQUAD,
     .dterm_lpf_hz = 100,    // filtering ON by default
-    .dterm_notch_hz = 260,
-    .dterm_notch_cutoff = 160,
+    .dterm_notch_hz = 80,			//260 dammstanger 20170629
+    .dterm_notch_cutoff = 30,
     .deltaMethod = PID_DELTA_FROM_MEASUREMENT,
     .horizon_tilt_effect = 75,
     .horizon_tilt_mode = HORIZON_TILT_MODE_SAFE,

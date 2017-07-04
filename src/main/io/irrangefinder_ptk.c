@@ -122,7 +122,7 @@ void ptkIrInit(irrangfd_t *irrangfd)
 	    }
 
 	    // signal PTK "thread" to initialize when it gets to it
-	    ptkIrSetState(PTK_INITIALIZING);
+	    ptkIrSetState(PTK_RECEIVING_DATA);
 }
 
 
@@ -178,6 +178,9 @@ void ptkWrtCmd(void)
 	const uint8_t dattst[8]={0x01,0x03,0xD8,0xD9,0x00,0x01,0x6F,0x51};
     uint32_t now = millis();
 
+	if(ptkIrData.state!=PTK_RECEIVING_DATA){
+		return;
+	}
     if (now < (lastMeasurementAt + 40)) {
         // PTK 测量周期为25Hz所以应在上一次40ms
         return;

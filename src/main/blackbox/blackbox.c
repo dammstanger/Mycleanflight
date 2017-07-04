@@ -961,9 +961,13 @@ static void loadMainState(void)
         blackboxCurrent->gyroADC[i] = gyroADC[i];
     }
 
-    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
-        blackboxCurrent->accSmooth[i] = accSmooth[i];
-    }
+//    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
+//        blackboxCurrent->accSmooth[i] = accSmooth[i];
+//    }
+
+    blackboxCurrent->accSmooth[0] = attitude.values.roll;	//dammstanger 20170627
+    blackboxCurrent->accSmooth[1] = attitude.values.pitch;
+    blackboxCurrent->accSmooth[2] = attitude.values.yaw;
 
     for (i = 0; i < motorCount; i++) {
         blackboxCurrent->motor[i] = motor[i];
@@ -975,9 +979,11 @@ static void loadMainState(void)
     blackboxCurrent->amperageLatest = state->amperage;
 
 #ifdef MAG
-    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
-        blackboxCurrent->magADC[i] = magADC[i];
-    }
+//    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
+//        blackboxCurrent->magADC[i] = magADC[i];
+//    }
+
+    blackboxCurrent->magADC[0] = altitudeHoldGetEstimatedAltitude();
 #endif
 
 #ifdef BARO

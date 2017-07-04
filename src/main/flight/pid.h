@@ -69,7 +69,7 @@ typedef struct pidProfile_s {
     uint8_t horizon_tilt_effect;            // inclination factor for Horizon mode
     uint8_t horizon_tilt_mode;              // SAFE or EXPERT
 
-    uint8_t dterm_filter_type;              // Filter selection for dterm
+    uint8_t dterm_filter_type;              // Filter selection for dterm		CLI中使用dterm_lowpass_level项进行设置，NORMAL代表lpf滤波器，HIGH代表biquad(双二阶滤波器)
     uint16_t dterm_notch_hz;                // Biquad dterm notch hz
     uint16_t dterm_notch_cutoff;            // Biquad dterm notch low cutoff
 } pidProfile_t;

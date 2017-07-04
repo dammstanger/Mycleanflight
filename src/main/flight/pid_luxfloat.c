@@ -131,12 +131,12 @@ STATIC_UNIT_TESTED int16_t pidLuxFloatCore(int axis, const pidProfile_t *pidProf
 
         // Filter delta
         if (pidProfile->dterm_notch_hz) {
-            delta = biquadFilterApply(&dtermFilterNotch[axis], delta);
+            delta = biquadFilterApply(&dtermFilterNotch[axis], delta);		//只要dterm_notch_hz不为0，notch filter 默认总是使用的。
         }
 
         if (pidProfile->dterm_lpf_hz) {
             if (pidProfile->dterm_filter_type == FILTER_BIQUAD) {
-                delta = biquadFilterApply(&dtermFilterLpf[axis], delta);
+                delta = biquadFilterApply(&dtermFilterLpf[axis], delta);		//CLI中对应dterm_lowpass_level项，NORMAL表示lpf，high表示biquad filter
             } else {
                 // DTerm delta low pass filter
                 delta = pt1FilterApply4(&deltaFilter[axis], delta, pidProfile->dterm_lpf_hz, getdT());
