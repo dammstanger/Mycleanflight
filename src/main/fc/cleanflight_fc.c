@@ -542,10 +542,12 @@ void processRx(void)
     }
 
     bool canUseHorizonMode = true;
-
+    bool canUseBaroMode = true;
+//angle and failsafe
     if ((rcModeIsActive(BOXANGLE) || (feature(FEATURE_FAILSAFE) && failsafeIsActive())) && (sensors(SENSOR_ACC))) {
         // bumpless transfer to Level mode
         canUseHorizonMode = false;
+        canUseBaroMode = false;
 
         if (!FLIGHT_MODE(ANGLE_MODE)) {
 #ifdef USE_PID_MW23
@@ -557,6 +559,7 @@ void processRx(void)
         DISABLE_FLIGHT_MODE(ANGLE_MODE); // failsafe support
     }
 
+//horizon
     if (rcModeIsActive(BOXHORIZON) && canUseHorizonMode) {
 
         DISABLE_FLIGHT_MODE(ANGLE_MODE);
@@ -576,6 +579,19 @@ void processRx(void)
     } else {
         LED1_OFF;
     }
+
+//baro  dammstanger 20140705	将baro模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
+    if(rcModeIsActive(BOXBARO) && canUseBaroMode){
+
+		if (!FLIGHT_MODE(BARO_MODE)) {
+#ifdef USE_PID_MW23
+			pidResetITermAngle();
+#endif
+//			ENABLE_FLIGHT_MODE(BARO_MODE);		//已经在updateAltHoldState()中使能了，这里不用。
+		}
+	}
+
+
 
 #ifdef  MAG
     if (sensors(SENSOR_ACC) || sensors(SENSOR_MAG)) {
