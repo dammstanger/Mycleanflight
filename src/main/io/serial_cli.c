@@ -452,6 +452,7 @@ static const char * const lookupTableDebug[DEBUG_MODE_COUNT] = {
     "GYRO",
     "PIDLOOP",
     "GYROSYNC",
+	"IRRANGFD",
 #ifdef OSD
     "OSD",
     "OSD_WATCHDOG",
@@ -789,6 +790,8 @@ const clivalue_t valueTable[] = {
     { "yaw_lpf_hz",                 VAR_UINT16 | PROFILE_VALUE, .config.minmax = {0, 500 } , PG_PID_PROFILE, offsetof(pidProfile_t, yaw_lpf_hz)},
     { "dterm_lowpass_level",        VAR_UINT8  | PROFILE_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_LOWPASS_TYPE }, PG_PID_PROFILE, offsetof(pidProfile_t, dterm_filter_type)},
     { "dterm_lowpass_hz",           VAR_UINT16 | PROFILE_VALUE, .config.minmax = {0, 500 } , PG_PID_PROFILE, offsetof(pidProfile_t, dterm_lpf_hz)},
+    { "dterm_notch_hz",        		VAR_UINT16 | PROFILE_VALUE, .config.minmax = {1, 500 } , PG_PID_PROFILE, offsetof(pidProfile_t, dterm_notch_hz)},
+    { "dterm_notch_cutoff_hz",      VAR_UINT16 | PROFILE_VALUE, .config.minmax = {1, 500 } , PG_PID_PROFILE, offsetof(pidProfile_t, dterm_notch_cutoff)},
     { "horizon_tilt_effect",        VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0, 250 } , PG_PID_PROFILE, offsetof(pidProfile_t, horizon_tilt_effect)},
     { "horizon_tilt_mode",          VAR_UINT8  | PROFILE_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_HORIZON_TILT_MODE }, PG_PID_PROFILE, offsetof(pidProfile_t, horizon_tilt_mode)},
 

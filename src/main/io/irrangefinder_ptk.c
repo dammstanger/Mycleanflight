@@ -46,7 +46,6 @@
 #include "drivers/light_led.h"
 
 #include "sensors/sensors.h"
-//#include "sensors/irrangefinder.h"
 
 #include "fc/config.h"
 #include "fc/runtime_config.h"
@@ -61,7 +60,7 @@
 #include "flight/navigation.h"
 
 
-#define REVDATASIZE 4
+#define REVDATASIZE 6
 #define PTK_MAXRANGECM	1200
 #define PTK_DETECTION_CONE_DECIDEGREES 30 //  recommended cone angle 3 degrees, 单位0.1度
 #define PTK_DETECTION_CONE_EXTENDED_DECIDEGREES 300
@@ -128,7 +127,7 @@ void ptkIrInit(irrangfd_t *irrangfd)
 
 void ptkRevDat_Callback(uint16_t dat)
 {
-	static u8 check = 0,i = 0;
+//	static u8 check = 0,i = 0;
 	static u8 ReceiveData[REVDATASIZE] = {0};
 
 //	if(check==2)
@@ -148,24 +147,43 @@ void ptkRevDat_Callback(uint16_t dat)
 //	}
 //	if((dat==0x59)&&(check==1)) {check = 2;i = 0;}
 //	if((dat==0x59)&&(check==0))	check = 1;
-	if(check==3)
-	{
-		ReceiveData[i] = (u8)dat;
-		i++;
-		if(i==REVDATASIZE)
+
+//	if(check==3)
+//	{
+//		ReceiveData[i] = (u8)dat;
+//		i++;
+//		if(i==REVDATASIZE)
+//		{
+//			i = 0;
+//			check = 0;
+//		    if (debugMode == DEBUG_IRRANGFD)
+//		    {
+//		        ptkIrData.dist = (((int16_t)ReceiveData[0]<<8|ReceiveData[1]) + 5)/10;			//四舍五入
+//		        debug[0] = ptkIrData.dist;
+//		    }
+//		}
+//	}
+//	if((dat==0x02)&&(check==2)) {check = 3;i = 0;}		//first three bytes are 0x01 0x03 0x02
+//	if((dat==0x03)&&(check==1)) {check = 2;}
+//	if((dat==0x01)&&(check==0))	check = 1;
+
+
+//TF02PIX格式
+		ReceiveData[0] = ReceiveData[1];
+		ReceiveData[1] = ReceiveData[2];
+		ReceiveData[2] = ReceiveData[3];
+		ReceiveData[3] = ReceiveData[4];
+		ReceiveData[4] = ReceiveData[5];
+		ReceiveData[5] = (u8)dat;			//判断包尾是不是0x0D 0x0A
+
+		if(ReceiveData[5]==0x0A && ReceiveData[4]==0x0D)
 		{
-			i = 0;
-			check = 0;
-		    if (debugMode == DEBUG_IRRANGFD)
-		    {
-		        ptkIrData.dist = (((int16_t)ReceiveData[0]<<8|ReceiveData[1]) + 5)/10;			//四舍五入
-		        debug[0] = ptkIrData.dist;
-		    }
+			ptkIrData.dist = (int16_t)((ReceiveData[0]-'0')*100 + (ReceiveData[2]-'0')*10 + (ReceiveData[3]-'0'));
+			if (debugMode == DEBUG_IRRANGFD)
+			{
+				debug[0] = ptkIrData.dist;
+			}
 		}
-	}
-	if((dat==0x02)&&(check==2)) {check = 3;i = 0;}		//first three bytes are 0x01 0x03 0x02
-	if((dat==0x03)&&(check==1)) {check = 2;}
-	if((dat==0x01)&&(check==0))	check = 1;
 
 //	serialWrite(ptkIrPort,(u8)dat);
 }
