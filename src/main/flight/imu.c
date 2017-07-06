@@ -199,7 +199,7 @@ void imuCalculateAcceleration(uint32_t deltaT)
 
     imuTransformVectorBodyToEarth(&accel_ned);
 
-    if (imuRuntimeConfig->acc_unarmedcal == 1) {
+    if (imuRuntimeConfig->acc_unarmedcal == 1) {			//??
         if (!ARMING_FLAG(ARMED)) {
             accZoffset -= accZoffset / 64;
             accZoffset += accel_ned.V.Z;
@@ -208,10 +208,10 @@ void imuCalculateAcceleration(uint32_t deltaT)
     } else
         accel_ned.V.Z -= acc.acc_1G;
 
-    accz_smooth = accz_smooth + (dT / (fc_acc + dT)) * (accel_ned.V.Z - accz_smooth); // low pass filter
+    accz_smooth = accz_smooth + (dT / (fc_acc + dT)) * (accel_ned.V.Z - accz_smooth); // low pass filter fc_acc为时间常数
 
     // apply Deadband to reduce integration drift and vibration influence
-    accSum[X] += applyDeadband(lrintf(accel_ned.V.X), accDeadband->xy);
+    accSum[X] += applyDeadband(lrintf(accel_ned.V.X), accDeadband->xy);			//lrintf()四舍五入
     accSum[Y] += applyDeadband(lrintf(accel_ned.V.Y), accDeadband->xy);
     accSum[Z] += applyDeadband(lrintf(accz_smooth), accDeadband->z);
 

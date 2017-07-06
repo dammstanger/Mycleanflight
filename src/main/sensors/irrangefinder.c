@@ -36,7 +36,7 @@ void irrangfdInit(void)
 #ifdef USE_PTK
     ptkIrInit(&irrangfd);
 #endif
-    sensorsSet(SENSOR_IRRANGFD);
+    sensorsSet(SENSOR_IRRANGFD);						//使能红外测距传感器
     irrangfd.irrangfdCfAltCm = irrangfd.irrangfdMaxRangeCm / 2;
     irrangfd.irrangfdMaxTiltDeciDegrees =  irrangfd.irrangfddetectionConeExtendedDeciDegrees / 2;
     irrangfd.sonarMaxTiltCos = cos_approx(irrangfd.irrangfdMaxTiltDeciDegrees / 10.0f * RAD);

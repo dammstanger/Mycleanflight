@@ -60,10 +60,10 @@
 #include "flight/navigation.h"
 
 
-#define REVDATASIZE 6
+#define REVDATASIZE 4
 #define PTK_MAXRANGECM	1200
 #define PTK_DETECTION_CONE_DECIDEGREES 30 //  recommended cone angle 3 degrees, 单位0.1度
-#define PTK_DETECTION_CONE_EXTENDED_DECIDEGREES 300
+#define PTK_DETECTION_CONE_EXTENDED_DECIDEGREES 450
 
 typedef enum {
 	PTK_UNKNOWN,
@@ -124,29 +124,11 @@ void ptkIrInit(irrangfd_t *irrangfd)
 	    ptkIrSetState(PTK_RECEIVING_DATA);
 }
 
-
+void tst_TF02PakHandle(uint16_t dat);
 void ptkRevDat_Callback(uint16_t dat)
 {
 //	static u8 check = 0,i = 0;
-	static u8 ReceiveData[REVDATASIZE] = {0};
-
-//	if(check==2)
-//	{
-//		ReceiveData[i] = (u8)dat;
-//		i++;
-//		if(i==REVDATASIZE)
-//		{
-//			i = 0;
-//			check = 0;
-//		    if (debugMode == DEBUG_IRRANGFD)
-//		    {
-//		        ptkIrData.dist = ((int16_t)ReceiveData[1]<<8)|ReceiveData[0];
-//		        debug[0] = ptkIrData.dist;
-//		    }
-//		}
-//	}
-//	if((dat==0x59)&&(check==1)) {check = 2;i = 0;}
-//	if((dat==0x59)&&(check==0))	check = 1;
+//	static u8 ReceiveData[REVDATASIZE] = {0};
 
 //	if(check==3)
 //	{
@@ -167,25 +149,75 @@ void ptkRevDat_Callback(uint16_t dat)
 //	if((dat==0x03)&&(check==1)) {check = 2;}
 //	if((dat==0x01)&&(check==0))	check = 1;
 
+	tst_TF02PakHandle(dat);
 
-//TF02PIX格式
-		ReceiveData[0] = ReceiveData[1];
-		ReceiveData[1] = ReceiveData[2];
-		ReceiveData[2] = ReceiveData[3];
-		ReceiveData[3] = ReceiveData[4];
-		ReceiveData[4] = ReceiveData[5];
-		ReceiveData[5] = (u8)dat;			//判断包尾是不是0x0D 0x0A
 
-		if(ReceiveData[5]==0x0A && ReceiveData[4]==0x0D)
+}
+
+
+void tst_TF02PakHandle(uint16_t dat)
+{
+	//TF02PIX格式
+	static u8 i = 0;
+	static u8 ReceiveData[7] = {0};
+
+	ReceiveData[0] = ReceiveData[1];
+	ReceiveData[1] = ReceiveData[2];
+	ReceiveData[2] = ReceiveData[3];
+	ReceiveData[3] = ReceiveData[4];
+	ReceiveData[4] = ReceiveData[5];
+	ReceiveData[5] = ReceiveData[6];
+	ReceiveData[6] = (u8)dat;			//判断包尾是不是0x0D 0x0A
+	i++;
+	if(ReceiveData[6]==0x0A && ReceiveData[5]==0x0D)
+	{
+		if(i==6)
 		{
-			ptkIrData.dist = (int16_t)((ReceiveData[0]-'0')*100 + (ReceiveData[2]-'0')*10 + (ReceiveData[3]-'0'));
+			i = 0;
+			ptkIrData.dist = (uint16_t)((ReceiveData[1]-'0')*100 + (ReceiveData[3]-'0')*10 + (ReceiveData[4]-'0'));
+		}
+		else if(i==7)
+		{
+			i = 0;
+			ptkIrData.dist = (uint16_t)((ReceiveData[0]-'0')*1000 + (ReceiveData[1]-'0')*100 + (ReceiveData[3]-'0')*10 + (ReceiveData[4]-'0'));
+		}
+		else{
+			i = 0;
+			return ;
+		}
+		if (debugMode == DEBUG_IRRANGFD)
+		{
+			debug[0] = ptkIrData.dist;
+		}
+	}
+	else if(i==7)
+	{
+		i = 0;
+	}
+}
+
+void tst_TF01PakHandle(uint16_t dat)
+{
+	static u8 check = 0,i = 0;
+	static u8 ReceiveData[7] = {0};
+
+	if(check==2)
+	{
+		ReceiveData[i] = (u8)dat;
+		i++;
+		if(i==REVDATASIZE)
+		{
+			i = 0;
+			check = 0;
 			if (debugMode == DEBUG_IRRANGFD)
 			{
+				ptkIrData.dist = ((int16_t)ReceiveData[1]<<8)|ReceiveData[0];
 				debug[0] = ptkIrData.dist;
 			}
 		}
-
-//	serialWrite(ptkIrPort,(u8)dat);
+	}
+	if((dat==0x59)&&(check==1)) {check = 2;i = 0;}
+	if((dat==0x59)&&(check==0))	check = 1;
 }
 
 /**

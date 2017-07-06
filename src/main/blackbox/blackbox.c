@@ -967,7 +967,7 @@ static void loadMainState(void)
 
     blackboxCurrent->accSmooth[0] = attitude.values.roll;	//dammstanger 20170627
     blackboxCurrent->accSmooth[1] = attitude.values.pitch;
-    blackboxCurrent->accSmooth[2] = attitude.values.yaw;
+    blackboxCurrent->accSmooth[2] = altitudeGetCfVel();
 
     for (i = 0; i < motorCount; i++) {
         blackboxCurrent->motor[i] = motor[i];
@@ -984,6 +984,9 @@ static void loadMainState(void)
 //    }
 
     blackboxCurrent->magADC[0] = altitudeHoldGetEstimatedAltitude();
+    blackboxCurrent->magADC[0] = altitudeGetImuBasedAlt();
+    blackboxCurrent->magADC[0] = altitudeGetImuBasedVel();
+
 #endif
 
 #ifdef BARO

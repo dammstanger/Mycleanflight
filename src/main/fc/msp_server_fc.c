@@ -166,6 +166,7 @@ static const box_t boxes[CHECKBOX_ITEM_COUNT] = {
     { "FAILSAFE",  BOXFAILSAFE,  27 },
     { "AIR MODE",  BOXAIRMODE,   28 },
     { "VTX",       BOXVTX,       29 },
+    { "IRRANGFD",  BOXIRRANGFD,  30 },
 };
 
 // mask of enabled IDs, calculated on start based on enabled features. boxId_e is used as bit index.
@@ -347,6 +348,12 @@ static void initActiveBoxIds(void)
     if (feature(FEATURE_SONAR)){
         ena |= 1 << BOXSONAR;
     }
+
+#ifdef IRRANGFD
+    if (feature(FEATURE_IRRANGFD)){
+        ena |= 1 << BOXIRRANGFD;
+    }
+#endif
 
 #ifdef USE_SERVOS
     if (mixerConfig()->mixerMode == MIXER_CUSTOM_AIRPLANE) {
@@ -645,7 +652,7 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
             break;
 
         case MSP_ALTITUDE:
-#if defined(BARO) || defined(SONAR)
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD)
             sbufWriteU32(dst, altitudeHoldGetEstimatedAltitude());
             sbufWriteU16(dst, vario);
 #else

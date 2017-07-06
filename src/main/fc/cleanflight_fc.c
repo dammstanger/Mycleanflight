@@ -543,11 +543,13 @@ void processRx(void)
 
     bool canUseHorizonMode = true;
     bool canUseBaroMode = true;
+    bool canUseIRrangfdMode = true;
 //angle and failsafe
     if ((rcModeIsActive(BOXANGLE) || (feature(FEATURE_FAILSAFE) && failsafeIsActive())) && (sensors(SENSOR_ACC))) {
         // bumpless transfer to Level mode
         canUseHorizonMode = false;
         canUseBaroMode = false;
+        canUseIRrangfdMode = false;
 
         if (!FLIGHT_MODE(ANGLE_MODE)) {
 #ifdef USE_PID_MW23
@@ -591,7 +593,16 @@ void processRx(void)
 		}
 	}
 
+//IRrangfd  dammstanger 20140706	将IRrangfd模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
+	if(rcModeIsActive(BOXIRRANGFD) && canUseIRrangfdMode){
 
+		if (!FLIGHT_MODE(IRRANGFD_MODE)) {
+#ifdef USE_PID_MW23
+			pidResetITermAngle();
+#endif
+//			ENABLE_FLIGHT_MODE(IRRANGFD_MODE);		//已经在updateIRrangfdAltHoldState()中使能了，这里不用。
+		}
+	}
 
 #ifdef  MAG
     if (sensors(SENSOR_ACC) || sensors(SENSOR_MAG)) {
@@ -728,14 +739,14 @@ void subTaskMainSubprocesses(void)
         updateGtuneState();
 #endif
 
-#if defined(BARO) || defined(SONAR)
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD)
         // FIXME outdated comments?
         // updateRcCommands sets rcCommand, which is needed by updateAltHoldState and updateSonarAltHoldState
         // this must be called here since applyAltHold directly manipulates rcCommands[]
         updateRcCommands();
 
-        if (sensors(SENSOR_BARO) || sensors(SENSOR_SONAR)) {
-            if (FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(SONAR_MODE)) {
+        if (sensors(SENSOR_BARO) || sensors(SENSOR_SONAR) || sensors(SENSOR_IRRANGFD)) {
+            if (FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(SONAR_MODE) || FLIGHT_MODE(IRRANGFD_MODE) ) {
                 applyAltHold();
             }
         }
@@ -763,11 +774,12 @@ void subTaskMainSubprocesses(void)
     ) {
         rcCommand[YAW] = 0;
     }
-
-    if (throttleCorrectionConfig()->throttle_correction_value && (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE))) {
+    //倾角补偿
+    if (throttleCorrectionConfig()->throttle_correction_value &&
+       (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE) || FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(IRRANGFD_MODE))) {		//dammstanger 20170706
         rcCommand[THROTTLE] += calculateThrottleAngleCorrection(throttleCorrectionConfig()->throttle_correction_value);
     }
-
+    //对控制指令滤波
     processRcCommand();
 
 #ifdef GPS
@@ -986,7 +998,7 @@ void taskUpdateRxMain(void)
     processRx();
     isRXDataNew = true;
 
-#if !defined(BARO) && !defined(SONAR)
+#if !defined(BARO) && !defined(SONAR) && !defined(IRRANGFD)
     // updateRcCommands sets rcCommand, which is needed by updateAltHoldState and updateSonarAltHoldState
     updateRcCommands();
 #endif
@@ -1002,6 +1014,13 @@ void taskUpdateRxMain(void)
     // updateRcCommands() sets rcCommand[], updateAltHoldState depends on valid rcCommand[] data.
     if (sensors(SENSOR_SONAR)) {
         updateSonarAltHoldState();
+    }
+#endif
+
+#ifdef IRRANGFD
+
+    if (sensors(SENSOR_IRRANGFD)) {
+    	updateIRrangfdAltHoldState();
     }
 #endif
 }
@@ -1025,7 +1044,6 @@ void taskProcessGPS(void)
 #ifdef MAG
 void taskUpdateCompass(void)
 {
-	irrangfdUpdate();
     if (sensors(SENSOR_MAG)) {
         updateCompass(&sensorTrims()->magZero);
     }
@@ -1035,18 +1053,6 @@ void taskUpdateCompass(void)
 #ifdef BARO
 void taskUpdateBaro(void)
 {
-	int32_t dist;
-	dist = irrangfdRead();
-    if (debugMode == DEBUG_IRRANGFD)
-    {
-        debug[1] = dist;
-    }
-	dist = irrangfdCalculateAltitude(dist, getCosTiltAngle());
-    if (debugMode == DEBUG_IRRANGFD)
-    {
-        debug[2] = dist;
-    }
-
     if (sensors(SENSOR_BARO)) {
         const uint32_t newDeadline = baroUpdate();
         if (newDeadline != 0) {
@@ -1065,7 +1071,18 @@ void taskUpdateSonar(void)
 }
 #endif
 
-#if defined(BARO) || defined(SONAR)
+
+#ifdef IRRANGFD
+void taskUpdateIrrangfd(void)
+{
+    if (sensors(SENSOR_IRRANGFD)) {
+    	irrangfdUpdate();
+    }
+}
+#endif
+
+
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD)
 void taskCalculateAltitude(void)
 {
     if (false
@@ -1074,6 +1091,9 @@ void taskCalculateAltitude(void)
 #endif
 #if defined(SONAR)
         || sensors(SENSOR_SONAR)
+#endif
+#if defined(IRRANGFD)
+        || sensors(SENSOR_IRRANGFD)
 #endif
         ) {
         calculateEstimatedAltitude(currentTime);

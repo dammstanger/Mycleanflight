@@ -65,7 +65,7 @@
 #define IRRANGFD							//dammstanger 20170622
 #define USE_PTK
 
-#define SONAR								//20170503
+//#define SONAR								//20170503
 #define SONAR_TRIGGER_PIN           Pin_0   // RC_CH7 (PB0) - only 3.3v ( add a 1K Ohms resistor )
 #define SONAR_TRIGGER_GPIO          GPIOB
 #define SONAR_ECHO_PIN              Pin_1   // RC_CH8 (PB1) - only 3.3v ( add a 1K Ohms resistor )
@@ -167,7 +167,7 @@
 #define ENABLE_BLACKBOX_LOGGING_ON_SPIFLASH_BY_DEFAULT
 
 //#define DISPLAY				//20170503
-#define GPS
+//#define GPS
 //#define GTUNE
 #define SERIAL_RX
 //#define TELEMETRY

@@ -22,6 +22,8 @@ typedef struct{
 	int32_t calculatedAltitude;
 }irrangfd_t;
 
+extern irrangfd_t irrangfd;
+
 void irrangfdUpdate(void);
 int32_t irrangfdRead(void);
 int32_t irrangfdCalculateAltitude(int32_t irrangfdDistance, float cosTiltAngle);
