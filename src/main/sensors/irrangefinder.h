@@ -17,7 +17,7 @@ typedef struct{
 	int16_t irrangfdMaxAltWithTiltCm;
 	int16_t irrangfdCfAltCm; // Complimentary Filter altitude
 	int16_t irrangfdMaxTiltDeciDegrees;
-	float sonarMaxTiltCos;
+	float irrangfdMaxTiltCos;
 
 	int32_t calculatedAltitude;
 }irrangfd_t;
@@ -28,3 +28,4 @@ void irrangfdUpdate(void);
 int32_t irrangfdRead(void);
 int32_t irrangfdCalculateAltitude(int32_t irrangfdDistance, float cosTiltAngle);
 int32_t irrangfdGetLatestAltitude(void);
+bool isIRrangfdWorkFind();

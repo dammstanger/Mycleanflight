@@ -949,9 +949,12 @@ static void loadMainState(void)
     for (i = 0; i < XYZ_AXIS_COUNT; i++) {
         blackboxCurrent->axisPID_I[i] = axisPID_I[i];
     }
-    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
-        blackboxCurrent->axisPID_D[i] = axisPID_D[i];
-    }
+//    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
+//        blackboxCurrent->axisPID_D[i] = axisPID_D[i];
+//    }
+
+    blackboxCurrent->axisPID_D[0] = altitudeGetAltHold();
+    blackboxCurrent->axisPID_D[1] = altitudeGetIRangfdRawalt();
 
     for (i = 0; i < 4; i++) {
         blackboxCurrent->rcCommand[i] = rcCommand[i];
@@ -965,8 +968,8 @@ static void loadMainState(void)
 //        blackboxCurrent->accSmooth[i] = accSmooth[i];
 //    }
 
-    blackboxCurrent->accSmooth[0] = attitude.values.roll;	//dammstanger 20170627
-    blackboxCurrent->accSmooth[1] = attitude.values.pitch;
+    blackboxCurrent->accSmooth[0] = altitudeGetImuBasedVel();
+    blackboxCurrent->accSmooth[1] = altitudeGetBaroVel();
     blackboxCurrent->accSmooth[2] = altitudeGetCfVel();
 
     for (i = 0; i < motorCount; i++) {
@@ -984,13 +987,13 @@ static void loadMainState(void)
 //    }
 
     blackboxCurrent->magADC[0] = altitudeHoldGetEstimatedAltitude();
-    blackboxCurrent->magADC[0] = altitudeGetImuBasedAlt();
-    blackboxCurrent->magADC[0] = altitudeGetImuBasedVel();
+    blackboxCurrent->magADC[1] = altitudeGetImuBasedAlt();
+    blackboxCurrent->magADC[2] = altitudeGetIRangfdalt();
 
 #endif
 
 #ifdef BARO
-    blackboxCurrent->BaroAlt = BaroAlt;
+    blackboxCurrent->BaroAlt = altitudeGetBaroAlt();
 #endif
 
 #ifdef SONAR

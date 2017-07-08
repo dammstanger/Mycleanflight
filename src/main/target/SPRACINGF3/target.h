@@ -169,7 +169,7 @@
 //#define DISPLAY				//20170503
 //#define GPS
 //#define GTUNE
-#define SERIAL_RX
+//#define SERIAL_RX
 //#define TELEMETRY
 //#define TELEMETRY_IBUS
 //#define USE_SERVOS

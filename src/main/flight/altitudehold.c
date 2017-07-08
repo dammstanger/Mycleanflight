@@ -81,11 +81,12 @@ PG_RESET_TEMPLATE(airplaneConfig_t, airplaneConfig,
 
 #define DEGREES_80_IN_DECIDEGREES 800
 
+static int32_t AltHold_debug = 0;
 static void applyMultirotorAltHold(void)
 {
     static uint8_t isAltHoldChanged = 0;
     // multirotor alt hold
-    if (rcControlsConfig()->alt_hold_fast_change) {
+    if (rcControlsConfig()->alt_hold_fast_change) {		//本质是死区内使用高度位置保持，死去外直接油门控制
         // rapid alt changes
         if (ABS(rcData[THROTTLE] - initialRawThrottleHold) > rcControlsConfig()->alt_hold_deadband) {
             errorVelocityI = 0;
@@ -108,6 +109,7 @@ static void applyMultirotorAltHold(void)
             isAltHoldChanged = 1;
         } else if (isAltHoldChanged) {									//当油门在死区内时，isAltHoldChanged可使清零只执行一次
             AltHold = EstAlt;
+            AltHold_debug = AltHold;
             velocityControl = 0;
             isAltHoldChanged = 0;
         }
@@ -231,9 +233,13 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
 }
 
 
-static float altimu_acc = 0.0f;
+static float altimu_debug = 0.0f;
 static float velimu_debug = 0.0f;
 static float velcf_debug = 0.0f;
+static int32_t irrangfdAlt_debug = 0;
+static int32_t irrangfdAltRaw_debug = 0;
+static float baroVel_debug = 0.0f;
+static int32_t BaroAlt_debug = 0;
 void calculateEstimatedAltitude(uint32_t currentTime)
 {
     static uint32_t previousTime;
@@ -275,6 +281,11 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     }
 
     BaroAlt = baroCalculateAltitude();
+    if (debugMode == DEBUG_IRRANGFD)
+    {
+        debug[3] = BaroAlt;
+    }
+    BaroAlt_debug = BaroAlt;
 #else
     BaroAlt = 0;
 #endif
@@ -297,15 +308,22 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     }
     //dammstanger 20170705
 #elif defined(IRRANGFD)
-    irrangfdAlt = irrangfdRead();
-    if (debugMode == DEBUG_IRRANGFD)
-    {
-        debug[1] = irrangfdAlt;
+    if(isIRrangfdWorkFind()==true){
+		irrangfdAlt = irrangfdRead();
+		if (debugMode == DEBUG_IRRANGFD)
+		{
+			debug[1] = irrangfdAlt;
+		}
+		irrangfdAltRaw_debug = irrangfdAlt;
+		irrangfdAlt = irrangfdCalculateAltitude(irrangfdAlt, getCosTiltAngle());
+		irrangfdAlt_debug = irrangfdAlt;
+		if (debugMode == DEBUG_IRRANGFD)
+		{
+			debug[2] = irrangfdAlt;
+		}
     }
-    irrangfdAlt = irrangfdCalculateAltitude(irrangfdAlt, getCosTiltAngle());
-    if (debugMode == DEBUG_IRRANGFD)
-    {
-        debug[2] = irrangfdAlt;
+    else{
+    	irrangfdAlt = 0;
     }
 
     if (irrangfdAlt > 0 && irrangfdAlt < irrangfd.irrangfdCfAltCm) {
@@ -335,7 +353,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     // Integrator - Altitude in cm								位移公式由acc计算得到的垂直位置
     dx = (vel_acc * 0.5f) * dt + vel * dt;            		// integrate velocity to get distance dx = (1/2)*a*dt^2 + v0*dt  alt = alt +dx
     accAlt += dx;
-    altimu_acc += dx;
+    altimu_debug += dx;
 #ifdef BARO
     accAlt = accAlt * barometerConfig()->baro_cf_alt + (float)BaroAlt * (1.0f - barometerConfig()->baro_cf_alt);    // complementary filter for altitude estimation (baro & acc)
 #endif															//baro_cf_alt默认0.965
@@ -378,14 +396,15 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 
     baroVel = constrain(baroVel, -1500, 1500);  // constrain baro velocity +/- 1500cm/s
     baroVel = applyDeadband(baroVel, 10);       // to reduce noise near zero
-
+    baroVel_debug = baroVel;
     // apply Complimentary Filter to keep the calculated velocity based on baro velocity (i.e. near real velocity).
     // By using CF it's possible to correct the drift of integrated accZ (velocity) without loosing the phase, i.e也就是 without delay
 #ifdef BARO
-    vel = vel * barometerConfig()->baro_cf_vel + baroVel * (1.0f - barometerConfig()->baro_cf_vel);			//baro_cf_alt默认0.985
+    vel = vel * barometerConfig()->baro_cf_vel + baroVel * (1.0f - barometerConfig()->baro_cf_vel);			//baro_cf_vel默认0.985
 #endif
+    velcf_debug = vel;
     vel_tmp = lrintf(vel);			//4舍5入取整
-    velcf_debug = vel_tmp;
+
     // set vario
     vario = applyDeadband(vel_tmp, 5);
 
@@ -399,10 +418,9 @@ int32_t altitudeHoldGetEstimatedAltitude(void)
     return EstAlt;
 }
 
-
 int32_t altitudeGetImuBasedAlt(void)
 {
-	return (int32_t)altimu_acc;
+	return (int32_t)altimu_debug;
 }
 
 
@@ -414,6 +432,29 @@ int32_t altitudeGetImuBasedVel(void)
 int32_t altitudeGetCfVel(void)
 {
 	return (int32_t)velcf_debug;
+}
+
+int32_t altitudeGetIRangfdalt(void)
+{
+	return irrangfdAlt_debug;
+}
+int32_t altitudeGetIRangfdRawalt(void)
+{
+	return irrangfdAltRaw_debug;
+}
+
+int32_t altitudeGetBaroVel(void)
+{
+	return baroVel_debug;
+}
+int32_t altitudeGetBaroAlt(void)
+{
+	return BaroAlt_debug;
+}
+
+int32_t altitudeGetAltHold(void)
+{
+	return AltHold_debug;
 }
 
 

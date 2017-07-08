@@ -75,6 +75,10 @@ typedef enum {
 } ptkState_e;
 
 #if defined(IRRANGFD)
+
+static bool workfind = false;					//传感器正常工作标志位
+static bool revdatflg = false;					//接收到数据包标志
+
 ptkIrData_t ptkIrData;
 static serialPort_t *ptkIrPort;
 
@@ -151,7 +155,6 @@ void ptkRevDat_Callback(uint16_t dat)
 
 	tst_TF02PakHandle(dat);
 
-
 }
 
 
@@ -185,6 +188,7 @@ void tst_TF02PakHandle(uint16_t dat)
 			i = 0;
 			return ;
 		}
+		revdatflg = true;
 		if (debugMode == DEBUG_IRRANGFD)
 		{
 			debug[0] = ptkIrData.dist;
@@ -250,5 +254,28 @@ int32_t ptk_get_distance(void)
 
     return distance;
 }
+
+void ptkSensorWorkChk()
+{
+	static int8_t datrevlosecnt = 0;				//数据丢包计数
+	if(revdatflg)
+	{
+		revdatflg = false;
+		workfind = true;
+		datrevlosecnt = 0;
+		return ;
+	}
+	if(datrevlosecnt>=5){
+		workfind = false;
+	}
+	else
+		datrevlosecnt++;
+}
+
+bool isPtkWorkFind()
+{
+	return workfind;
+}
+
 
 #endif

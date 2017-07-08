@@ -39,8 +39,8 @@ void irrangfdInit(void)
     sensorsSet(SENSOR_IRRANGFD);						//使能红外测距传感器
     irrangfd.irrangfdCfAltCm = irrangfd.irrangfdMaxRangeCm / 2;
     irrangfd.irrangfdMaxTiltDeciDegrees =  irrangfd.irrangfddetectionConeExtendedDeciDegrees / 2;
-    irrangfd.sonarMaxTiltCos = cos_approx(irrangfd.irrangfdMaxTiltDeciDegrees / 10.0f * RAD);
-    irrangfd.irrangfdMaxAltWithTiltCm = irrangfd.irrangfdMaxRangeCm * irrangfd.sonarMaxTiltCos;
+    irrangfd.irrangfdMaxTiltCos = cos_approx(irrangfd.irrangfdMaxTiltDeciDegrees / 10.0f * RAD);
+    irrangfd.irrangfdMaxAltWithTiltCm = irrangfd.irrangfdMaxRangeCm * irrangfd.irrangfdMaxTiltCos;
 
 }
 
@@ -50,7 +50,7 @@ static int32_t applyIrrangfdMedianFilter(int32_t newirrangfdReading)
 {
     static int32_t irrangfdFilterSamples[DISTANCE_SAMPLES_MEDIAN_PTK];
     static int currentFilterSampleIndex = 0;
-    static bool medianFilterReady = false;
+    static bool medianFilterReady = false;			//用于滤波器等待足够的有效数据后出发工作
     int nextSampleIndex;
 
     if (newirrangfdReading > IRRANGFD_OUT_OF_RANGE) // only accept samples that are in range
@@ -75,6 +75,15 @@ void irrangfdUpdate(void)
 	//对于不能自动连续测量回传数据的模块，使用命令触发
 #ifdef USE_PTK
 	ptkWrtCmd();
+	ptkSensorWorkChk();
+#endif
+}
+
+
+bool isIRrangfdWorkFind()
+{
+#ifdef USE_PTK
+	return isPtkWorkFind();
 #endif
 }
 
@@ -99,7 +108,7 @@ int32_t irrangfdRead(void)
 int32_t irrangfdCalculateAltitude(int32_t irrangfdDistance, float cosTiltAngle)
 {
     // calculate sonar altitude only if the ground is in the irrangefinder cone
-    if (cosTiltAngle <= irrangfd.sonarMaxTiltCos)
+    if (cosTiltAngle <= irrangfd.irrangfdMaxTiltCos)
     	irrangfd.calculatedAltitude = IRRANGFD_OUT_OF_RANGE;
     else
         // altitude = distance * cos(tiltAngle), use approximation
