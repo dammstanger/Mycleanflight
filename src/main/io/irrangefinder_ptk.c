@@ -131,29 +131,29 @@ void ptkIrInit(irrangfd_t *irrangfd)
 void tst_TF02PakHandle(uint16_t dat);
 void ptkRevDat_Callback(uint16_t dat)
 {
-//	static u8 check = 0,i = 0;
-//	static u8 ReceiveData[REVDATASIZE] = {0};
+	static u8 check = 0,i = 0;
+	static u8 ReceiveData[REVDATASIZE] = {0};
 
-//	if(check==3)
-//	{
-//		ReceiveData[i] = (u8)dat;
-//		i++;
-//		if(i==REVDATASIZE)
-//		{
-//			i = 0;
-//			check = 0;
-//		    if (debugMode == DEBUG_IRRANGFD)
-//		    {
-//		        ptkIrData.dist = (((int16_t)ReceiveData[0]<<8|ReceiveData[1]) + 5)/10;			//四舍五入
-//		        debug[0] = ptkIrData.dist;
-//		    }
-//		}
-//	}
-//	if((dat==0x02)&&(check==2)) {check = 3;i = 0;}		//first three bytes are 0x01 0x03 0x02
-//	if((dat==0x03)&&(check==1)) {check = 2;}
-//	if((dat==0x01)&&(check==0))	check = 1;
-
-	tst_TF02PakHandle(dat);
+	if(check==3)
+	{
+		ReceiveData[i] = (u8)dat;
+		i++;
+		if(i==REVDATASIZE)
+		{
+			i = 0;
+			check = 0;
+			revdatflg = true;
+		    if (debugMode == DEBUG_IRRANGFD)
+		    {
+		        ptkIrData.dist = (((int16_t)ReceiveData[0]<<8|ReceiveData[1]) + 5)/10;			//四舍五入
+		        debug[0] = ptkIrData.dist;
+		    }
+		}
+	}
+	if((dat==0x02)&&(check==2)) {check = 3;i = 0;}		//first three bytes are 0x01 0x03 0x02
+	if((dat==0x03)&&(check==1)) {check = 2;}
+	if((dat==0x01)&&(check==0))	check = 1;
+//	tst_TF02PakHandle(dat);
 
 }
 

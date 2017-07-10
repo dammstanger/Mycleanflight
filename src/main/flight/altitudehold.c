@@ -82,6 +82,7 @@ PG_RESET_TEMPLATE(airplaneConfig_t, airplaneConfig,
 #define DEGREES_80_IN_DECIDEGREES 800
 
 static int32_t AltHold_debug = 0;
+static int32_t setVelocity_debug = 0;
 static void applyMultirotorAltHold(void)
 {
     static uint8_t isAltHoldChanged = 0;
@@ -105,6 +106,7 @@ static void applyMultirotorAltHold(void)
         if (ABS(rcData[THROTTLE] - initialRawThrottleHold) > rcControlsConfig()->alt_hold_deadband) {
             // set velocity proportional to stick movement +100 throttle gives ~ +50 cm/s
             setVelocity = (rcData[THROTTLE] - initialRawThrottleHold) / 2;
+            setVelocity_debug = setVelocity;
             velocityControl = 1;
             isAltHoldChanged = 1;
         } else if (isAltHoldChanged) {									//当油门在死区内时，isAltHoldChanged可使清零只执行一次
@@ -202,7 +204,7 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
     int32_t error;
     int32_t setVel;
 
-    if (!isThrustFacingDownwards(&attitude)) {
+    if (!isThrustFacingDownwards(&attitude)) {			//如果飞行器翻转飞行，油门不是使推力向下，则
         return result;
     }
 
@@ -455,6 +457,11 @@ int32_t altitudeGetBaroAlt(void)
 int32_t altitudeGetAltHold(void)
 {
 	return AltHold_debug;
+}
+
+int32_t altitudeGetsetVel(void)
+{
+	return setVelocity_debug;
 }
 
 

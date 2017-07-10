@@ -40,4 +40,5 @@ int32_t altitudeGetBaroVel(void);
 int32_t altitudeGetIRangfdalt(void);
 int32_t altitudeGetAltHold(void);
 int32_t altitudeGetIRangfdRawalt(void);
+int32_t altitudeGetsetVel(void);
 

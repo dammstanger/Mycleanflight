@@ -955,6 +955,7 @@ static void loadMainState(void)
 
     blackboxCurrent->axisPID_D[0] = altitudeGetAltHold();
     blackboxCurrent->axisPID_D[1] = altitudeGetIRangfdRawalt();
+    blackboxCurrent->axisPID_D[2] = altitudeGetsetVel();
 
     for (i = 0; i < 4; i++) {
         blackboxCurrent->rcCommand[i] = rcCommand[i];
