@@ -105,16 +105,36 @@ static void applyMultirotorAltHold(void)
         // slow alt changes, mostly used for aerial photography
         if (ABS(rcData[THROTTLE] - initialRawThrottleHold) > rcControlsConfig()->alt_hold_deadband) {
             // set velocity proportional to stick movement +100 throttle gives ~ +50 cm/s
-            setVelocity = (rcData[THROTTLE] - initialRawThrottleHold) / 2;
-            setVelocity_debug = setVelocity;
+        	if(rcData[THROTTLE]>initialRawThrottleHold)
+        		setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold + rcControlsConfig()->alt_hold_deadband)+20);
+        	else
+        		setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold - rcControlsConfig()->alt_hold_deadband)-20);
             velocityControl = 1;
             isAltHoldChanged = 1;
         } else if (isAltHoldChanged) {									//当油门在死区内时，isAltHoldChanged可使清零只执行一次
             AltHold = EstAlt;
             AltHold_debug = AltHold;
-            velocityControl = 0;
+            setVelocity = 0;
             isAltHoldChanged = 0;
         }
+        setVelocity_debug = setVelocity;
+		if (debugMode == DEBUG_IRRANGFD)
+		{
+			debug[3] = setVelocity;
+		}
+//        if (ABS(rcData[THROTTLE] - initialRawThrottleHold) > rcControlsConfig()->alt_hold_deadband) {
+//            // set velocity proportional to stick movement +100 throttle gives ~ +50 cm/s
+//            setVelocity = (rcData[THROTTLE] - initialRawThrottleHold) / 2;
+//        	setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold + rcControlsConfig()->alt_hold_deadband));
+//            setVelocity_debug = setVelocity;
+//            velocityControl = 1;
+//            isAltHoldChanged = 1;
+//        } else if (isAltHoldChanged) {									//当油门在死区内时，isAltHoldChanged可使清零只执行一次
+//            AltHold = EstAlt;
+//            AltHold_debug = AltHold;
+//            velocityControl = 0;
+//            isAltHoldChanged = 0;
+//        }
         //进入高度保持模式的手动油门值 + 高度保持控制器输出的油门控制量
         rcCommand[THROTTLE] = constrain(initialThrottleHold + altHoldThrottleAdjustment, motorConfig()->minthrottle, motorConfig()->maxthrottle);
     }
@@ -210,13 +230,13 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
 
     // Altitude P-Controller
 
-    if (!velocityControl) {
-        error = constrain(AltHold - EstAlt, -500, 500);
-        error = applyDeadband(error, 10); // remove small P parameter to reduce noise near zero position
-        setVel = constrain((pidProfile()->P8[PIDALT] * error / 128), -300, +300); // limit velocity to +/- 3 m/s
-    } else {
+//    if (!velocityControl) {
+//        error = constrain(AltHold - EstAlt, -500, 500);
+//        error = applyDeadband(error, 10); // remove small P parameter to reduce noise near zero position
+//        setVel = constrain((pidProfile()->P8[PIDALT] * error / 128), -300, +300); // limit velocity to +/- 3 m/s
+//    } else {
         setVel = setVelocity;
-    }
+//    }
     // Velocity PID-Controller
 
     // P
@@ -283,10 +303,6 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     }
 
     BaroAlt = baroCalculateAltitude();
-    if (debugMode == DEBUG_IRRANGFD)
-    {
-        debug[3] = BaroAlt;
-    }
     BaroAlt_debug = BaroAlt;
 #else
     BaroAlt = 0;
@@ -319,14 +335,15 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 		irrangfdAltRaw_debug = irrangfdAlt;
 		irrangfdAlt = irrangfdCalculateAltitude(irrangfdAlt, getCosTiltAngle());
 		irrangfdAlt_debug = irrangfdAlt;
-		if (debugMode == DEBUG_IRRANGFD)
-		{
-			debug[2] = irrangfdAlt;
-		}
     }
     else{
     	irrangfdAlt = 0;
     }
+
+	if (debugMode == DEBUG_IRRANGFD)
+	{
+		debug[2] = irrangfdAlt;
+	}
 
     if (irrangfdAlt > 0 && irrangfdAlt < irrangfd.irrangfdCfAltCm) {
         // just use the IRrangefinder
