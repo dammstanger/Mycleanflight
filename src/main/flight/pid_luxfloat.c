@@ -131,12 +131,12 @@ STATIC_UNIT_TESTED int16_t pidLuxFloatCore(int axis, const pidProfile_t *pidProf
 
         // Filter delta
         if (pidProfile->dterm_notch_hz) {
-            delta = biquadFilterApply(&dtermFilterNotch[axis], delta);
+            delta = biquadFilterApply(&dtermFilterNotch[axis], delta);		//只要dterm_notch_hz不为0，notch filter 默认总是使用的。
         }
 
         if (pidProfile->dterm_lpf_hz) {
             if (pidProfile->dterm_filter_type == FILTER_BIQUAD) {
-                delta = biquadFilterApply(&dtermFilterLpf[axis], delta);
+                delta = biquadFilterApply(&dtermFilterLpf[axis], delta);		//CLI中对应dterm_lowpass_level项，NORMAL表示lpf，high表示biquad filter
             } else {
                 // DTerm delta low pass filter
                 delta = pt1FilterApply4(&deltaFilter[axis], delta, pidProfile->dterm_lpf_hz, getdT());
@@ -179,7 +179,7 @@ void pidLuxFloat(const pidProfile_t *pidProfile, const controlRateConfig_t *cont
         } else {
             // control is GYRO based for ACRO and HORIZON - direct sticks control is applied to rate PID
             angleRate = (float)((rate + 27) * rcCommand[axis]) / 16.0f; // 200dps to 1200dps max roll/pitch rate
-            if (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE)) {
+            if (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE)||FLIGHT_MODE(BARO_MODE)||FLIGHT_MODE(IRRANGFD_MODE)) {		//baro IRRANGFD模式也改为自水平控制
                 // calculate error angle and limit the angle to the max inclination
                 // multiplication of rcCommand corresponds to changing the sticks scaling here
 #ifdef GPS
@@ -189,8 +189,8 @@ void pidLuxFloat(const pidProfile_t *pidProfile, const controlRateConfig_t *cont
                 const float errorAngle = constrain(2 * rcCommand[axis], -((int)max_angle_inclination), max_angle_inclination)
                         - attitude.raw[axis] + angleTrim->raw[axis];
 #endif
-                if (FLIGHT_MODE(ANGLE_MODE)) {
-                    // ANGLE mode
+                if (FLIGHT_MODE(ANGLE_MODE)||FLIGHT_MODE(BARO_MODE)||FLIGHT_MODE(IRRANGFD_MODE)) {			//baro IRRANGFD模式也改为自水平控制,目标角速度使用与angle模式相同
+                    // ANGLE mode or BARO mode
                     angleRate = errorAngle * pidProfile->P8[PIDLEVEL] / 16.0f;
                 } else {
                     // HORIZON mode

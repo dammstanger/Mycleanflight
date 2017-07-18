@@ -29,5 +29,16 @@ void calculateEstimatedAltitude(uint32_t currentTime);
 void applyAltHold(void);
 void updateAltHoldState(void);
 void updateSonarAltHoldState(void);
+void updateIRrangfdAltHoldState(void);
 
 int32_t altitudeHoldGetEstimatedAltitude(void);
+int32_t altitudeGetCfVel(void);
+int32_t altitudeGetImuBasedVel(void);
+int32_t altitudeGetImuBasedAlt(void);
+int32_t altitudeGetBaroAlt(void);
+int32_t altitudeGetBaroVel(void);
+int32_t altitudeGetIRangfdalt(void);
+int32_t altitudeGetAltHold(void);
+int32_t altitudeGetIRangfdRawalt(void);
+int32_t altitudeGetsetVel(void);
+

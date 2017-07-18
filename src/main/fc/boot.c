@@ -291,6 +291,7 @@ void init(void)
     ensureEEPROMContainsValidData();
     readEEPROM();
 
+
     systemState |= SYSTEM_STATE_CONFIG_LOADED;		//系统状态现在设为：配置已加载
 
 #ifdef STM32F303
@@ -320,8 +321,8 @@ void init(void)
     // initialize IO (needed for all IO operations)
    IOInitGlobal();
 
-//    debugMode = debugConfig()->debug_mode;		//调试模式
-    debugMode = DEBUG_IRRANGFD;
+    debugMode = debugConfig()->debug_mode;		//调试模式
+//    debugMode = DEBUG_IRRANGFD;						//dammstanger 20170704
 
 #ifdef USE_EXTI
     EXTIInit();
@@ -607,8 +608,8 @@ void init(void)
     mspInit();
     mspSerialInit();
 
-//    const uint16_t pidPeriodUs = US_FROM_HZ(gyro.sampleFrequencyHz);
-    const uint16_t pidPeriodUs = 1000;
+    const uint16_t pidPeriodUs = US_FROM_HZ(gyro.sampleFrequencyHz);
+
     pidSetTargetLooptime(pidPeriodUs * gyroConfig()->pid_process_denom);
     pidInitFilters(pidProfile());
 
@@ -830,8 +831,12 @@ void configureScheduler(void)
 #ifdef SONAR
     setTaskEnabled(TASK_SONAR, sensors(SENSOR_SONAR));
 #endif
-#if defined(BARO) || defined(SONAR)
-    setTaskEnabled(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR));		//dammstanger	20170516
+#ifdef IRRANGFD
+    setTaskEnabled(TASK_IRRANGFD, sensors(SENSOR_IRRANGFD));			//dammstanger 20170705
+#endif
+
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD)
+    setTaskEnabled(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR) || sensors(SENSOR_IRRANGFD));		//dammstanger	20170705
 #endif
 #ifdef DISPLAY
     setTaskEnabled(TASK_DISPLAY, feature(FEATURE_DISPLAY));

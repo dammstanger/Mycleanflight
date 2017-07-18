@@ -196,10 +196,10 @@ void rxInit(modeActivationCondition_t *modeActivationConditions)
         modeActivationCondition_t *modeActivationCondition = &modeActivationConditions[i];
         if (modeActivationCondition->modeId == BOXARM && IS_RANGE_USABLE(&modeActivationCondition->range)) {
             // ARM switch is defined, determine an OFF value
-            if (modeActivationCondition->range.startStep > 0) {
-                value = MODE_STEP_TO_CHANNEL_VALUE((modeActivationCondition->range.startStep - 1));
+            if (modeActivationCondition->range.startStep > 0) {										//900-2100步进为48  0表示900 48表示2100
+                value = MODE_STEP_TO_CHANNEL_VALUE((modeActivationCondition->range.startStep - 1));	//ARM定义的范围小端大于0，则让解锁开关的值低于这个小端
             } else {
-                value = MODE_STEP_TO_CHANNEL_VALUE((modeActivationCondition->range.endStep + 1));
+                value = MODE_STEP_TO_CHANNEL_VALUE((modeActivationCondition->range.endStep + 1));   //如果小于0，则让解算通道值大于大端
             }
             // Initialize ARM AUX channel to OFF value
             rcData[modeActivationCondition->auxChannelIndex + NON_AUX_CHANNEL_COUNT] = value;
@@ -482,7 +482,7 @@ static void readRxChannelsApplyRanges(void)
 
         // apply the rx calibration
         if (channel < NON_AUX_CHANNEL_COUNT) {
-            sample = applyRxChannelRangeConfiguraton(sample, channelRanges(channel));
+            sample = applyRxChannelRangeConfiguraton(sample, channelRanges(channel));	//前4个是摇杆有校准
         }
 
         rcRaw[channel] = sample;

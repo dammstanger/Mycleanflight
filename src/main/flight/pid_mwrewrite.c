@@ -95,7 +95,7 @@ STATIC_UNIT_TESTED int16_t pidMultiWiiRewriteCore(int axis, const pidProfile_t *
     int32_t ITerm = lastITerm[axis] + ((rateError * (uint16_t)targetPidLooptime) >> 11) * pidProfile->I8[axis];
     // limit maximum integrator value to prevent WindUp - accumulating extreme values when system is saturated.
     // I coefficient (I8) moved before integration to make limiting independent from PID settings
-    ITerm = constrain(ITerm, (int32_t)(-PID_MAX_I << 13), (int32_t)(PID_MAX_I << 13));
+    ITerm = constrain(ITerm, (int32_t)(-(PID_MAX_I << 13)), (int32_t)(PID_MAX_I << 13));			//dammstanger 20170706
     // Anti windup protection
     if (rcModeIsActive(BOXAIRMODE)) {
         if (STATE(ANTI_WINDUP) || motorLimitReached) {

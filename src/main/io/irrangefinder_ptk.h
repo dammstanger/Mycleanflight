@@ -41,3 +41,5 @@ typedef struct ptkIrData_s {
 void ptkIrInit(irrangfd_t *irrangfd);
 void ptkWrtCmd(void);
 int32_t ptk_get_distance(void);
+void ptkSensorWorkChk(void);
+bool isPtkWorkFind(void);

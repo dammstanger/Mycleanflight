@@ -46,7 +46,6 @@
 #include "drivers/light_led.h"
 
 #include "sensors/sensors.h"
-//#include "sensors/irrangefinder.h"
 
 #include "fc/config.h"
 #include "fc/runtime_config.h"
@@ -64,7 +63,7 @@
 #define REVDATASIZE 4
 #define PTK_MAXRANGECM	1200
 #define PTK_DETECTION_CONE_DECIDEGREES 30 //  recommended cone angle 3 degrees, 单位0.1度
-#define PTK_DETECTION_CONE_EXTENDED_DECIDEGREES 300
+#define PTK_DETECTION_CONE_EXTENDED_DECIDEGREES 450
 
 typedef enum {
 	PTK_UNKNOWN,
@@ -76,6 +75,10 @@ typedef enum {
 } ptkState_e;
 
 #if defined(IRRANGFD)
+
+static bool workfind = false;					//传感器正常工作标志位
+static bool revdatflg = false;					//接收到数据包标志
+
 ptkIrData_t ptkIrData;
 static serialPort_t *ptkIrPort;
 
@@ -122,32 +125,15 @@ void ptkIrInit(irrangfd_t *irrangfd)
 	    }
 
 	    // signal PTK "thread" to initialize when it gets to it
-	    ptkIrSetState(PTK_INITIALIZING);
+	    ptkIrSetState(PTK_RECEIVING_DATA);
 }
 
-
+void tst_TF02PakHandle(uint16_t dat);
 void ptkRevDat_Callback(uint16_t dat)
 {
 	static u8 check = 0,i = 0;
 	static u8 ReceiveData[REVDATASIZE] = {0};
 
-//	if(check==2)
-//	{
-//		ReceiveData[i] = (u8)dat;
-//		i++;
-//		if(i==REVDATASIZE)
-//		{
-//			i = 0;
-//			check = 0;
-//		    if (debugMode == DEBUG_IRRANGFD)
-//		    {
-//		        ptkIrData.dist = ((int16_t)ReceiveData[1]<<8)|ReceiveData[0];
-//		        debug[0] = ptkIrData.dist;
-//		    }
-//		}
-//	}
-//	if((dat==0x59)&&(check==1)) {check = 2;i = 0;}
-//	if((dat==0x59)&&(check==0))	check = 1;
 	if(check==3)
 	{
 		ReceiveData[i] = (u8)dat;
@@ -156,6 +142,7 @@ void ptkRevDat_Callback(uint16_t dat)
 		{
 			i = 0;
 			check = 0;
+			revdatflg = true;
 		    if (debugMode == DEBUG_IRRANGFD)
 		    {
 		        ptkIrData.dist = (((int16_t)ReceiveData[0]<<8|ReceiveData[1]) + 5)/10;			//四舍五入
@@ -166,8 +153,75 @@ void ptkRevDat_Callback(uint16_t dat)
 	if((dat==0x02)&&(check==2)) {check = 3;i = 0;}		//first three bytes are 0x01 0x03 0x02
 	if((dat==0x03)&&(check==1)) {check = 2;}
 	if((dat==0x01)&&(check==0))	check = 1;
+//	tst_TF02PakHandle(dat);
 
-//	serialWrite(ptkIrPort,(u8)dat);
+}
+
+
+void tst_TF02PakHandle(uint16_t dat)
+{
+	//TF02PIX格式
+	static u8 i = 0;
+	static u8 ReceiveData[7] = {0};
+
+	ReceiveData[0] = ReceiveData[1];
+	ReceiveData[1] = ReceiveData[2];
+	ReceiveData[2] = ReceiveData[3];
+	ReceiveData[3] = ReceiveData[4];
+	ReceiveData[4] = ReceiveData[5];
+	ReceiveData[5] = ReceiveData[6];
+	ReceiveData[6] = (u8)dat;			//判断包尾是不是0x0D 0x0A
+	i++;
+	if(ReceiveData[6]==0x0A && ReceiveData[5]==0x0D)
+	{
+		if(i==6)
+		{
+			i = 0;
+			ptkIrData.dist = (uint16_t)((ReceiveData[1]-'0')*100 + (ReceiveData[3]-'0')*10 + (ReceiveData[4]-'0'));
+		}
+		else if(i==7)
+		{
+			i = 0;
+			ptkIrData.dist = (uint16_t)((ReceiveData[0]-'0')*1000 + (ReceiveData[1]-'0')*100 + (ReceiveData[3]-'0')*10 + (ReceiveData[4]-'0'));
+		}
+		else{
+			i = 0;
+			return ;
+		}
+		revdatflg = true;
+		if (debugMode == DEBUG_IRRANGFD)
+		{
+			debug[0] = ptkIrData.dist;
+		}
+	}
+	else if(i==7)
+	{
+		i = 0;
+	}
+}
+
+void tst_TF01PakHandle(uint16_t dat)
+{
+	static u8 check = 0,i = 0;
+	static u8 ReceiveData[7] = {0};
+
+	if(check==2)
+	{
+		ReceiveData[i] = (u8)dat;
+		i++;
+		if(i==REVDATASIZE)
+		{
+			i = 0;
+			check = 0;
+			if (debugMode == DEBUG_IRRANGFD)
+			{
+				ptkIrData.dist = ((int16_t)ReceiveData[1]<<8)|ReceiveData[0];
+				debug[0] = ptkIrData.dist;
+			}
+		}
+	}
+	if((dat==0x59)&&(check==1)) {check = 2;i = 0;}
+	if((dat==0x59)&&(check==0))	check = 1;
 }
 
 /**
@@ -178,6 +232,9 @@ void ptkWrtCmd(void)
 	const uint8_t dattst[8]={0x01,0x03,0xD8,0xD9,0x00,0x01,0x6F,0x51};
     uint32_t now = millis();
 
+	if(ptkIrData.state!=PTK_RECEIVING_DATA){
+		return;
+	}
     if (now < (lastMeasurementAt + 40)) {
         // PTK 测量周期为25Hz所以应在上一次40ms
         return;
@@ -197,5 +254,28 @@ int32_t ptk_get_distance(void)
 
     return distance;
 }
+
+void ptkSensorWorkChk()
+{
+	static int8_t datrevlosecnt = 0;				//数据丢包计数
+	if(revdatflg)
+	{
+		revdatflg = false;
+		workfind = true;
+		datrevlosecnt = 0;
+		return ;
+	}
+	if(datrevlosecnt>=5){
+		workfind = false;
+	}
+	else
+		datrevlosecnt++;
+}
+
+bool isPtkWorkFind()
+{
+	return workfind;
+}
+
 
 #endif

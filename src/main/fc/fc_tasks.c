@@ -148,7 +148,16 @@ cfTask_t cfTasks[] = {
     },
 #endif
 
-#if defined(BARO) || defined(SONAR)
+#ifdef IRRANGFD
+    [TASK_IRRANGFD] = {
+        .taskName = "IRRANGFD",
+        .taskFunc = taskUpdateIrrangfd,
+        .desiredPeriod = TASK_PERIOD_MS(40),
+        .staticPriority = TASK_PRIORITY_MEDIUM,
+    },
+#endif
+
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD)
     [TASK_ALTITUDE] = {
         .taskName = "ALTITUDE",
         .taskFunc = taskCalculateAltitude,
