@@ -41,6 +41,7 @@
 #include "sensors/barometer.h"
 #include "sensors/sonar.h"
 #include "sensors/irrangefinder.h"
+#include "sensors/mwrader.h"
 
 #include "rx/rx.h"
 
@@ -259,10 +260,12 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
 static float altimu_debug = 0.0f;
 static float velimu_debug = 0.0f;
 static float velcf_debug = 0.0f;
-static int32_t irrangfdAlt_debug = 0;
-static int32_t irrangfdAltRaw_debug = 0;
+//static int32_t irrangfdAlt_debug = 0;
+//static int32_t irrangfdAltRaw_debug = 0;
 static float baroVel_debug = 0.0f;
 static int32_t BaroAlt_debug = 0;
+static int32_t mwraderAlt_debug = 0;
+
 void calculateEstimatedAltitude(uint32_t currentTime)
 {
     static uint32_t previousTime;
@@ -288,6 +291,11 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     int32_t irrangfdAlt = IRRANGFD_OUT_OF_RANGE;
     static int32_t baroAlt_offset = 0;
     float irrangfdTransition;
+#elif defined(MWRADER)
+
+    int32_t mwraderAlt = MWRADER_OUT_OF_RANGE;
+    static int32_t baroAlt_offset = 0;
+    float mwraderTransition;
 #endif
 
     dTime = currentTime - previousTime;			//单位us
@@ -358,6 +366,13 @@ void calculateEstimatedAltitude(uint32_t currentTime)
             BaroAlt = irrangfdAlt * irrangfdTransition + BaroAlt * (1.0f - irrangfdTransition);
         }
     }
+#elif defined(MWRADER)
+//    if(ismwraderWorkFind()==true)
+//    {
+    	mwraderAlt = mwraderRead();
+    	mwraderAlt_debug = mwraderAlt;
+
+//    }
 #endif
 
     dt = accTimeSum * 1e-6f; // delta acc reading time in seconds
@@ -454,14 +469,19 @@ int32_t altitudeGetCfVel(void)
 	return (int32_t)velcf_debug;
 }
 
-int32_t altitudeGetIRangfdalt(void)
-{
-	return irrangfdAlt_debug;
-}
-int32_t altitudeGetIRangfdRawalt(void)
-{
-	return irrangfdAltRaw_debug;
-}
+//int32_t altitudeGetIRangfdalt(void)
+//{
+//	return irrangfdAlt_debug;
+//}
+//int32_t altitudeGetIRangfdRawalt(void)
+//{
+//	return irrangfdAltRaw_debug;
+//}
+
+ int16_t altitudeGetMwraderAlt(void)
+ {
+	 return mwraderAlt_debug;
+ }
 
 int32_t altitudeGetBaroVel(void)
 {

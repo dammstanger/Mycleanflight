@@ -37,8 +37,8 @@ int32_t altitudeGetImuBasedVel(void);
 int32_t altitudeGetImuBasedAlt(void);
 int32_t altitudeGetBaroAlt(void);
 int32_t altitudeGetBaroVel(void);
-int32_t altitudeGetIRangfdalt(void);
+//int32_t altitudeGetIRangfdalt(void);
 int32_t altitudeGetAltHold(void);
-int32_t altitudeGetIRangfdRawalt(void);
+//int32_t altitudeGetIRangfdRawalt(void);
 int32_t altitudeGetsetVel(void);
-
+int16_t altitudeGetMwraderAlt(void);
