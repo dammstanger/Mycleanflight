@@ -74,7 +74,7 @@ typedef enum {
 	PTK_LOST_COMMUNICATION,
 } ptkState_e;
 
-#if defined(IRRANGFD)
+#if defined(IRRANGFD) && defined(USE_PTK)
 
 static bool workfind = false;					//传感器正常工作标志位
 static bool revdatflg = false;					//接收到数据包标志
@@ -82,7 +82,6 @@ static bool revdatflg = false;					//接收到数据包标志
 ptkIrData_t ptkIrData;
 static serialPort_t *ptkIrPort;
 
-STATIC_UNIT_TESTED volatile int32_t measurement = -1;
 static uint32_t lastMeasurementAt;
 
 
@@ -213,9 +212,9 @@ void tst_TF01PakHandle(uint16_t dat)
 		{
 			i = 0;
 			check = 0;
+			ptkIrData.dist = ((int16_t)ReceiveData[1]<<8)|ReceiveData[0];
 			if (debugMode == DEBUG_IRRANGFD)
 			{
-				ptkIrData.dist = ((int16_t)ReceiveData[1]<<8)|ReceiveData[0];
 				debug[0] = ptkIrData.dist;
 			}
 		}

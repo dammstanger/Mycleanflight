@@ -118,6 +118,7 @@ static void applyMultirotorAltHold(void)
             isAltHoldChanged = 0;
         }
         setVelocity_debug = setVelocity;
+
 		if (debugMode == DEBUG_IRRANGFD)
 		{
 			debug[3] = setVelocity;

@@ -91,6 +91,7 @@
 #include "io/transponder_ir.h"
 #include "io/vtx.h"
 #include "io/irrangefinder_ptk.h"
+#include "io/mwrader_zb.h"
 
 #include "fc/msp_server_fc.h"
 #include "msp/msp.h"
@@ -109,6 +110,7 @@
 #include "sensors/boardalignment.h"
 #include "sensors/initialisation.h"
 #include "sensors/irrangefinder.h"
+#include "sensors/mwrader.h"
 
 #include "telemetry/telemetry.h"
 #include "blackbox/blackbox.h"
@@ -149,6 +151,7 @@ void navigationInit(pidProfile_t *pidProfile);
 const sonarHardware_t *sonarGetHardwareConfiguration(amperageMeter_e amperageMeter);
 void sonarInit(const sonarHardware_t *sonarHardware);
 void irrangfdInit(void);
+void mwraderInit(void);
 
 #ifdef STM32F303xC
 // from system_stm32f30x.c
@@ -322,7 +325,6 @@ void init(void)
    IOInitGlobal();
 
     debugMode = debugConfig()->debug_mode;		//调试模式
-//    debugMode = DEBUG_IRRANGFD;						//dammstanger 20170704
 
 #ifdef USE_EXTI
     EXTIInit();
@@ -644,6 +646,12 @@ void init(void)
 #ifdef IRRANGFD
     if (feature(FEATURE_IRRANGFD)) {
     	irrangfdInit();
+    }
+#endif
+
+#ifdef MWRADER
+    if (feature(FEATURE_MWRADER)) {
+     	mwraderInit();
     }
 #endif
 

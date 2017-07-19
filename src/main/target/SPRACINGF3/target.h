@@ -62,8 +62,11 @@
 #define BEEPER
 #define LED0
 
-#define IRRANGFD							//dammstanger 20170622
-#define USE_PTK
+//#define IRRANGFD							//dammstanger 20170622
+//#define USE_PTK
+
+#define MWRADER								//dammstanger 20170718
+#define USE_ZB005
 
 //#define SONAR								//20170503
 #define SONAR_TRIGGER_PIN           Pin_0   // RC_CH7 (PB0) - only 3.3v ( add a 1K Ohms resistor )

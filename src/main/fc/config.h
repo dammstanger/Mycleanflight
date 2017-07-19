@@ -45,7 +45,8 @@ typedef enum {
     FEATURE_TRANSPONDER = 1 << 21,
     FEATURE_OSD = 1 << 22,
 	FEATURE_IRRANGFD = 1 << 23,
-} features_e;
+	FEATURE_MWRADER = 1 << 24,
+} features_e;						//uint32_t activeFeaturesLatch
 
 void handleOneshotFeatureChangeOnRestart(void);
 
