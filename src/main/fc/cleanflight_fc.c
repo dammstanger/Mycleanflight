@@ -544,12 +544,14 @@ void processRx(void)
     bool canUseHorizonMode = true;
     bool canUseBaroMode = true;
     bool canUseIRrangfdMode = true;
+    bool canUseMwraderMode = true;
 //angle and failsafe
     if ((rcModeIsActive(BOXANGLE) || (feature(FEATURE_FAILSAFE) && failsafeIsActive())) && (sensors(SENSOR_ACC))) {
         // bumpless transfer to Level mode
         canUseHorizonMode = false;
         canUseBaroMode = false;
         canUseIRrangfdMode = false;
+        canUseMwraderMode = false;
 
         if (!FLIGHT_MODE(ANGLE_MODE)) {
 #ifdef USE_PID_MW23
@@ -601,6 +603,16 @@ void processRx(void)
 			pidResetITermAngle();
 #endif
 //			ENABLE_FLIGHT_MODE(IRRANGFD_MODE);		//已经在updateIRrangfdAltHoldState()中使能了，这里不用。
+		}
+	}
+
+//IRrangfd  dammstanger 20140721	将rader模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
+		if(rcModeIsActive(BOXMWRADER) && canUseMwraderMode){
+
+		if (!FLIGHT_MODE(MWRADER_MODE)) {
+#ifdef USE_PID_MW23
+			pidResetITermAngle();
+#endif
 		}
 	}
 
@@ -739,14 +751,14 @@ void subTaskMainSubprocesses(void)
         updateGtuneState();
 #endif
 
-#if defined(BARO) || defined(SONAR) || defined(IRRANGFD)
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADER)
         // FIXME outdated comments?
         // updateRcCommands sets rcCommand, which is needed by updateAltHoldState and updateSonarAltHoldState
         // this must be called here since applyAltHold directly manipulates rcCommands[]
         updateRcCommands();
 
-        if (sensors(SENSOR_BARO) || sensors(SENSOR_SONAR) || sensors(SENSOR_IRRANGFD)) {
-            if (FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(SONAR_MODE) || FLIGHT_MODE(IRRANGFD_MODE) ) {
+        if (sensors(SENSOR_BARO) || sensors(SENSOR_SONAR) || sensors(SENSOR_IRRANGFD) || sensors(SENSOR_MWRADER)) {
+            if (FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(SONAR_MODE) || FLIGHT_MODE(IRRANGFD_MODE)  || FLIGHT_MODE(MWRADER_MODE) ) {
                 applyAltHold();
             }
         }
@@ -998,7 +1010,7 @@ void taskUpdateRxMain(void)
     processRx();
     isRXDataNew = true;
 
-#if !defined(BARO) && !defined(SONAR) && !defined(IRRANGFD)
+#if !defined(BARO) && !defined(SONAR) && !defined(IRRANGFD) && !defined(MWRADER)
     // updateRcCommands sets rcCommand, which is needed by updateAltHoldState and updateSonarAltHoldState
     updateRcCommands();
 #endif
@@ -1021,6 +1033,13 @@ void taskUpdateRxMain(void)
 
     if (sensors(SENSOR_IRRANGFD)) {
     	updateIRrangfdAltHoldState();
+    }
+#endif
+
+#ifdef MWRADER
+
+    if (sensors(SENSOR_MWRADER)) {
+    	updateMwraderAltHoldState();
     }
 #endif
 }
@@ -1081,8 +1100,16 @@ void taskUpdateIrrangfd(void)
 }
 #endif
 
+#ifdef MWRADER
+void taskMwraderCheck(void)
+{
+    if (sensors(SENSOR_MWRADER)) {
+    	mwraderUpdate();
+    }
+}
+#endif
 
-#if defined(BARO) || defined(SONAR) || defined(IRRANGFD)
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADER)
 void taskCalculateAltitude(void)
 {
     if (false
@@ -1095,7 +1122,10 @@ void taskCalculateAltitude(void)
 #if defined(IRRANGFD)
         || sensors(SENSOR_IRRANGFD)
 #endif
-        ) {
+#if defined(MWRADER)
+        || sensors(SENSOR_MWRADER)
+#endif
+		) {
         calculateEstimatedAltitude(currentTime);
     }
 }

@@ -47,8 +47,11 @@ typedef enum {
 #ifdef IRRANGFD
     TASK_IRRANGFD,
 #endif
+#ifdef MWRADER
+    TASK_MWRADER,
+#endif
 
-#if defined(BARO) || defined(SONAR) || defined(IRRANGFD)
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADER)
     TASK_ALTITUDE,
 #endif
 #ifdef DISPLAY
@@ -90,6 +93,7 @@ void taskUpdateCompass(void);
 void taskUpdateBaro(void);
 void taskUpdateSonar(void);
 void taskUpdateIrrangfd(void);			//dammstaner 20170705
+void taskMwraderCheck(void);
 void taskCalculateAltitude(void);
 void taskUpdateDisplay(void);
 void taskTelemetry(void);

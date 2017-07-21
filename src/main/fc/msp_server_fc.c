@@ -167,6 +167,7 @@ static const box_t boxes[CHECKBOX_ITEM_COUNT] = {
     { "AIR MODE",  BOXAIRMODE,   28 },
     { "VTX",       BOXVTX,       29 },
     { "IRRANGFD",  BOXIRRANGFD,  30 },
+	{ "MWRADER",  BOXMWRADER,  	 31 },
 };
 
 // mask of enabled IDs, calculated on start based on enabled features. boxId_e is used as bit index.
@@ -352,6 +353,12 @@ static void initActiveBoxIds(void)
 #ifdef IRRANGFD
     if (feature(FEATURE_IRRANGFD)){
         ena |= 1 << BOXIRRANGFD;
+    }
+#endif
+
+#ifdef MWRADER
+    if (feature(FEATURE_MWRADER)){
+        ena |= 1 << BOXMWRADER;
     }
 #endif
 
@@ -652,7 +659,7 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
             break;
 
         case MSP_ALTITUDE:
-#if defined(BARO) || defined(SONAR) || defined(IRRANGFD)
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADER)
             sbufWriteU32(dst, altitudeHoldGetEstimatedAltitude());
             sbufWriteU16(dst, vario);
 #else

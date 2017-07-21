@@ -65,7 +65,7 @@ int32_t AltHold;
 int32_t vario = 0;                      // variometer in cm/s
 
 
-#if defined(BARO) || defined(SONAR) || defined(IRRANGFD)
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADER)
 
 static int16_t initialRawThrottleHold;
 static int16_t initialThrottleHold;
@@ -104,18 +104,31 @@ static void applyMultirotorAltHold(void)
         }
     } else {
         // slow alt changes, mostly used for aerial photography
+//        if (ABS(rcData[THROTTLE] - initialRawThrottleHold) > rcControlsConfig()->alt_hold_deadband) {
+//            // set velocity proportional to stick movement +100 throttle gives ~ +50 cm/s
+//        	if(rcData[THROTTLE]>initialRawThrottleHold)
+//        		setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold + rcControlsConfig()->alt_hold_deadband)+20);
+//        	else
+//        		setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold - rcControlsConfig()->alt_hold_deadband)-20);
+//            velocityControl = 1;
+//            isAltHoldChanged = 1;
+//        } else if (isAltHoldChanged) {									//当油门在死区内时，isAltHoldChanged可使清零只执行一次
+//            AltHold = EstAlt;
+//            AltHold_debug = AltHold;
+//            setVelocity = 0;
+//            isAltHoldChanged = 0;
+//        }
+
         if (ABS(rcData[THROTTLE] - initialRawThrottleHold) > rcControlsConfig()->alt_hold_deadband) {
             // set velocity proportional to stick movement +100 throttle gives ~ +50 cm/s
-        	if(rcData[THROTTLE]>initialRawThrottleHold)
-        		setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold + rcControlsConfig()->alt_hold_deadband)+20);
-        	else
-        		setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold - rcControlsConfig()->alt_hold_deadband)-20);
+            setVelocity = (rcData[THROTTLE] - initialRawThrottleHold) / 2;
+            setVelocity_debug = setVelocity;
             velocityControl = 1;
             isAltHoldChanged = 1;
         } else if (isAltHoldChanged) {									//当油门在死区内时，isAltHoldChanged可使清零只执行一次
             AltHold = EstAlt;
             AltHold_debug = AltHold;
-            setVelocity = 0;
+            velocityControl = 0;
             isAltHoldChanged = 0;
         }
         setVelocity_debug = setVelocity;
@@ -124,19 +137,6 @@ static void applyMultirotorAltHold(void)
 		{
 			debug[3] = setVelocity;
 		}
-//        if (ABS(rcData[THROTTLE] - initialRawThrottleHold) > rcControlsConfig()->alt_hold_deadband) {
-//            // set velocity proportional to stick movement +100 throttle gives ~ +50 cm/s
-//            setVelocity = (rcData[THROTTLE] - initialRawThrottleHold) / 2;
-//        	setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold + rcControlsConfig()->alt_hold_deadband));
-//            setVelocity_debug = setVelocity;
-//            velocityControl = 1;
-//            isAltHoldChanged = 1;
-//        } else if (isAltHoldChanged) {									//当油门在死区内时，isAltHoldChanged可使清零只执行一次
-//            AltHold = EstAlt;
-//            AltHold_debug = AltHold;
-//            velocityControl = 0;
-//            isAltHoldChanged = 0;
-//        }
         //进入高度保持模式的手动油门值 + 高度保持控制器输出的油门控制量
         rcCommand[THROTTLE] = constrain(initialThrottleHold + altHoldThrottleAdjustment, motorConfig()->minthrottle, motorConfig()->maxthrottle);
     }
@@ -214,6 +214,24 @@ void updateIRrangfdAltHoldState(void)
     }
 }
 
+void updateMwraderAltHoldState(void)
+{
+    // rader alt hold activate
+    if (!rcModeIsActive(BOXMWRADER)) {
+        DISABLE_FLIGHT_MODE(MWRADER_MODE);
+        return;
+    }
+
+    if (!FLIGHT_MODE(MWRADER_MODE)) {
+        ENABLE_FLIGHT_MODE(MWRADER_MODE);
+        AltHold = EstAlt;
+        initialRawThrottleHold = rcData[THROTTLE];
+        initialThrottleHold = rcCommand[THROTTLE];
+        errorVelocityI = 0;
+        altHoldThrottleAdjustment = 0;
+    }
+}
+
 
 bool isThrustFacingDownwards(attitudeEulerAngles_t *attitude)
 {
@@ -232,13 +250,13 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
 
     // Altitude P-Controller
 
-//    if (!velocityControl) {
-//        error = constrain(AltHold - EstAlt, -500, 500);
-//        error = applyDeadband(error, 10); // remove small P parameter to reduce noise near zero position
-//        setVel = constrain((pidProfile()->P8[PIDALT] * error / 128), -300, +300); // limit velocity to +/- 3 m/s
-//    } else {
+    if (!velocityControl) {
+        error = constrain(AltHold - EstAlt, -500, 500);
+        error = applyDeadband(error, 10); // remove small P parameter to reduce noise near zero position
+        setVel = constrain((pidProfile()->P8[PIDALT] * error / 128), -300, +300); // limit velocity to +/- 3 m/s
+    } else {
         setVel = setVelocity;
-//    }
+    }
     // Velocity PID-Controller
 
     // P
@@ -367,12 +385,32 @@ void calculateEstimatedAltitude(uint32_t currentTime)
         }
     }
 #elif defined(MWRADER)
-//    if(ismwraderWorkFind()==true)
-//    {
+    if(ismwraderWorkFind()==true)
+    {
     	mwraderAlt = mwraderRead();
     	mwraderAlt_debug = mwraderAlt;
+	    if (debugMode == DEBUG_IRRANGFD)
+	    {
+	        debug[2] = mwraderAlt;
+	    }
+	    mwraderAlt = mwraderCalculateAltitude(mwraderAlt, getCosTiltAngle());
+	}
+	else{
+		mwraderAlt = 0;
+	}
 
-//    }
+	if (mwraderAlt > 0 && mwraderAlt < mwrader.mwraderCfAltCm) {
+		// just use the IRrangefinder
+		baroAlt_offset = BaroAlt - mwraderAlt;
+		BaroAlt = mwraderAlt;
+	} else {
+		BaroAlt -= baroAlt_offset;
+		if (mwraderAlt > 0  && mwraderAlt <= mwrader.mwraderMaxAltWithTiltCm) {
+			// rader in range, so use complementary filter
+			mwraderTransition = (float)(mwrader.mwraderMaxAltWithTiltCm - mwraderAlt) / (mwrader.mwraderMaxAltWithTiltCm - mwrader.mwraderCfAltCm);
+			BaroAlt = mwraderAlt * mwraderTransition + BaroAlt * (1.0f - mwraderTransition);
+		}
+	}
 #endif
 
     dt = accTimeSum * 1e-6f; // delta acc reading time in seconds
@@ -419,6 +457,13 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     if (irrangfdAlt > 0 && irrangfdAlt < irrangfd.irrangfdCfAltCm) {
         // the IRrangefinder has the best range
         EstAlt = BaroAlt;					//当IRrangefinder处于良好测量距离时，垂直位置只使用IRrangefinder数据
+    } else {
+        EstAlt = accAlt;					//否则使用acc积分、气压、IR三者融合的数据
+    }
+#elif defined(MWRADER)
+    if (mwraderAlt > 0 && mwraderAlt < mwrader.mwraderCfAltCm) {
+        // the rader has the best range
+        EstAlt = BaroAlt;					//当rader处于良好测量距离时，垂直位置只使用rader数据
     } else {
         EstAlt = accAlt;					//否则使用acc积分、气压、IR三者融合的数据
     }
@@ -469,19 +514,10 @@ int32_t altitudeGetCfVel(void)
 	return (int32_t)velcf_debug;
 }
 
-//int32_t altitudeGetIRangfdalt(void)
-//{
-//	return irrangfdAlt_debug;
-//}
-//int32_t altitudeGetIRangfdRawalt(void)
-//{
-//	return irrangfdAltRaw_debug;
-//}
-
- int16_t altitudeGetMwraderAlt(void)
- {
-	 return mwraderAlt_debug;
- }
+int16_t altitudeGetMwraderAlt(void)
+{
+ return mwraderAlt_debug;
+}
 
 int32_t altitudeGetBaroVel(void)
 {
@@ -501,7 +537,6 @@ int32_t altitudeGetsetVel(void)
 {
 	return setVelocity_debug;
 }
-
 
 #endif
 

@@ -26,6 +26,6 @@ extern mwrader_t mwrader;
 
 void mwraderUpdate(void);
 int32_t mwraderRead(void);
-int32_t mwraderCalculateAltitude(int32_t irrangfdDistance, float cosTiltAngle);
+int32_t mwraderCalculateAltitude(int32_t mwraderDistance, float cosTiltAngle);
 int32_t mwraderGetLatestAltitude(void);
 bool ismwraderWorkFind(void);

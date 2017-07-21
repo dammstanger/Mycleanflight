@@ -14,6 +14,7 @@
 
 #include "common/maths.h"
 #include "common/axis.h"
+#include "common/filter.h"
 
 #include "config/parameter_group.h"
 #include "config/feature.h"
@@ -72,7 +73,7 @@ void mwraderUpdate(void)
 {
 	//对于不能自动连续测量回传数据的模块，使用命令触发
 #ifdef USE_ZB005
-	zbMwWrtCmd();
+
 	zbMwSensorWorkChk();
 #endif
 }
@@ -85,6 +86,14 @@ bool ismwraderWorkFind()
 #endif
 }
 
+
+int32_t sectionlpf(int32_t datin,float dt)
+{
+	static float dat_lpf;
+	dat_lpf = dat_lpf + (1/(1+1/(0.5*M_PIf*dt)))*(datin-dat_lpf);
+	return (int32_t)(dat_lpf+0.5);
+}
+
 /**
  * Get the last distance measured by the irrangefinder in centimeters. When the ground is too far away, SONAR_OUT_OF_RANGE is returned.
  */
@@ -94,7 +103,12 @@ int32_t mwraderRead(void)
     if (distance > mwrader.mwraderMaxRangeCm)
         distance = MWRADER_OUT_OF_RANGE;
 
-    return applyMwraderMedianFilter(distance);
+//    pt1Filter_t raderlpf;
+//    return (int32_t)(pt1FilterApply4(&raderlpf,distance,1.0,0.05)+0.5);			//4舍5入
+//    return applyMwraderMedianFilter(distance);
+    if(distance!=MWRADER_OUT_OF_RANGE)
+    	return sectionlpf(distance, 0.05);
+    else return distance;
 }
 
 /**

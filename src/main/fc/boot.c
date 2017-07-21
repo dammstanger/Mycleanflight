@@ -842,9 +842,11 @@ void configureScheduler(void)
 #ifdef IRRANGFD
     setTaskEnabled(TASK_IRRANGFD, sensors(SENSOR_IRRANGFD));			//dammstanger 20170705
 #endif
-
-#if defined(BARO) || defined(SONAR) || defined(IRRANGFD)
-    setTaskEnabled(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR) || sensors(SENSOR_IRRANGFD));		//dammstanger	20170705
+#ifdef MWRADER
+    setTaskEnabled(TASK_MWRADER, sensors(SENSOR_MWRADER));				//dammstanger 20170721
+#endif
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADER)
+    setTaskEnabled(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR) || sensors(SENSOR_IRRANGFD) || sensors(SENSOR_MWRADER));		//dammstanger	20170705
 #endif
 #ifdef DISPLAY
     setTaskEnabled(TASK_DISPLAY, feature(FEATURE_DISPLAY));
@@ -853,7 +855,7 @@ void configureScheduler(void)
     setTaskEnabled(TASK_TELEMETRY, feature(FEATURE_TELEMETRY));
 #endif
 #ifdef LED_STRIP
-//    setTaskEnabled(TASK_LEDSTRIP, feature(FEATURE_LED_STRIP));
+    setTaskEnabled(TASK_LEDSTRIP, feature(FEATURE_LED_STRIP));
 #endif
 #ifdef TRANSPONDER
     setTaskEnabled(TASK_TRANSPONDER, feature(FEATURE_TRANSPONDER));

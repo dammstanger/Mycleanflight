@@ -148,8 +148,8 @@
 #define ADC_AMPERAGE     ADC_CHANNEL1
 #define ADC_RSSI        ADC_CHANNEL2
 
-#define LED_STRIP
-#define LED_STRIP_TIMER TIM1
+//#define LED_STRIP
+//#define LED_STRIP_TIMER TIM1
 
 #define WS2811_GPIO                     GPIOA
 #define WS2811_GPIO_AHB_PERIPHERAL      RCC_AHBPeriph_GPIOA

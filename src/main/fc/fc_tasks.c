@@ -157,7 +157,16 @@ cfTask_t cfTasks[] = {
     },
 #endif
 
-#if defined(BARO) || defined(SONAR) || defined(IRRANGFD)
+#ifdef MWRADER
+    [TASK_MWRADER] = {
+        .taskName = "MWRADER",
+        .taskFunc = taskMwraderCheck,
+        .desiredPeriod = TASK_PERIOD_MS(50),
+        .staticPriority = TASK_PRIORITY_MEDIUM,
+    },
+#endif
+
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADER)
     [TASK_ALTITUDE] = {
         .taskName = "ALTITUDE",
         .taskFunc = taskCalculateAltitude,
@@ -202,12 +211,12 @@ cfTask_t cfTasks[] = {
     },
 #endif
 
-//#ifdef LED_STRIP
-//    [TASK_LEDSTRIP] = {
-//        .taskName = "LEDSTRIP",
-//        .taskFunc = taskLedStrip,
-//        .desiredPeriod = TASK_PERIOD_MS(10),
-//        .staticPriority = TASK_PRIORITY_IDLE,
-//    },
-//#endif
+#ifdef LED_STRIP
+    [TASK_LEDSTRIP] = {
+        .taskName = "LEDSTRIP",
+        .taskFunc = taskLedStrip,
+        .desiredPeriod = TASK_PERIOD_MS(10),
+        .staticPriority = TASK_PRIORITY_IDLE,
+    },
+#endif
 };
