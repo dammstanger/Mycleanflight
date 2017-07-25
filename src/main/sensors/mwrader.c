@@ -87,8 +87,8 @@ bool ismwraderWorkFind()
 }
 
 //方向选择性低通滤波器，相对高度上升时与相对高度下降时参数2*f不同
-#define RISE_2F 0.45f
-#define DEC_2F 0.55f	//下降时截止频率高
+#define RISE_2F 0.7f
+#define DEC_2F 0.7f	//下降时截止频率高
 int32_t sectionlpf(int32_t datin,float dt)
 {
 	static float dat_lpf;

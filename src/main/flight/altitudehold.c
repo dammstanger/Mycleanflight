@@ -133,10 +133,6 @@ static void applyMultirotorAltHold(void)
         }
         setVelocity_debug = setVelocity;
 
-		if (debugMode == DEBUG_IRRANGFD)
-		{
-			debug[3] = setVelocity;
-		}
         //进入高度保持模式的手动油门值 + 高度保持控制器输出的油门控制量
         rcCommand[THROTTLE] = constrain(initialThrottleHold + altHoldThrottleAdjustment, motorConfig()->minthrottle, motorConfig()->maxthrottle);
     }
@@ -331,6 +327,10 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 
     BaroAlt = baroCalculateAltitude();
     BaroAlt_debug = BaroAlt;
+	if (debugMode == DEBUG_MWRADER)
+	{
+		debug[3] = BaroAlt;
+	}
 #else
     BaroAlt = 0;
 #endif
@@ -389,7 +389,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     {
     	mwraderAlt = mwraderRead();
     	mwraderAlt_debug = mwraderAlt;
-	    if (debugMode == DEBUG_IRRANGFD)
+	    if (debugMode == DEBUG_MWRADER)
 	    {
 	        debug[2] = mwraderAlt;
 	    }
@@ -399,18 +399,29 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 		mwraderAlt = 0;
 	}
 
-	if (mwraderAlt > 0 && mwraderAlt < mwrader.mwraderCfAltCm) {
-		// just use the IRrangefinder
-		baroAlt_offset = BaroAlt - mwraderAlt;
-		BaroAlt = mwraderAlt;
-	} else {
-		BaroAlt -= baroAlt_offset;
-		if (mwraderAlt > 0  && mwraderAlt <= mwrader.mwraderMaxAltWithTiltCm) {
-			// rader in range, so use complementary filter
-			mwraderTransition = (float)(mwrader.mwraderMaxAltWithTiltCm - mwraderAlt) / (mwrader.mwraderMaxAltWithTiltCm - mwrader.mwraderCfAltCm);
-			BaroAlt = mwraderAlt * mwraderTransition + BaroAlt * (1.0f - mwraderTransition);
-		}
-	}
+//	if (mwraderAlt > 0 && mwraderAlt < mwrader.mwraderCfAltCm) {
+//		// just use the IRrangefinder
+//		baroAlt_offset = BaroAlt - mwraderAlt;
+//		BaroAlt = mwraderAlt;
+//	} else {
+//		BaroAlt -= baroAlt_offset;
+//		if (mwraderAlt > 0  && mwraderAlt <= mwrader.mwraderMaxAltWithTiltCm) {
+//			// rader in range, so use complementary filter
+//			mwraderTransition = (float)(mwrader.mwraderMaxAltWithTiltCm - mwraderAlt) / (mwrader.mwraderMaxAltWithTiltCm - mwrader.mwraderCfAltCm);
+//			BaroAlt = mwraderAlt * mwraderTransition + BaroAlt * (1.0f - mwraderTransition);
+//		}
+//	}
+
+    if(mwraderAlt>0){
+    	baroAlt_offset = BaroAlt - mwraderAlt;
+    	if(mwraderAlt>BaroAlt+50){
+    		BaroAlt = BaroAlt - baroAlt_offset;
+    	}
+    	else if(mwraderAlt<BaroAlt){
+    		BaroAlt = mwraderAlt;
+    	}
+
+    }
 #endif
 
     dt = accTimeSum * 1e-6f; // delta acc reading time in seconds

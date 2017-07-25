@@ -63,7 +63,7 @@
 #if defined(MWRADER) && defined(USE_ZB005)
 
 #define REVDATASIZE_MAX 18
-#define ZB_MAXRANGECM	1200
+#define ZB_MAXRANGECM	300
 #define ZB_DETECTION_CONE_DECIDEGREES 360 //  recommended cone angle 36 degrees, 单位0.1度
 #define ZB_DETECTION_CONE_EXTENDED_DECIDEGREES 450
 
@@ -217,7 +217,7 @@ void zbRevDat_Callback(uint16_t dat)
 			check = 0;
 			revdatflg = true;						//到达这里说明数据有效
 
-		    if (debugMode == DEBUG_IRRANGFD)
+		    if (debugMode == DEBUG_MWRADER)
 		    {
 		        debug[0] = zbMwData.dist;
 		        debug[1] = zbMwData.vel;
@@ -264,7 +264,7 @@ void tst_Nra24PakHandle(uint16_t dat)
 			}
 			else return;
 
-		    if (debugMode == DEBUG_IRRANGFD)
+		    if (debugMode == DEBUG_MWRADER)
 		    {
 		        debug[0] = zbMwData.dist;
 		    }
