@@ -399,12 +399,10 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 		mwraderAlt = 0;
 	}
 
-    if(isAltHoldChanged==0 && isAltHoldChanged_last==1)
+    if(isAltHoldChanged)
     	if(mwraderAltRaw<mwrader.mwraderMaxRangeCm){
     		EstAlt_tmp = mwraderAlt;							//回到量程范围且是下降过程需要把高度差消除
-    		AltHold = EstAlt_tmp;
     	}
-
     	isAltHoldChanged_last = isAltHoldChanged;
 
 	if (mwraderAlt > 0 && mwraderAlt < mwrader.mwraderCfAltCm) {
