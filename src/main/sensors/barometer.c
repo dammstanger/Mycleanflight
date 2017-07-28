@@ -172,6 +172,21 @@ int32_t baroCalculateAltitude(void)
     return BaroAlt;
 }
 
+//用于外部随时修改零点值的高度计算
+void baroCalculateDaltaAlt(int32_t *intgalt)
+{
+    int32_t BaroAlt_dalta;
+
+    if (isBaroCalibrationComplete()) {
+    	BaroAlt_dalta = lrintf((1.0f - powf((float)(baroPressureSum / PRESSURE_SAMPLE_COUNT) / 101325.0f, 0.190295f)) * 4433000.0f); // in cm
+    	BaroAlt_dalta -= baroGroundAltitude;
+    	*intgalt = lrintf((float)(*intgalt) * barometerConfig()->baro_noise_lpf + (float)BaroAlt_dalta * (1.0f - barometerConfig()->baro_noise_lpf)); // additional LPF to reduce baro noise
+    }
+    else {
+    	*intgalt = 0;
+    }
+}
+
 void performBaroCalibrationCycle(void)
 {
     baroGroundPressure -= baroGroundPressure / 8;

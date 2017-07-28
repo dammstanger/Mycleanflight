@@ -971,7 +971,7 @@ static void loadMainState(void)
 //    }
 
     blackboxCurrent->accSmooth[0] = altitudeGetImuBasedVel();
-    blackboxCurrent->accSmooth[1] = altitudeGetBaroVel();
+    blackboxCurrent->accSmooth[1] = altitudeGetNoneImuVel();
     blackboxCurrent->accSmooth[2] = altitudeGetCfVel();
 
     for (i = 0; i < motorCount; i++) {

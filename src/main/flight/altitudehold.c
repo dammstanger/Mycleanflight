@@ -84,9 +84,13 @@ PG_RESET_TEMPLATE(airplaneConfig_t, airplaneConfig,
 
 static int32_t AltHold_debug = 0;
 static int32_t setVelocity_debug = 0;
+static uint8_t isAltHoldChanged = 0;
 static void applyMultirotorAltHold(void)
 {
-    static uint8_t isAltHoldChanged = 0;
+//#ifdef MWRADER
+//    int32_t rela_alt;
+//
+//#endif
     // multirotor alt hold
     if (rcControlsConfig()->alt_hold_fast_change) {		//本质是死区内使用高度位置保持，死去外直接油门控制
         // rapid alt changes
@@ -104,35 +108,21 @@ static void applyMultirotorAltHold(void)
         }
     } else {
         // slow alt changes, mostly used for aerial photography
-//        if (ABS(rcData[THROTTLE] - initialRawThrottleHold) > rcControlsConfig()->alt_hold_deadband) {
-//            // set velocity proportional to stick movement +100 throttle gives ~ +50 cm/s
-//        	if(rcData[THROTTLE]>initialRawThrottleHold)
-//        		setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold + rcControlsConfig()->alt_hold_deadband)+20);
-//        	else
-//        		setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold - rcControlsConfig()->alt_hold_deadband)-20);
-//            velocityControl = 1;
-//            isAltHoldChanged = 1;
-//        } else if (isAltHoldChanged) {									//当油门在死区内时，isAltHoldChanged可使清零只执行一次
-//            AltHold = EstAlt;
-//            AltHold_debug = AltHold;
-//            setVelocity = 0;
-//            isAltHoldChanged = 0;
-//        }
-
         if (ABS(rcData[THROTTLE] - initialRawThrottleHold) > rcControlsConfig()->alt_hold_deadband) {
-            // set velocity proportional to stick movement +100 throttle gives ~ +50 cm/s
-            setVelocity = (rcData[THROTTLE] - initialRawThrottleHold) / 2;
-            setVelocity_debug = setVelocity;
+        // 设置初始目标速度为+-20cm/s
+        	if(rcData[THROTTLE]>initialRawThrottleHold)
+        		setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold + rcControlsConfig()->alt_hold_deadband)+20);
+        	else
+        		setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold - rcControlsConfig()->alt_hold_deadband)-20);
             velocityControl = 1;
             isAltHoldChanged = 1;
         } else if (isAltHoldChanged) {									//当油门在死区内时，isAltHoldChanged可使清零只执行一次
             AltHold = EstAlt;
-            AltHold_debug = AltHold;
             velocityControl = 0;
             isAltHoldChanged = 0;
         }
         setVelocity_debug = setVelocity;
-
+        AltHold_debug = AltHold;
         //进入高度保持模式的手动油门值 + 高度保持控制器输出的油门控制量
         rcCommand[THROTTLE] = constrain(initialThrottleHold + altHoldThrottleAdjustment, motorConfig()->minthrottle, motorConfig()->maxthrottle);
     }
@@ -253,8 +243,8 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
     } else {
         setVel = setVelocity;
     }
-    // Velocity PID-Controller
 
+    // Velocity PID-Controller
     // P
     error = setVel - vel_tmp;
     result = constrain((pidProfile()->P8[PIDVEL] * error / 32), -300, +300);
@@ -274,25 +264,27 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
 static float altimu_debug = 0.0f;
 static float velimu_debug = 0.0f;
 static float velcf_debug = 0.0f;
-//static int32_t irrangfdAlt_debug = 0;
-//static int32_t irrangfdAltRaw_debug = 0;
-static float baroVel_debug = 0.0f;
+static float noneimuVel_debug = 0.0f;
 static int32_t BaroAlt_debug = 0;
 static int32_t mwraderAlt_debug = 0;
 
+#define WAVERANGE 50				//cm
 void calculateEstimatedAltitude(uint32_t currentTime)
 {
     static uint32_t previousTime;
     uint32_t dTime;
-    int32_t baroVel;
+    static int32_t noneimuvel;
     float dt;
     float vel_acc;
     int32_t vel_tmp;
     float accZ_tmp;
     static float accZ_old = 0.0f;
-    static float vel = 0.0f;
+    static float imuVel = 0.0f;
+    static float estVel = 0.0f;
     static float accAlt = 0.0f;
-    static int32_t lastBaroAlt;
+    static int32_t EstAlt_tmp = 0;
+    static int32_t EstAlt_tmp_last;
+    static uint8_t isAltHoldChanged_last = 0;
 
     float dx;
 
@@ -308,8 +300,12 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 #elif defined(MWRADER)
 
     int32_t mwraderAlt = MWRADER_OUT_OF_RANGE;
+    int32_t mwraderAltRaw = MWRADER_OUT_OF_RANGE;
+    static int32_t BaroAlt_rela = 15;			//初始化雷达地面高度
     static int32_t baroAlt_offset = 0;
+    static int32_t EstAlt_offset = 0;
     float mwraderTransition;
+    static u8 isRaderStartWave = 0;				//初始摆动标记
 #endif
 
     dTime = currentTime - previousTime;			//单位us
@@ -321,18 +317,24 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 #ifdef BARO
     if (!isBaroCalibrationComplete()) {
         performBaroCalibrationCycle();
-        vel = 0;
+        estVel = 0;
+        imuVel = 0;
         accAlt = 0;
     }
-
-    BaroAlt = baroCalculateAltitude();
-    BaroAlt_debug = BaroAlt;
-	if (debugMode == DEBUG_MWRADER)
-	{
-		debug[3] = BaroAlt;
-	}
+	#ifdef MWRADER
+	    baroCalculateAltitude();
+	    EstAlt_tmp = BaroAlt;
+		baroCalculateDaltaAlt(&BaroAlt_rela);
+		BaroAlt_debug = BaroAlt;
+		if (debugMode == DEBUG_MWRADER)
+		{
+			debug[0] = BaroAlt_rela;
+		}
+	#else
+		EstAlt_tmp = baroCalculateAltitude();
+	#endif
 #else
-    BaroAlt = 0;
+    EstAlt_tmp = 0;
 #endif
 
 #ifdef SONAR
@@ -341,14 +343,14 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 
     if (sonarAlt > 0 && sonarAlt < sonarCfAltCm) {
         // just use the SONAR
-        baroAlt_offset = BaroAlt - sonarAlt;
-        BaroAlt = sonarAlt;
+        baroAlt_offset = EstAlt_tmp - sonarAlt;
+        EstAlt_tmp = sonarAlt;
     } else {
-        BaroAlt -= baroAlt_offset;
+        EstAlt_tmp -= baroAlt_offset;
         if (sonarAlt > 0  && sonarAlt <= sonarMaxAltWithTiltCm) {
             // SONAR in range, so use complementary filter
             sonarTransition = (float)(sonarMaxAltWithTiltCm - sonarAlt) / (sonarMaxAltWithTiltCm - sonarCfAltCm);
-            BaroAlt = sonarAlt * sonarTransition + BaroAlt * (1.0f - sonarTransition);
+            EstAlt_tmp = sonarAlt * sonarTransition + EstAlt_tmp * (1.0f - sonarTransition);
         }
     }
     //dammstanger 20170705
@@ -374,53 +376,82 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 
     if (irrangfdAlt > 0 && irrangfdAlt < irrangfd.irrangfdCfAltCm) {
         // just use the IRrangefinder
-        baroAlt_offset = BaroAlt - irrangfdAlt;
-        BaroAlt = irrangfdAlt;
+        baroAlt_offset = EstAlt_tmp - irrangfdAlt;
+        EstAlt_tmp = irrangfdAlt;
     } else {
-        BaroAlt -= baroAlt_offset;
+        EstAlt_tmp -= baroAlt_offset;
         if (irrangfdAlt > 0  && irrangfdAlt <= irrangfd.irrangfdMaxAltWithTiltCm) {
             // IRrangefinder in range, so use complementary filter
         	irrangfdTransition = (float)(irrangfd.irrangfdMaxAltWithTiltCm - irrangfdAlt) / (irrangfd.irrangfdMaxAltWithTiltCm - irrangfd.irrangfdCfAltCm);
-            BaroAlt = irrangfdAlt * irrangfdTransition + BaroAlt * (1.0f - irrangfdTransition);
+            EstAlt_tmp = irrangfdAlt * irrangfdTransition + EstAlt_tmp * (1.0f - irrangfdTransition);
         }
     }
 #elif defined(MWRADER)
     if(ismwraderWorkFind()==true)
     {
     	mwraderAlt = mwraderRead();
-    	mwraderAlt_debug = mwraderAlt;
-	    if (debugMode == DEBUG_MWRADER)
-	    {
-	        debug[2] = mwraderAlt;
-	    }
+    	mwraderAlt_debug = mwraderAlt;												//debug
 	    mwraderAlt = mwraderCalculateAltitude(mwraderAlt, getCosTiltAngle());
+
+	    mwraderAltRaw = mwraderReadRaw();
 	}
 	else{
 		mwraderAlt = 0;
 	}
 
-//	if (mwraderAlt > 0 && mwraderAlt < mwrader.mwraderCfAltCm) {
-//		// just use the IRrangefinder
-//		baroAlt_offset = BaroAlt - mwraderAlt;
-//		BaroAlt = mwraderAlt;
-//	} else {
-//		BaroAlt -= baroAlt_offset;
-//		if (mwraderAlt > 0  && mwraderAlt <= mwrader.mwraderMaxAltWithTiltCm) {
-//			// rader in range, so use complementary filter
-//			mwraderTransition = (float)(mwrader.mwraderMaxAltWithTiltCm - mwraderAlt) / (mwrader.mwraderMaxAltWithTiltCm - mwrader.mwraderCfAltCm);
-//			BaroAlt = mwraderAlt * mwraderTransition + BaroAlt * (1.0f - mwraderTransition);
-//		}
-//	}
-
-    if(mwraderAlt>0){
-    	baroAlt_offset = BaroAlt - mwraderAlt;
-    	if(mwraderAlt>BaroAlt+50){
-    		BaroAlt = BaroAlt - baroAlt_offset;
-    	}
-    	else if(mwraderAlt<BaroAlt){
-    		BaroAlt = mwraderAlt;
+    if(isAltHoldChanged==0 && isAltHoldChanged_last==1)
+    	if(mwraderAltRaw<mwrader.mwraderMaxRangeCm){
+    		EstAlt_tmp = mwraderAlt;							//回到量程范围且是下降过程需要把高度差消除
+    		AltHold = EstAlt_tmp;
     	}
 
+    	isAltHoldChanged_last = isAltHoldChanged;
+
+	if (mwraderAlt > 0 && mwraderAlt < mwrader.mwraderCfAltCm) {
+		// just use the IRrangefinder
+		baroAlt_offset = EstAlt_tmp - mwraderAlt;
+		EstAlt_tmp = mwraderAlt;
+	} else {
+		EstAlt_tmp -= baroAlt_offset;
+		if (mwraderAlt > 0 && mwraderAlt <= mwrader.mwraderMaxAltWithTiltCm) {
+			// rader in range, so use complementary filter
+			mwraderTransition = (float)(mwrader.mwraderMaxAltWithTiltCm - mwraderAlt) / (mwrader.mwraderMaxAltWithTiltCm - mwrader.mwraderCfAltCm);
+			EstAlt_tmp = mwraderAlt * mwraderTransition + EstAlt_tmp * (1.0f - mwraderTransition);
+		}
+	}
+
+//    if(mwraderAlt>0 && mwraderAlt < mwrader.mwraderMaxAltWithTiltCm){
+////    	baroAlt_offset = BaroAlt - mwraderAlt;
+//    	EstAlt_offset = EstAlt_tmp - mwraderAltRaw;
+//	    if (debugMode == DEBUG_MWRADER)
+//	    {
+//	        debug[2] = EstAlt_offset;
+//	    }
+//    	if(EstAlt_offset < -WAVERANGE){
+//    		if(isRaderStartWave==0){
+//    			isRaderStartWave = 1;
+//    			BaroAlt_rela = EstAlt_tmp;
+//    		}
+//    			EstAlt_tmp = BaroAlt_rela;
+//    	}
+//
+//    	else if(EstAlt_offset>=-WAVERANGE && EstAlt_offset<0){
+//    		isRaderStartWave = 0;
+//			mwraderTransition = -(float)EstAlt_offset / WAVERANGE;
+//			EstAlt_tmp = mwraderAlt * mwraderTransition + EstAlt_tmp  * (1.0f - mwraderTransition);
+//    	}
+//       	else{
+//        		isRaderStartWave = 0;
+//        		EstAlt_tmp = mwraderAlt;
+//        	}
+//    }
+//    else{
+//    	EstAlt_tmp = BaroAlt_rela;
+//    }
+
+    if (debugMode == DEBUG_MWRADER)
+    {
+        debug[3] = EstAlt_tmp;
     }
 #endif
 
@@ -435,14 +466,14 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     vel_acc = accZ_tmp * accVelScale * (float)accTimeSum;		//accTimeSum的acc积分出来的垂直速度 dv= a*dt
 
     // Integrator - Altitude in cm								位移公式由acc计算得到的垂直位置
-    dx = (vel_acc * 0.5f) * dt + vel * dt;            		// integrate velocity to get distance dx = (1/2)*a*dt^2 + v0*dt  alt = alt +dx
+    dx = (vel_acc * 0.5f) * dt + estVel * dt;            		// integrate velocity to get distance dx = (1/2)*a*dt^2 + v0*dt  alt = alt +dx
     accAlt += dx;
     altimu_debug += dx;
 #ifdef BARO
-    accAlt = accAlt * barometerConfig()->baro_cf_alt + (float)BaroAlt * (1.0f - barometerConfig()->baro_cf_alt);    // complementary filter for altitude estimation (baro & acc)
+    accAlt = accAlt * barometerConfig()->baro_cf_alt + (float)EstAlt_tmp * (1.0f - barometerConfig()->baro_cf_alt);    // complementary filter for altitude estimation (baro & acc)
 #endif															//baro_cf_alt默认0.965
-    vel += vel_acc;						// v = v + dv 累加出速度
-    velimu_debug = vel;
+    imuVel += vel_acc;						// v = v + dv 累加出速度
+    velimu_debug = imuVel;
 #ifdef DEBUG_ALT_HOLD
     debug[1] = accSum[2] / accSumCount; // acceleration
     debug[2] = vel;                     // velocity
@@ -460,41 +491,45 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 #ifdef SONAR
     if (sonarAlt > 0 && sonarAlt < sonarCfAltCm) {
         // the sonar has the best range
-        EstAlt = BaroAlt;					//当声纳处于良好测量距离时，垂直位置只使用声呐数据
+        EstAlt = EstAlt_tmp;					//当声纳处于良好测量距离时，垂直位置只使用声呐数据
     } else {
         EstAlt = accAlt;					//否则使用acc积分、气压、声呐三者融合的数据
     }
 #elif defined(IRRANGFD)
     if (irrangfdAlt > 0 && irrangfdAlt < irrangfd.irrangfdCfAltCm) {
         // the IRrangefinder has the best range
-        EstAlt = BaroAlt;					//当IRrangefinder处于良好测量距离时，垂直位置只使用IRrangefinder数据
+        EstAlt = EstAlt_tmp;					//当IRrangefinder处于良好测量距离时，垂直位置只使用IRrangefinder数据
     } else {
         EstAlt = accAlt;					//否则使用acc积分、气压、IR三者融合的数据
     }
 #elif defined(MWRADER)
     if (mwraderAlt > 0 && mwraderAlt < mwrader.mwraderCfAltCm) {
         // the rader has the best range
-        EstAlt = BaroAlt;					//当rader处于良好测量距离时，垂直位置只使用rader数据
+        EstAlt = EstAlt_tmp;				//当rader处于良好测量距离时，垂直位置只使用rader数据
     } else {
         EstAlt = accAlt;					//否则使用acc积分、气压、IR三者融合的数据
     }
+    BaroAlt = EstAlt;
 #else
     EstAlt = accAlt;
 #endif
 
-    baroVel = (BaroAlt - lastBaroAlt) * 1000000.0f / dTime;		//单位：cm/s
-    lastBaroAlt = BaroAlt;
-
-    baroVel = constrain(baroVel, -1500, 1500);  // constrain baro velocity +/- 1500cm/s
-    baroVel = applyDeadband(baroVel, 10);       // to reduce noise near zero
-    baroVel_debug = baroVel;
+    int32_t d_EstAlt_tmp = EstAlt_tmp - EstAlt_tmp_last;
+    EstAlt_tmp_last = EstAlt_tmp;
+    if(d_EstAlt_tmp<=20){														//如果高度数据跳跃超过极限，则速度使用历史值
+    	noneimuvel = d_EstAlt_tmp * 1000000.0f / dTime;		//单位：cm/s
+		noneimuvel = constrain(noneimuvel, -1500, 1500);  // constrain baro velocity +/- 1500cm/s
+		noneimuvel = applyDeadband(noneimuvel, 10);       // to reduce noise near zero
+    }
+    noneimuVel_debug = noneimuvel;
     // apply Complimentary Filter to keep the calculated velocity based on baro velocity (i.e. near real velocity).
     // By using CF it's possible to correct the drift of integrated accZ (velocity) without loosing the phase, i.e也就是 without delay
 #ifdef BARO
-    vel = vel * barometerConfig()->baro_cf_vel + baroVel * (1.0f - barometerConfig()->baro_cf_vel);			//baro_cf_vel默认0.985
+    estVel = imuVel * barometerConfig()->baro_cf_vel + noneimuvel * (1.0f - barometerConfig()->baro_cf_vel);			//baro_cf_vel默认0.985
 #endif
-    velcf_debug = vel;
-    vel_tmp = lrintf(vel);			//4舍5入取整
+    imuVel = estVel;					//
+    velcf_debug = estVel;
+    vel_tmp = lrintf(estVel);			//4舍5入取整
 
     // set vario
     vario = applyDeadband(vel_tmp, 5);
@@ -530,9 +565,9 @@ int16_t altitudeGetMwraderAlt(void)
  return mwraderAlt_debug;
 }
 
-int32_t altitudeGetBaroVel(void)
+int32_t altitudeGetNoneImuVel(void)
 {
-	return baroVel_debug;
+	return noneimuVel_debug;
 }
 int32_t altitudeGetBaroAlt(void)
 {

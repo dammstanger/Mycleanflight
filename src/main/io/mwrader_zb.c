@@ -219,8 +219,7 @@ void zbRevDat_Callback(uint16_t dat)
 
 		    if (debugMode == DEBUG_MWRADER)
 		    {
-		        debug[0] = zbMwData.dist;
-		        debug[1] = zbMwData.vel;
+		        debug[1] = zbMwData.dist;
 		    }
 		}	// end if(ReceiveData[i-1]==0x0D && ReceiveData[i]==0x0A )
 		else{
@@ -266,7 +265,7 @@ void tst_Nra24PakHandle(uint16_t dat)
 
 		    if (debugMode == DEBUG_MWRADER)
 		    {
-		        debug[0] = zbMwData.dist;
+		        debug[1] = zbMwData.dist;
 		    }
 		}
 		else{

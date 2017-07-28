@@ -87,8 +87,8 @@ bool ismwraderWorkFind()
 }
 
 //方向选择性低通滤波器，相对高度上升时与相对高度下降时参数2*f不同
-#define RISE_2F 0.7f
-#define DEC_2F 0.7f	//下降时截止频率高
+#define RISE_2F 1.5f
+#define DEC_2F 1.5f	//下降时截止频率高
 int32_t sectionlpf(int32_t datin,float dt)
 {
 	static float dat_lpf;
@@ -97,7 +97,7 @@ int32_t sectionlpf(int32_t datin,float dt)
 		dat_lpf = dat_lpf + (1/(1+1/(DEC_2F*M_PIf*dt)))*dalta;
 	else
 		dat_lpf = dat_lpf + (1/(1+1/(RISE_2F*M_PIf*dt)))*dalta;
-	return (int32_t)(dat_lpf+0.5);								//四舍五入
+	return (int32_t)(dat_lpf+0.5);											//四舍五入
 }
 
 /**
@@ -110,11 +110,21 @@ int32_t mwraderRead(void)
         distance = MWRADER_OUT_OF_RANGE;
 
 //    pt1Filter_t raderlpf;
-//    return (int32_t)(pt1FilterApply4(&raderlpf,distance,1.0,0.05)+0.5);			//4舍5入
+//    return (int32_t)(pt1FilterApply4(&raderlpf,distance,1.0,0.05)+0.5);	//4舍5入
 //    return applyMwraderMedianFilter(distance);
     if(distance!=MWRADER_OUT_OF_RANGE)
     	return sectionlpf(distance, 0.05);
     else return distance;
+}
+
+int32_t mwraderReadRaw(void)
+{
+    int32_t distance = zbMw_get_distance();
+    if (distance > mwrader.mwraderMaxRangeCm)
+        distance = MWRADER_OUT_OF_RANGE;
+
+    if(distance!=MWRADER_OUT_OF_RANGE)
+    	return distance;
 }
 
 /**

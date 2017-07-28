@@ -788,7 +788,7 @@ void subTaskMainSubprocesses(void)
     }
     //倾角补偿
     if (throttleCorrectionConfig()->throttle_correction_value &&
-       (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE) || FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(IRRANGFD_MODE))) {		//dammstanger 20170706
+       (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE) || FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(IRRANGFD_MODE) || FLIGHT_MODE(MWRADER_MODE))) {		//dammstanger 20170706
         rcCommand[THROTTLE] += calculateThrottleAngleCorrection(throttleCorrectionConfig()->throttle_correction_value);
     }
     //对控制指令滤波
