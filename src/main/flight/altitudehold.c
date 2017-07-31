@@ -428,8 +428,8 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 
 			// rader in range, so use complementary filter
 //			mwraderTransition = (float)(mwrader.mwraderMaxAltWithTiltCm - mwraderAlt) / (mwrader.mwraderMaxAltWithTiltCm - mwrader.mwraderCfAltCm);
-	    	mwraderTransition = altLookup(mwraderAlt);
-			EstAlt_tmp = mwraderAlt * mwraderTransition + EstAlt_tmp * (1.0f - mwraderTransition);
+	    	mwraderTransition = altLookup(mwraderAlt-mwrader.mwraderCfAltCm);
+			EstAlt_tmp = mwraderAlt * (1.0f - mwraderTransition) + EstAlt_tmp * mwraderTransition;
 		}
 	}
 
