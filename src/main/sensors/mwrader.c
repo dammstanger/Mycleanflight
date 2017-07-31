@@ -24,7 +24,7 @@
 #include "fc/runtime_config.h"
 #include "fc/config.h"
 
-#include "sensors/irrangefinder.h"
+#include "sensors/mwrader.h"
 #include "sensors/sensors.h"
 
 #ifdef MWRADER
@@ -41,6 +41,7 @@ void mwraderInit(void)
     mwrader.mwraderMaxTiltDeciDegrees =  mwrader.mwraderdetectionConeExtendedDeciDegrees / 2;
     mwrader.mwraderMaxTiltCos = cos_approx(mwrader.mwraderMaxTiltDeciDegrees / 10.0f * RAD);
     mwrader.mwraderMaxAltWithTiltCm = mwrader.mwraderMaxRangeCm * mwrader.mwraderMaxTiltCos;
+
 }
 
 #define DISTANCE_SAMPLES_MEDIAN_ZB 5

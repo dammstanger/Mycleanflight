@@ -273,6 +273,7 @@ SYSTEM_SRC = \
 		   $(CMSIS_SRC) \
 		   $(DEVICE_STDPERIPH_SRC)
 
+#add fc/alt_transcurve.c \     dammstanger 20170729
 FC_COMMON_SRC = \
 		   config/feature.c \
 		   config/profile.c \
@@ -288,6 +289,7 @@ FC_COMMON_SRC = \
 		   fc/config.c \
 		   fc/runtime_config.c \
 		   fc/msp_server_fc.c \
+		   fc/alt_transcurve.c \
 		   flight/altitudehold.c \
 		   flight/failsafe.c \
 		   flight/pid.c \

@@ -652,6 +652,7 @@ void init(void)
 #ifdef MWRADER
     if (feature(FEATURE_MWRADER)) {
      	mwraderInit();
+     	generateAltTransCurve(mwrader.mwraderMaxAltWithTiltCm - mwrader.mwraderCfAltCm);
     }
 #endif
 

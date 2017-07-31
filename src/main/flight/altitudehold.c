@@ -47,6 +47,7 @@
 
 #include "io/motors.h"
 
+#include "fc/alt_transcurve.h"
 #include "fc/rc_controls.h"
 #include "fc/runtime_config.h"
 #include "fc/fc_debug.h"
@@ -70,6 +71,7 @@ int32_t vario = 0;                      // variometer in cm/s
 static int16_t initialRawThrottleHold;
 static int16_t initialThrottleHold;
 static int32_t EstAlt;                // in cm
+static int32_t updateAltHoldflg = 0;	//用于中途自动跟新高度保持值
 
 PG_REGISTER_WITH_RESET_TEMPLATE(airplaneConfig_t, airplaneConfig, PG_AIRPLANE_ALT_HOLD_CONFIG, 0);
 
@@ -103,6 +105,10 @@ static void applyMultirotorAltHold(void)
                 AltHold = EstAlt;
                 isAltHoldChanged = 0;
             }
+            else if(updateAltHoldflg){
+            	updateAltHoldflg = 0;
+            	AltHold = EstAlt;
+            }
             //
             rcCommand[THROTTLE] = constrain(initialThrottleHold + altHoldThrottleAdjustment, motorConfig()->minthrottle, motorConfig()->maxthrottle);
         }
@@ -120,6 +126,10 @@ static void applyMultirotorAltHold(void)
             AltHold = EstAlt;
             velocityControl = 0;
             isAltHoldChanged = 0;
+        }
+        else if(updateAltHoldflg){
+        	updateAltHoldflg = 0;
+        	AltHold = EstAlt;
         }
         setVelocity_debug = setVelocity;
         AltHold_debug = AltHold;
@@ -399,12 +409,6 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 		mwraderAlt = 0;
 	}
 
-    if(isAltHoldChanged)
-    	if(mwraderAltRaw<mwrader.mwraderMaxRangeCm){
-    		EstAlt_tmp = mwraderAlt;							//回到量程范围且是下降过程需要把高度差消除
-    	}
-    	isAltHoldChanged_last = isAltHoldChanged;
-
 	if (mwraderAlt > 0 && mwraderAlt < mwrader.mwraderCfAltCm) {
 		// just use the IRrangefinder
 		baroAlt_offset = EstAlt_tmp - mwraderAlt;
@@ -412,8 +416,19 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 	} else {
 		EstAlt_tmp -= baroAlt_offset;
 		if (mwraderAlt > 0 && mwraderAlt <= mwrader.mwraderMaxAltWithTiltCm) {
+	    	if(isAltHoldChanged){
+	    		EstAlt_tmp = mwraderAlt;							//回到量程范围且是下降过程需要把高度差消除
+	    		accAlt = mwraderAlt;
+	    	}
+	    	else if((EstAlt_tmp - mwraderAlt)>20){
+	    		EstAlt_tmp = mwraderAlt;							//回到量程范围且是下降过程需要把高度差消除
+	    		accAlt = mwraderAlt;
+	    		updateAltHoldflg = 1;
+	    	}
+
 			// rader in range, so use complementary filter
-			mwraderTransition = (float)(mwrader.mwraderMaxAltWithTiltCm - mwraderAlt) / (mwrader.mwraderMaxAltWithTiltCm - mwrader.mwraderCfAltCm);
+//			mwraderTransition = (float)(mwrader.mwraderMaxAltWithTiltCm - mwraderAlt) / (mwrader.mwraderMaxAltWithTiltCm - mwrader.mwraderCfAltCm);
+	    	mwraderTransition = altLookup(mwraderAlt);
 			EstAlt_tmp = mwraderAlt * mwraderTransition + EstAlt_tmp * (1.0f - mwraderTransition);
 		}
 	}
