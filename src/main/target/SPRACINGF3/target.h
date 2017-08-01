@@ -181,8 +181,8 @@
 
 //#define SPEKTRUM_BIND
 // UART3,
-#define BIND_PORT  GPIOB
-#define BIND_PIN   Pin_11
+//#define BIND_PORT  GPIOB
+//#define BIND_PIN   Pin_11
 
 //#define USE_SERIAL_4WAY_BLHELI_INTERFACE
 

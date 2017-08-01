@@ -464,7 +464,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 
     if (debugMode == DEBUG_MWRADER)
     {
-        debug[3] = EstAlt_tmp;
+        debug[2] = EstAlt_tmp;
     }
 #endif
 
@@ -487,6 +487,10 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 #endif															//baro_cf_alt默认0.965
     imuVel += vel_acc;						// v = v + dv 累加出速度
     velimu_debug = imuVel;
+    if (debugMode == DEBUG_MWRADER)
+    {
+        debug[3] = accAlt;
+    }
 #ifdef DEBUG_ALT_HOLD
     debug[1] = accSum[2] / accSumCount; // acceleration
     debug[2] = vel;                     // velocity

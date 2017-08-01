@@ -112,10 +112,10 @@ int32_t mwraderRead(void)
 
 //    pt1Filter_t raderlpf;
 //    return (int32_t)(pt1FilterApply4(&raderlpf,distance,1.0,0.05)+0.5);	//4舍5入
-//    return applyMwraderMedianFilter(distance);
-    if(distance!=MWRADER_OUT_OF_RANGE)
-    	return sectionlpf(distance, 0.05);
-    else return distance;
+    return applyMwraderMedianFilter(distance);
+//    if(distance!=MWRADER_OUT_OF_RANGE)
+//    	return sectionlpf(distance, 0.05);
+//    else return distance;
 }
 
 int32_t mwraderReadRaw(void)

@@ -95,7 +95,7 @@ static void zbWmSetState(zbState_e state)
 
 void zbWmInit(mwrader_t *mwrader)
 {
-	zbMwData.baudrateIndex = BAUD_38400;
+	zbMwData.baudrateIndex = BAUD_115200;
 	zbMwData.errors = 0;
 	zbMwData.timeouts = 0;
 
@@ -131,109 +131,109 @@ void tst_Nra24PakHandle(uint16_t dat);
 //对zb005协议包解析 ASCII格式
 void zbRevDat_Callback(uint16_t dat)
 {
-	static u8 check = 0,i = 0;
-	static u8 ReceiveData[REVDATASIZE_MAX] = {0};
-
-	if(check==3)
-	{
-		ReceiveData[i] = (u8)dat;
-
-		if(ReceiveData[i-1]==0x0D && ReceiveData[i]==0x0A )						//到达包尾
-		{
-			if(ReceiveData[3]=='.')
-			{
-				zbMwData.dist = (uint16_t)((ReceiveData[2]-'0')*100 +			//解析出距离
-										  (ReceiveData[4]-'0')*10 +
-										  (ReceiveData[5]-'0'));
-				if(ReceiveData[8]=='.')
-				{
-					zbMwData.vel = (int16_t)((ReceiveData[7]-'0')*100 +			//解析出速度
-											(ReceiveData[9]-'0')*10 +
-											(ReceiveData[10]-'0'));
-				}
-				else if(ReceiveData[10]=='.')
-				{
-					zbMwData.vel = -(int16_t)((ReceiveData[8]-'0')*1000 +		//解析出速度
-											 (ReceiveData[9]-'0')*100 +
-											 (ReceiveData[11]-'0')*10 +
-											 (ReceiveData[12]-'0'));
-				}
-				else if(ReceiveData[9]=='.')
-				{
-					if(ReceiveData[7]=='-')
-					{
-						zbMwData.vel = -(int16_t)((ReceiveData[8]-'0')*100 +	//解析出速度
-												 (ReceiveData[10]-'0')*10 +
-												 (ReceiveData[11]-'0'));
-					}
-					else{
-						zbMwData.vel = (int16_t)((ReceiveData[7]-'0')*1000 +	//解析出速度
-												(ReceiveData[8]-'0')*100 +
-												(ReceiveData[10]-'0')*10 +
-												(ReceiveData[11]-'0'));
-					}
-				}
-				else {i = 0;check = 0;return ;}
-			}//end if(ReceiveData[3]=='.')
-			else if(ReceiveData[4]=='.')
-			{
-				zbMwData.dist = (uint16_t)((ReceiveData[2]-'0')*1000 +			//解析出距离
-										  (ReceiveData[3]-'0')*100 +
-										  (ReceiveData[5]-'0')*10 +
-										  (ReceiveData[6]-'0'));
-				if(ReceiveData[9]=='.')
-				{
-					zbMwData.vel = (int16_t)((ReceiveData[8]-'0')*100 +			//解析出速度
-											(ReceiveData[10]-'0')*10 +
-											(ReceiveData[1]-'0'));
-				}
-				else if(ReceiveData[11]=='.')
-				{
-					zbMwData.vel = -(int16_t)((ReceiveData[9]-'0')*1000 +		//解析出速度
-											 (ReceiveData[10]-'0')*100 +
-											 (ReceiveData[12]-'0')*10 +
-											 (ReceiveData[13]-'0'));
-				}
-				else if(ReceiveData[10]=='.')
-				{
-					if(ReceiveData[7]=='-')
-					{
-						zbMwData.vel = -(int16_t)((ReceiveData[9]-'0')*100 +	//解析出速度
-												 (ReceiveData[11]-'0')*10 +
-												 (ReceiveData[12]-'0'));
-					}
-					else{
-						zbMwData.vel = (int16_t)((ReceiveData[8]-'0')*1000 +	//解析出速度
-												(ReceiveData[9]-'0')*100 +
-												(ReceiveData[11]-'0')*10 +
-												(ReceiveData[12]-'0'));
-					}
-				}
-				else {i = 0;check = 0;return ;}
-			} //end else if(ReceiveData[4]=='.')
-			else {i = 0;check = 0;return ;}
-
-			i = 0;
-			check = 0;
-			revdatflg = true;						//到达这里说明数据有效
-
-		    if (debugMode == DEBUG_MWRADER)
-		    {
-		        debug[1] = zbMwData.dist;
-		    }
-		}	// end if(ReceiveData[i-1]==0x0D && ReceiveData[i]==0x0A )
-		else{
-			i++;
-		}
-	}
-	else{
-		if((dat==0x0A)&&(check==2)) {check = 3;i = 0;}		//first three bytes are 0x31 0x0D 0x0A
-		else if(check==2) check = 0;
-		if((dat==0x0D)&&(check==1)) check = 2;
-		else if(check==1) check = 0;
-		if((dat==0x31)&&(check==0))	check = 1;
-	}
-//	tst_Nra24PakHandle(dat);
+//	static u8 check = 0,i = 0;
+//	static u8 ReceiveData[REVDATASIZE_MAX] = {0};
+//
+//	if(check==3)
+//	{
+//		ReceiveData[i] = (u8)dat;
+//
+//		if(ReceiveData[i-1]==0x0D && ReceiveData[i]==0x0A )						//到达包尾
+//		{
+//			if(ReceiveData[3]=='.')
+//			{
+//				zbMwData.dist = (uint16_t)((ReceiveData[2]-'0')*100 +			//解析出距离
+//										  (ReceiveData[4]-'0')*10 +
+//										  (ReceiveData[5]-'0'));
+//				if(ReceiveData[8]=='.')
+//				{
+//					zbMwData.vel = (int16_t)((ReceiveData[7]-'0')*100 +			//解析出速度
+//											(ReceiveData[9]-'0')*10 +
+//											(ReceiveData[10]-'0'));
+//				}
+//				else if(ReceiveData[10]=='.')
+//				{
+//					zbMwData.vel = -(int16_t)((ReceiveData[8]-'0')*1000 +		//解析出速度
+//											 (ReceiveData[9]-'0')*100 +
+//											 (ReceiveData[11]-'0')*10 +
+//											 (ReceiveData[12]-'0'));
+//				}
+//				else if(ReceiveData[9]=='.')
+//				{
+//					if(ReceiveData[7]=='-')
+//					{
+//						zbMwData.vel = -(int16_t)((ReceiveData[8]-'0')*100 +	//解析出速度
+//												 (ReceiveData[10]-'0')*10 +
+//												 (ReceiveData[11]-'0'));
+//					}
+//					else{
+//						zbMwData.vel = (int16_t)((ReceiveData[7]-'0')*1000 +	//解析出速度
+//												(ReceiveData[8]-'0')*100 +
+//												(ReceiveData[10]-'0')*10 +
+//												(ReceiveData[11]-'0'));
+//					}
+//				}
+//				else {i = 0;check = 0;return ;}
+//			}//end if(ReceiveData[3]=='.')
+//			else if(ReceiveData[4]=='.')
+//			{
+//				zbMwData.dist = (uint16_t)((ReceiveData[2]-'0')*1000 +			//解析出距离
+//										  (ReceiveData[3]-'0')*100 +
+//										  (ReceiveData[5]-'0')*10 +
+//										  (ReceiveData[6]-'0'));
+//				if(ReceiveData[9]=='.')
+//				{
+//					zbMwData.vel = (int16_t)((ReceiveData[8]-'0')*100 +			//解析出速度
+//											(ReceiveData[10]-'0')*10 +
+//											(ReceiveData[1]-'0'));
+//				}
+//				else if(ReceiveData[11]=='.')
+//				{
+//					zbMwData.vel = -(int16_t)((ReceiveData[9]-'0')*1000 +		//解析出速度
+//											 (ReceiveData[10]-'0')*100 +
+//											 (ReceiveData[12]-'0')*10 +
+//											 (ReceiveData[13]-'0'));
+//				}
+//				else if(ReceiveData[10]=='.')
+//				{
+//					if(ReceiveData[7]=='-')
+//					{
+//						zbMwData.vel = -(int16_t)((ReceiveData[9]-'0')*100 +	//解析出速度
+//												 (ReceiveData[11]-'0')*10 +
+//												 (ReceiveData[12]-'0'));
+//					}
+//					else{
+//						zbMwData.vel = (int16_t)((ReceiveData[8]-'0')*1000 +	//解析出速度
+//												(ReceiveData[9]-'0')*100 +
+//												(ReceiveData[11]-'0')*10 +
+//												(ReceiveData[12]-'0'));
+//					}
+//				}
+//				else {i = 0;check = 0;return ;}
+//			} //end else if(ReceiveData[4]=='.')
+//			else {i = 0;check = 0;return ;}
+//
+//			i = 0;
+//			check = 0;
+//			revdatflg = true;						//到达这里说明数据有效
+//
+//		    if (debugMode == DEBUG_MWRADER)
+//		    {
+//		        debug[1] = zbMwData.dist;
+//		    }
+//		}	// end if(ReceiveData[i-1]==0x0D && ReceiveData[i]==0x0A )
+//		else{
+//			i++;
+//		}
+//	}
+//	else{
+//		if((dat==0x0A)&&(check==2)) {check = 3;i = 0;}		//first three bytes are 0x31 0x0D 0x0A
+//		else if(check==2) check = 0;
+//		if((dat==0x0D)&&(check==1)) check = 2;
+//		else if(check==1) check = 0;
+//		if((dat==0x31)&&(check==0))	check = 1;
+//	}
+	tst_Nra24PakHandle(dat);
 //	serialWrite(zbMwPort,dat);
 }
 
