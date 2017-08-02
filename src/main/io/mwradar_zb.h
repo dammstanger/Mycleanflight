@@ -1,5 +1,5 @@
 /*
- * mwrader_zb.h
+ * mwradar_zb.h
  *
  *  Created on: 2017年7月18日
  *      Author: DammStanger
@@ -8,7 +8,7 @@
 #pragma once
 
 #include "platform.h"
-#include "sensors/mwrader.h"
+#include "sensors/mwradar.h"
 
 typedef struct zbMwData_s {
     uint8_t state;                  // PTKir thread state. Used for detecting cable disconnects and configuring attached devices
@@ -21,7 +21,7 @@ typedef struct zbMwData_s {
 } zbMwData_t;
 
 
-void zbWmInit(mwrader_t *mwrader);
+void zbWmInit(mwradar_t *mwradar);
 void zbMwWrtCmd(void);
 int32_t zbMw_get_distance(void);
 void zbMwSensorWorkChk(void);

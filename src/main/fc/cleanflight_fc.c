@@ -544,14 +544,14 @@ void processRx(void)
     bool canUseHorizonMode = true;
     bool canUseBaroMode = true;
     bool canUseIRrangfdMode = true;
-    bool canUseMwraderMode = true;
+    bool canUseMwradarMode = true;
 //angle and failsafe
     if ((rcModeIsActive(BOXANGLE) || (feature(FEATURE_FAILSAFE) && failsafeIsActive())) && (sensors(SENSOR_ACC))) {
         // bumpless transfer to Level mode
         canUseHorizonMode = false;
         canUseBaroMode = false;
         canUseIRrangfdMode = false;
-        canUseMwraderMode = false;
+        canUseMwradarMode = false;
 
         if (!FLIGHT_MODE(ANGLE_MODE)) {
 #ifdef USE_PID_MW23
@@ -606,10 +606,10 @@ void processRx(void)
 		}
 	}
 
-//IRrangfd  dammstanger 20140721	将rader模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
-		if(rcModeIsActive(BOXMWRADER) && canUseMwraderMode){
+//IRrangfd  dammstanger 20140721	将radar模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
+		if(rcModeIsActive(BOXMWRADAR) && canUseMwradarMode){
 
-		if (!FLIGHT_MODE(MWRADER_MODE)) {
+		if (!FLIGHT_MODE(MWRADAR_MODE)) {
 #ifdef USE_PID_MW23
 			pidResetITermAngle();
 #endif
@@ -751,14 +751,14 @@ void subTaskMainSubprocesses(void)
         updateGtuneState();
 #endif
 
-#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADER)
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADAR)
         // FIXME outdated comments?
         // updateRcCommands sets rcCommand, which is needed by updateAltHoldState and updateSonarAltHoldState
         // this must be called here since applyAltHold directly manipulates rcCommands[]
         updateRcCommands();
 
-        if (sensors(SENSOR_BARO) || sensors(SENSOR_SONAR) || sensors(SENSOR_IRRANGFD) || sensors(SENSOR_MWRADER)) {
-            if (FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(SONAR_MODE) || FLIGHT_MODE(IRRANGFD_MODE)  || FLIGHT_MODE(MWRADER_MODE) ) {
+        if (sensors(SENSOR_BARO) || sensors(SENSOR_SONAR) || sensors(SENSOR_IRRANGFD) || sensors(SENSOR_MWRADAR)) {
+            if (FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(SONAR_MODE) || FLIGHT_MODE(IRRANGFD_MODE)  || FLIGHT_MODE(MWRADAR_MODE) ) {
                 applyAltHold();
             }
         }
@@ -788,7 +788,7 @@ void subTaskMainSubprocesses(void)
     }
     //倾角补偿
     if (throttleCorrectionConfig()->throttle_correction_value &&
-       (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE) || FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(IRRANGFD_MODE) || FLIGHT_MODE(MWRADER_MODE))) {		//dammstanger 20170706
+       (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE) || FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(IRRANGFD_MODE) || FLIGHT_MODE(MWRADAR_MODE))) {		//dammstanger 20170706
         rcCommand[THROTTLE] += calculateThrottleAngleCorrection(throttleCorrectionConfig()->throttle_correction_value);
     }
     //对控制指令滤波
@@ -1010,7 +1010,7 @@ void taskUpdateRxMain(void)
     processRx();
     isRXDataNew = true;
 
-#if !defined(BARO) && !defined(SONAR) && !defined(IRRANGFD) && !defined(MWRADER)
+#if !defined(BARO) && !defined(SONAR) && !defined(IRRANGFD) && !defined(MWRADAR)
     // updateRcCommands sets rcCommand, which is needed by updateAltHoldState and updateSonarAltHoldState
     updateRcCommands();
 #endif
@@ -1036,10 +1036,10 @@ void taskUpdateRxMain(void)
     }
 #endif
 
-#ifdef MWRADER
+#ifdef MWRADAR
 
-    if (sensors(SENSOR_MWRADER)) {
-    	updateMwraderAltHoldState();
+    if (sensors(SENSOR_MWRADAR)) {
+    	updateMwradarAltHoldState();
     }
 #endif
 }
@@ -1100,16 +1100,16 @@ void taskUpdateIrrangfd(void)
 }
 #endif
 
-#ifdef MWRADER
-void taskMwraderCheck(void)
+#ifdef MWRADAR
+void taskMwradarCheck(void)
 {
-    if (sensors(SENSOR_MWRADER)) {
-    	mwraderUpdate();
+    if (sensors(SENSOR_MWRADAR)) {
+    	mwradarUpdate();
     }
 }
 #endif
 
-#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADER)
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADAR)
 void taskCalculateAltitude(void)
 {
     if (false
@@ -1122,8 +1122,8 @@ void taskCalculateAltitude(void)
 #if defined(IRRANGFD)
         || sensors(SENSOR_IRRANGFD)
 #endif
-#if defined(MWRADER)
-        || sensors(SENSOR_MWRADER)
+#if defined(MWRADAR)
+        || sensors(SENSOR_MWRADAR)
 #endif
 		) {
         calculateEstimatedAltitude(currentTime);

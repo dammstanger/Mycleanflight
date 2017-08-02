@@ -167,7 +167,7 @@ static const box_t boxes[CHECKBOX_ITEM_COUNT] = {
     { "AIR MODE",  BOXAIRMODE,   28 },
     { "VTX",       BOXVTX,       29 },
     { "IRRANGFD",  BOXIRRANGFD,  30 },
-	{ "MWRADER",  BOXMWRADER,  	 31 },
+	{ "MWRADAR",  BOXMWRADAR,  	 31 },
 };
 
 // mask of enabled IDs, calculated on start based on enabled features. boxId_e is used as bit index.
@@ -356,9 +356,9 @@ static void initActiveBoxIds(void)
     }
 #endif
 
-#ifdef MWRADER
-    if (feature(FEATURE_MWRADER)){
-        ena |= 1 << BOXMWRADER;
+#ifdef MWRADAR
+    if (feature(FEATURE_MWRADAR)){
+        ena |= 1 << BOXMWRADAR;
     }
 #endif
 
@@ -604,9 +604,9 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
             unsigned scale_shift = (acc.acc_1G > 1024) ? 3 : 0;
 
             for (unsigned i = 0; i < 3; i++)
-                sbufWriteU16(dst, accSmooth[i] >> scale_shift);		//
+                sbufWriteU16(dst, accSmooth[i] >> scale_shift);		//传感器的1g的LSB值>1024的话就缩小8倍避免溢出
             for (unsigned i = 0; i < 3; i++)
-                sbufWriteU16(dst, gyroADC[i]);				//这里的值会发送给configurator 在Sensor一栏的Gyroscope中转换成deg/s
+                sbufWriteU16(dst, gyroADC[i]);						//这里的值会发送给configurator 在Sensor一栏的Gyroscope中转换成deg/s
             for (unsigned i = 0; i < 3; i++)
                 sbufWriteU16(dst, magADC[i]);
             break;
@@ -659,7 +659,7 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
             break;
 
         case MSP_ALTITUDE:
-#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADER)
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADAR)
             sbufWriteU32(dst, altitudeHoldGetEstimatedAltitude());
             sbufWriteU16(dst, vario);
 #else

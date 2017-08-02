@@ -52,7 +52,7 @@ typedef enum {
     SENSOR_GPS = 1 << 5,
     SENSOR_GPSMAG = 1 << 6,
 	SENSOR_IRRANGFD = 1 << 7,
-	SENSOR_MWRADER = 1 << 8,
+	SENSOR_MWRADAR = 1 << 8,
 } sensors_e;
 
 typedef enum {

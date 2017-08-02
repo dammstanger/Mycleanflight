@@ -193,7 +193,7 @@ void imuCalculateAcceleration(uint32_t deltaT)
     // deltaT is measured in us ticks
     dT = (float)deltaT * 1e-6f;
 
-    accel_ned.V.X = accSmooth[0];
+    accel_ned.V.X = accSmooth[0];			//单位依然是LSB
     accel_ned.V.Y = accSmooth[1];
     accel_ned.V.Z = accSmooth[2];
 
@@ -202,9 +202,10 @@ void imuCalculateAcceleration(uint32_t deltaT)
     if (imuRuntimeConfig->acc_unarmedcal == 1) {			//??
         if (!ARMING_FLAG(ARMED)) {
             accZoffset -= accZoffset / 64;
-            accZoffset += accel_ned.V.Z;
+            accZoffset += accel_ned.V.Z;	//减去一个平均值再加上一个新的值，相当于64个值累加平均的效果
+            								//此过程要求水平放置 解锁 才准确
         }
-        accel_ned.V.Z -= accZoffset / 64;  // compensate for gravitation on z-axis
+        accel_ned.V.Z -= accZoffset / 64;  // compensate for gravitation on z-axis 减去z轴的重力加速度
     } else
         accel_ned.V.Z -= acc.acc_1G;
 
@@ -456,7 +457,6 @@ void imuUpdateAccelerometer(rollAndPitchTrims_t *accelerometerTrims)
 void imuUpdateAttitude(void)
 {
     if (sensors(SENSOR_ACC) && isAccelUpdatedAtLeastOnce) {
-//	if(0){									//dammstanger 20170508
         imuCalculateEstimatedAttitude();
     } else {
         accSmooth[X] = 0;

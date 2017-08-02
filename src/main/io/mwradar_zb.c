@@ -1,5 +1,5 @@
 /*
- * mwrader_zb.c
+ * mwradar_zb.c
  *
  *  Created on: 2017年7月18日
  *      Author: DammStanger
@@ -54,13 +54,13 @@
 
 #include "io/serial.h"
 #include "io/display.h"
-#include "io/mwrader_zb.h"
+#include "io/mwradar_zb.h"
 
 #include "flight/pid.h"
 #include "flight/navigation.h"
 
 
-#if defined(MWRADER) && defined(USE_ZB005)
+#if defined(MWRADAR) && defined(USE_ZB005)
 
 #define REVDATASIZE_MAX 18
 #define ZB_MAXRANGECM	300
@@ -93,33 +93,33 @@ static void zbWmSetState(zbState_e state)
 	zbMwData.lasttime = millis();
 }
 
-void zbWmInit(mwrader_t *mwrader)
+void zbWmInit(mwradar_t *mwradar)
 {
 	zbMwData.baudrateIndex = BAUD_115200;
 	zbMwData.errors = 0;
 	zbMwData.timeouts = 0;
 
-	mwrader->mwraderMaxRangeCm = ZB_MAXRANGECM;
-	mwrader->mwraderdetectionConeDeciDegrees = ZB_DETECTION_CONE_DECIDEGREES;
-	mwrader->mwraderdetectionConeExtendedDeciDegrees = ZB_DETECTION_CONE_EXTENDED_DECIDEGREES;
+	mwradar->mwradarMaxRangeCm = ZB_MAXRANGECM;
+	mwradar->mwradardetectionConeDeciDegrees = ZB_DETECTION_CONE_DECIDEGREES;
+	mwradar->mwradardetectionConeExtendedDeciDegrees = ZB_DETECTION_CONE_EXTENDED_DECIDEGREES;
 
 	// init zbMwData structure. if we're not actually enabled, don't bother doing anything else
 	zbWmSetState(ZB_UNKNOWN);
 
-    serialPortConfig_t *zbMwPortConfig = findSerialPortConfig(FUNCTION_MWRADER_ZB);			//如果是NULL，则没有接口可用
+    serialPortConfig_t *zbMwPortConfig = findSerialPortConfig(FUNCTION_MWRADAR_ZB);			//如果是NULL，则没有接口可用
     if (!zbMwPortConfig) {
-        featureClear(FEATURE_MWRADER);
+        featureClear(FEATURE_MWRADAR);
         return;
     }
 
 
 		portMode_t mode = MODE_RXTX;
 
-		zbMwPort = openSerialPort(zbMwPortConfig->identifier,FUNCTION_MWRADER_ZB,zbRevDat_Callback,
+		zbMwPort = openSerialPort(zbMwPortConfig->identifier,FUNCTION_MWRADAR_ZB,zbRevDat_Callback,
 				baudRates[zbMwData.baudrateIndex],mode,SERIAL_NOT_INVERTED);
 
 	    if (!zbMwPort) {
-	        featureClear(FEATURE_MWRADER);
+	        featureClear(FEATURE_MWRADAR);
 	        return;
 	    }
 
@@ -217,7 +217,7 @@ void zbRevDat_Callback(uint16_t dat)
 //			check = 0;
 //			revdatflg = true;						//到达这里说明数据有效
 //
-//		    if (debugMode == DEBUG_MWRADER)
+//		    if (debugMode == DEBUG_MWRADAR)
 //		    {
 //		        debug[1] = zbMwData.dist;
 //		    }
@@ -263,7 +263,7 @@ void tst_Nra24PakHandle(uint16_t dat)
 			}
 			else return;
 
-		    if (debugMode == DEBUG_MWRADER)
+		    if (debugMode == DEBUG_MWRADAR)
 		    {
 		        debug[1] = zbMwData.dist;
 		    }

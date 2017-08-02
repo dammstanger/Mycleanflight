@@ -1,4 +1,4 @@
-﻿/*
+﻿﻿/*
  * This file is part of Cleanflight.
  *
  * Cleanflight is free software: you can redistribute it and/or modify
@@ -88,10 +88,10 @@ static void mpu6050AccInit(acc_t *acc)
 
     switch (mpuDetectionResult.resolution) {
         case MPU_HALF_RESOLUTION:
-            acc->acc_1G = 256 * 8;
+            acc->acc_1G = 256 * 8;				//+-16g模式
             break;
-        case MPU_FULL_RESOLUTION:
-            acc->acc_1G = 512 * 8;
+        case MPU_FULL_RESOLUTION:				//+-8g模式   现行此模式
+            acc->acc_1G = 512 * 8;				//4096 LSB/g
             break;
     }
 }

@@ -91,7 +91,7 @@
 #include "io/transponder_ir.h"
 #include "io/vtx.h"
 #include "io/irrangefinder_ptk.h"
-#include "io/mwrader_zb.h"
+#include "io/mwradar_zb.h"
 
 #include "fc/msp_server_fc.h"
 #include "msp/msp.h"
@@ -110,7 +110,7 @@
 #include "sensors/boardalignment.h"
 #include "sensors/initialisation.h"
 #include "sensors/irrangefinder.h"
-#include "sensors/mwrader.h"
+#include "sensors/mwradar.h"
 
 #include "telemetry/telemetry.h"
 #include "blackbox/blackbox.h"
@@ -151,7 +151,7 @@ void navigationInit(pidProfile_t *pidProfile);
 const sonarHardware_t *sonarGetHardwareConfiguration(amperageMeter_e amperageMeter);
 void sonarInit(const sonarHardware_t *sonarHardware);
 void irrangfdInit(void);
-void mwraderInit(void);
+void mwradarInit(void);
 
 #ifdef STM32F303xC
 // from system_stm32f30x.c
@@ -649,10 +649,10 @@ void init(void)
     }
 #endif
 
-#ifdef MWRADER
-    if (feature(FEATURE_MWRADER)) {
-     	mwraderInit();
-     	generateAltTransCurve(mwrader.mwraderMaxAltWithTiltCm - mwrader.mwraderCfAltCm);
+#ifdef MWRADAR
+    if (feature(FEATURE_MWRADAR)) {
+     	mwradarInit();
+     	generateAltTransCurve(mwradar.mwradarMaxAltWithTiltCm - mwradar.mwradarCfAltCm);
     }
 #endif
 
@@ -843,11 +843,11 @@ void configureScheduler(void)
 #ifdef IRRANGFD
     setTaskEnabled(TASK_IRRANGFD, sensors(SENSOR_IRRANGFD));			//dammstanger 20170705
 #endif
-#ifdef MWRADER
-    setTaskEnabled(TASK_MWRADER, sensors(SENSOR_MWRADER));				//dammstanger 20170721
+#ifdef MWRADAR
+    setTaskEnabled(TASK_MWRADAR, sensors(SENSOR_MWRADAR));				//dammstanger 20170721
 #endif
-#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADER)
-    setTaskEnabled(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR) || sensors(SENSOR_IRRANGFD) || sensors(SENSOR_MWRADER));		//dammstanger	20170705
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADAR)
+    setTaskEnabled(TASK_ALTITUDE, sensors(SENSOR_BARO) || sensors(SENSOR_SONAR) || sensors(SENSOR_IRRANGFD) || sensors(SENSOR_MWRADAR));		//dammstanger	20170705
 #endif
 #ifdef DISPLAY
     setTaskEnabled(TASK_DISPLAY, feature(FEATURE_DISPLAY));

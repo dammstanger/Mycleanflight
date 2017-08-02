@@ -63,7 +63,7 @@
 #include "io/gps.h"
 #include "io/motors.h"
 #include "io/servos.h"
-#include "io/mwrader_zb.h"
+#include "io/mwradar_zb.h"
 
 #include "flight/mixer.h"
 #include "flight/servos.h"
@@ -947,16 +947,17 @@ static void loadMainState(void)
     for (i = 0; i < XYZ_AXIS_COUNT; i++) {
         blackboxCurrent->axisPID_P[i] = axisPID_P[i];
     }
-    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
-        blackboxCurrent->axisPID_I[i] = axisPID_I[i];
-    }
+//    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
+//        blackboxCurrent->axisPID_I[i] = axisPID_I[i];
+//    }
+    blackboxCurrent->axisPID_I[2] = altitudeGetsetVel();
 //    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
 //        blackboxCurrent->axisPID_D[i] = axisPID_D[i];
 //    }
 
     blackboxCurrent->axisPID_D[0] = altitudeGetAltHold();
     blackboxCurrent->axisPID_D[1] = zbMw_get_distance();
-    blackboxCurrent->axisPID_D[2] = altitudeGetsetVel();
+//    blackboxCurrent->axisPID_D[2] = altitudeGetsetVel();
 
     for (i = 0; i < 4; i++) {
         blackboxCurrent->rcCommand[i] = rcCommand[i];
@@ -990,7 +991,7 @@ static void loadMainState(void)
 
     blackboxCurrent->magADC[0] = altitudeHoldGetEstimatedAltitude();
     blackboxCurrent->magADC[1] = altitudeGetImuBasedAlt();
-    blackboxCurrent->magADC[2] = altitudeGetMwraderAlt();
+    blackboxCurrent->magADC[2] = altitudeGetMwradarAlt();
 
 #endif
 

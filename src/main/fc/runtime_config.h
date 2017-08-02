@@ -44,7 +44,7 @@ typedef enum {
     FAILSAFE_MODE   = (1 << 10),
     GTUNE_MODE      = (1 << 11),
 	IRRANGFD_MODE	= (1 << 12),
-	MWRADER_MODE	= (1 << 13),
+	MWRADAR_MODE	= (1 << 13),
 } flightModeFlags_e;
 
 extern uint16_t flightModeFlags;

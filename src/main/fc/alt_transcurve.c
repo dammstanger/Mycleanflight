@@ -10,7 +10,7 @@
 
 #include "config/parameter_group.h"
 
-#include "sensors/mwrader.h"
+#include "sensors/mwradar.h"
 
 #include "fc/alt_transcurve.h"
 

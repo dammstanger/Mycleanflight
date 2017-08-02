@@ -127,7 +127,7 @@ void performAcclerationCalibration(rollAndPitchTrims_t *rollAndPitchTrims)
         // Sum up CALIBRATING_ACC_CYCLES readings
         a[axis] += accSmooth[axis];
 
-        // Reset global variables to prevent other code from using un-calibrated data
+        // Reset global variables to prevent other code from using un-calibrated data 防止其他地方如AHRSUpdate使用未校准的数据
         accSmooth[axis] = 0;
         accelerationTrims->raw[axis] = 0;
     }

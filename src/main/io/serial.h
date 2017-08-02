@@ -38,7 +38,7 @@ typedef enum {
     FUNCTION_TELEMETRY_IBUS      = (1 << 10), // 1024
     FUNCTION_PASSTHROUGH         = (1 << 11), // 2048
 	FUNCTION_IRRANGDF_PTK		 = (1 << 12), // 4096
-	FUNCTION_MWRADER_ZB			 = (1 << 13), // 8192
+	FUNCTION_MWRADAR_ZB			 = (1 << 13), // 8192
 } serialPortFunction_e;							//uint16_t functionMask;
 
 typedef enum {

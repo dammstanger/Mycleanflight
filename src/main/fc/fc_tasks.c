@@ -157,16 +157,16 @@ cfTask_t cfTasks[] = {
     },
 #endif
 
-#ifdef MWRADER
-    [TASK_MWRADER] = {
-        .taskName = "MWRADER",
-        .taskFunc = taskMwraderCheck,
+#ifdef MWRADAR
+    [TASK_MWRADAR] = {
+        .taskName = "MWRADAR",
+        .taskFunc = taskMwradarCheck,
         .desiredPeriod = TASK_PERIOD_MS(50),
         .staticPriority = TASK_PRIORITY_MEDIUM,
     },
 #endif
 
-#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADER)
+#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADAR)
     [TASK_ALTITUDE] = {
         .taskName = "ALTITUDE",
         .taskFunc = taskCalculateAltitude,

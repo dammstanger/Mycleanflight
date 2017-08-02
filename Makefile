@@ -359,15 +359,15 @@ OSD_COMMON_SRC = \
 
 #dammstanger 20170619  add io/irrangefinder_ptk.c 
 #dammstanger 20170623  add sensors/irrangefinder.c 
-#dammstanger 20170718  add io/mwrader_zb.c 
-#dammstanger 20170718  add sensors/mwrader_zb.c 
+#dammstanger 20170718  add io/mwradar_zb.c 
+#dammstanger 20170718  add sensors/mwradar_zb.c 
 HIGHEND_SRC = \
 		   flight/gtune.c \
 		   flight/navigation.c \
 		   flight/gps_conversion.c \
 		   common/colorconversion.c \
 		   io/irrangefinder_ptk.c \
-		   io/mwrader_zb.c \
+		   io/mwradar_zb.c \
 		   io/gps.c \
 		   io/ledstrip.c \
 		   io/display.c \
@@ -381,7 +381,7 @@ HIGHEND_SRC = \
 		   sensors/sonar.c \
 		   sensors/barometer.c \
 		   sensors/irrangefinder.c\
-		   sensors/mwrader.c\
+		   sensors/mwradar.c\
 		   blackbox/blackbox.c \
 		   blackbox/blackbox_io.c
 

@@ -180,7 +180,7 @@ void pidLuxFloat(const pidProfile_t *pidProfile, const controlRateConfig_t *cont
             // control is GYRO based for ACRO and HORIZON - direct sticks control is applied to rate PID
             angleRate = (float)((rate + 27) * rcCommand[axis]) / 16.0f; // 200dps to 1200dps max roll/pitch rate
             if (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE)||
-            	FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(IRRANGFD_MODE) || FLIGHT_MODE(MWRADER_MODE)) {	//baro IRRANGFD MWRADER模式也改为自水平控制
+            	FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(IRRANGFD_MODE) || FLIGHT_MODE(MWRADAR_MODE)) {	//baro IRRANGFD MWRADAR模式也改为自水平控制
                 // calculate error angle and limit the angle to the max inclination
                 // multiplication of rcCommand corresponds to changing the sticks scaling here
 #ifdef GPS
@@ -191,7 +191,7 @@ void pidLuxFloat(const pidProfile_t *pidProfile, const controlRateConfig_t *cont
                         - attitude.raw[axis] + angleTrim->raw[axis];
 #endif
                 if (FLIGHT_MODE(ANGLE_MODE)||FLIGHT_MODE(BARO_MODE)||
-                	FLIGHT_MODE(IRRANGFD_MODE)||FLIGHT_MODE(MWRADER_MODE)) {			//baro IRRANGFD模式也改为自水平控制,目标角速度使用与angle模式相同
+                	FLIGHT_MODE(IRRANGFD_MODE)||FLIGHT_MODE(MWRADAR_MODE)) {			//baro IRRANGFD模式也改为自水平控制,目标角速度使用与angle模式相同
                     // ANGLE mode or BARO mode
                     angleRate = errorAngle * pidProfile->P8[PIDLEVEL] / 16.0f;
                 } else {
