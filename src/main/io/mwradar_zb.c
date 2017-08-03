@@ -63,7 +63,7 @@
 #if defined(MWRADAR) && defined(USE_ZB005)
 
 #define REVDATASIZE_MAX 18
-#define ZB_MAXRANGECM	300
+#define ZB_MAXRANGECM	600
 #define ZB_DETECTION_CONE_DECIDEGREES 360 //  recommended cone angle 36 degrees, 单位0.1度
 #define ZB_DETECTION_CONE_EXTENDED_DECIDEGREES 450
 
