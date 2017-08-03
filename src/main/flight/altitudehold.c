@@ -248,7 +248,7 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
     if (!velocityControl) {
         error = constrain(AltHold - EstAlt, -500, 500);
         error = applyDeadband(error, 5); // remove small P parameter to reduce noise near zero position  default 10
-        setVel = constrain((pidProfile()->P8[PIDALT] * error / 128), -30, +10); // limit velocity to + 0.3 m/s  -0.1m  default: +-3m/s
+        setVel = constrain((pidProfile()->P8[PIDALT] * error / 128), -5, +10); // limit velocity to + 0.3 m/s  -0.1m  default: +-3m/s 300
     } else {
         setVel = setVelocity;
     }
@@ -418,10 +418,12 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 	    	if(isAltHoldChanged){
 	    		EstAlt_tmp = mwradarAlt;							//回到量程范围且是下降过程需要把高度差消除
 	    		accAlt = mwradarAlt;
+	    		baroAlt_offset = 0;
 	    	}
 	    	else if((EstAlt_tmp - mwradarAlt)>20){
 	    		EstAlt_tmp = mwradarAlt;							//回到量程范围且是下降过程需要把高度差消除
 	    		accAlt = mwradarAlt;
+	    		baroAlt_offset = 0;
 	    		updateAltHoldflg = 1;
 	    	}
 
@@ -525,6 +527,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     if (mwradarAlt > 0 && mwradarAlt < mwradar.mwradarCfAltCm) {
         // the radar has the best range
         EstAlt = EstAlt_tmp;				//当radar处于良好测量距离时，垂直位置只使用radar数据
+        accAlt = EstAlt_tmp;				//
     } else {
         EstAlt = accAlt;					//否则使用acc积分、气压、IR三者融合的数据
     }
