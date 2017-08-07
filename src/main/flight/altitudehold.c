@@ -70,7 +70,8 @@ int32_t vario = 0;                      // variometer in cm/s
 
 static int16_t initialRawThrottleHold;
 static int16_t initialThrottleHold;
-static int32_t EstAlt;                // in cm
+static int32_t EstAlt;                	// in cm
+static float estVel = 0.0f;
 static int32_t updateAltHoldflg = 0;	//用于中途自动跟新高度保持值
 
 PG_REGISTER_WITH_RESET_TEMPLATE(airplaneConfig_t, airplaneConfig, PG_AIRPLANE_ALT_HOLD_CONFIG, 0);
@@ -89,10 +90,8 @@ static int32_t setVel_debug = 0;
 static uint8_t isAltHoldChanged = 0;
 static void applyMultirotorAltHold(void)
 {
-//#ifdef MWRADAR
-//    int32_t rela_alt;
-//
-//#endif
+	static float estVel_last =0.0f;
+	static u8 issetvelpos = 0;			//目标速度为正标记
     // multirotor alt hold
     if (rcControlsConfig()->alt_hold_fast_change) {		//本质是死区内使用高度位置保持，死去外直接油门控制
         // rapid alt changes
@@ -116,21 +115,32 @@ static void applyMultirotorAltHold(void)
         // slow alt changes, mostly used for aerial photography
         if (ABS(rcData[THROTTLE] - initialRawThrottleHold) > rcControlsConfig()->alt_hold_deadband) {
         // 设置初始目标速度为+-20cm/s
-        	if(rcData[THROTTLE]>initialRawThrottleHold)
+        	if(rcData[THROTTLE]>initialRawThrottleHold){
         		setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold + rcControlsConfig()->alt_hold_deadband)+20);
-        	else
+        		issetvelpos = 1;
+        	}
+        	else{
         		setVelocity = (rcData[THROTTLE] - (initialRawThrottleHold - rcControlsConfig()->alt_hold_deadband)-20);
+        		issetvelpos = 0;
+        	}
             velocityControl = 1;
             isAltHoldChanged = 1;
         } else if (isAltHoldChanged) {									//当油门在死区内时，isAltHoldChanged可使清零只执行一次
-            AltHold = EstAlt;
-            velocityControl = 0;
-            isAltHoldChanged = 0;
+        	setVelocity = 0;											//在速度的回到0之前还没进入位置控制的时候 使目标速度为0
+        	if((issetvelpos==1 && estVel<0 && estVel_last>0) ||
+        	   (issetvelpos==0 && estVel>0 && estVel_last<0) ){			//如果速度过零了，则切换模式
+				AltHold = EstAlt;
+				velocityControl = 0;
+				isAltHoldChanged = 0;
+        	}
         }
         else if(updateAltHoldflg){
         	updateAltHoldflg = 0;
         	AltHold = EstAlt;
         }
+
+        estVel_last = estVel;
+
         AltHold_debug = AltHold;
         //进入高度保持模式的手动油门值 + 高度保持控制器输出的油门控制量
         rcCommand[THROTTLE] = constrain(initialThrottleHold + altHoldThrottleAdjustment, motorConfig()->minthrottle, motorConfig()->maxthrottle);
@@ -248,7 +258,7 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
     if (!velocityControl) {
         error = constrain(AltHold - EstAlt, -500, 500);
         error = applyDeadband(error, 5); // remove small P parameter to reduce noise near zero position  default 10
-        setVel = constrain((pidProfile()->P8[PIDALT] * error / 128), -5, +10); // limit velocity to + 0.3 m/s  -0.1m  default: +-3m/s 300
+        setVel = constrain((pidProfile()->P8[PIDALT] * error / 128), -20, +20); // limit velocity to + 0.2 m/s  -0.2m  default: +-3m/s 300
     } else {
         setVel = setVelocity;
     }
@@ -276,7 +286,7 @@ static float velcf_debug = 0.0f;
 static float noneimuVel_debug = 0.0f;
 static int32_t BaroAlt_debug = 0;
 static int32_t mwradarAlt_debug = 0;
-
+static int32_t BaroAlt_rela = 15;			//初始化雷达地面高度
 #define WAVERANGE 50				//cm
 void calculateEstimatedAltitude(uint32_t currentTime)
 {
@@ -289,12 +299,10 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     float accZ_tmp;
     static float accZ_old = 0.0f;
     static float imuVel = 0.0f;
-    static float estVel = 0.0f;
     static float accAlt = 0.0f;
     static int32_t EstAlt_tmp = 0;
     static int32_t EstAlt_tmp_last;
     static uint8_t isAltHoldChanged_last = 0;
-
     float dx;
 
 #ifdef SONAR
@@ -310,7 +318,6 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 
     int32_t mwradarAlt = MWRADAR_OUT_OF_RANGE;
     int32_t mwradarAltRaw = MWRADAR_OUT_OF_RANGE;
-    static int32_t BaroAlt_rela = 15;			//初始化雷达地面高度
     static int32_t baroAlt_offset = 0;
     static int32_t EstAlt_offset = 0;
     float mwradarTransition;
@@ -490,10 +497,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     imuVel += vel_acc;						// v = v + dv 累加出速度
 
     velimu_debug = imuVel;
-    if (debugMode == DEBUG_MWRADAR)
-    {
-        debug[3] = accAlt;
-    }
+
 
 #ifdef DEBUG_ALT_HOLD
     debug[1] = accSum[2] / accSumCount; // acceleration
@@ -540,10 +544,17 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     EstAlt_tmp_last = EstAlt_tmp;
     if(d_EstAlt_tmp<=20){														//如果高度数据跳跃超过极限，则速度使用历史值
     	noneimuvel = d_EstAlt_tmp * 1000000.0f / dTime;		//单位：cm/s
+
+    	noneimuVel_debug = noneimuvel;
+        if (debugMode == DEBUG_MWRADAR)
+        {
+            debug[3] = noneimuvel;
+        }
+
 		noneimuvel = constrain(noneimuvel, -1500, 1500);  // constrain baro velocity +/- 1500cm/s
 		noneimuvel = applyDeadband(noneimuvel, 10);       // to reduce noise near zero
     }
-    noneimuVel_debug = noneimuvel;
+
     // apply Complimentary Filter to keep the calculated velocity based on baro velocity (i.e. near real velocity).
     // By using CF it's possible to correct the drift of integrated accZ (velocity) without loosing the phase, i.e也就是 without delay
 #ifdef BARO
@@ -604,6 +615,11 @@ int32_t altitudeGetAltHold(void)
 int32_t altitudeGetsetVel(void)
 {
 	return setVel_debug;
+}
+
+int32_t altitudeGetBaroRela(void)
+{
+	return BaroAlt_rela;
 }
 
 #endif
