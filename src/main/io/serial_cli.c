@@ -453,7 +453,8 @@ static const char * const lookupTableDebug[DEBUG_MODE_COUNT] = {
     "PIDLOOP",
     "GYROSYNC",
 	"IRRANGFD",
-	"MWRADAR"
+	"MWRADAR",
+	"ALT_HOLD",
 #ifdef OSD
     "OSD",
     "OSD_WATCHDOG",

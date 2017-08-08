@@ -319,9 +319,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     int32_t mwradarAlt = MWRADAR_OUT_OF_RANGE;
     int32_t mwradarAltRaw = MWRADAR_OUT_OF_RANGE;
     static int32_t baroAlt_offset = 0;
-    static int32_t EstAlt_offset = 0;
     float mwradarTransition;
-    static u8 isRaderStartWave = 0;				//初始摆动标记
 #endif
 
     dTime = currentTime - previousTime;			//单位us
@@ -337,18 +335,23 @@ void calculateEstimatedAltitude(uint32_t currentTime)
         imuVel = 0;
         accAlt = 0;
     }
+
 	#ifdef MWRADAR
-	    baroCalculateAltitude();
-	    EstAlt_tmp = BaroAlt;
-		baroCalculateDaltaAlt(&BaroAlt_rela);
-		BaroAlt_debug = BaroAlt;
+		if(ARMING_FLAG(ARMED))
+			baroCalculateDaltaAlt(&BaroAlt_rela);
+		else
+			BaroAlt_rela = EstAlt_tmp;
+
 		if (debugMode == DEBUG_MWRADAR)
 		{
 			debug[0] = BaroAlt_rela;
 		}
-	#else
-		EstAlt_tmp = baroCalculateAltitude();
 	#endif
+
+	baroCalculateAltitude();
+	BaroAlt_debug = BaroAlt;
+	EstAlt_tmp = BaroAlt;
+
 #else
     EstAlt_tmp = 0;
 #endif
@@ -407,7 +410,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     {
     	mwradarAlt = mwradarRead();
     	mwradarAlt_debug = mwradarAlt;												//debug
-	    mwradarAlt = mwradarCalculateAltitude(mwradarAlt, getCosTiltAngle());
+//	    mwradarAlt = mwradarCalculateAltitude(mwradarAlt, getCosTiltAngle());
 
 	    mwradarAltRaw = mwradarReadRaw();
 	}
@@ -442,35 +445,6 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 		}
 	}
 
-//    if(mwradarAlt>0 && mwradarAlt < mwradar.mwradarMaxAltWithTiltCm){
-////    	baroAlt_offset = BaroAlt - mwradarAlt;
-//    	EstAlt_offset = EstAlt_tmp - mwradarAltRaw;
-//	    if (debugMode == DEBUG_MWRADAR)
-//	    {
-//	        debug[2] = EstAlt_offset;
-//	    }
-//    	if(EstAlt_offset < -WAVERANGE){
-//    		if(isRaderStartWave==0){
-//    			isRaderStartWave = 1;
-//    			BaroAlt_rela = EstAlt_tmp;
-//    		}
-//    			EstAlt_tmp = BaroAlt_rela;
-//    	}
-//
-//    	else if(EstAlt_offset>=-WAVERANGE && EstAlt_offset<0){
-//    		isRaderStartWave = 0;
-//			mwradarTransition = -(float)EstAlt_offset / WAVERANGE;
-//			EstAlt_tmp = mwradarAlt * mwradarTransition + EstAlt_tmp  * (1.0f - mwradarTransition);
-//    	}
-//       	else{
-//        		isRaderStartWave = 0;
-//        		EstAlt_tmp = mwradarAlt;
-//        	}
-//    }
-//    else{
-//    	EstAlt_tmp = BaroAlt_rela;
-//    }
-
     if (debugMode == DEBUG_MWRADAR)
     {
         debug[2] = EstAlt_tmp;
@@ -499,11 +473,11 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     velimu_debug = imuVel;
 
 
-#ifdef DEBUG_ALT_HOLD
+if (debugMode == DEBUG_ALT_HOLD){
     debug[1] = accSum[2] / accSumCount; // acceleration
-    debug[2] = vel;                     // velocity
+    debug[2] = imuVel;                  // velocity
     debug[3] = accAlt;                  // height
-#endif
+}
 
     imuResetAccelerationSum();			//使用acc累加的各种量后清零
 
@@ -617,7 +591,7 @@ int32_t altitudeGetsetVel(void)
 	return setVel_debug;
 }
 
-int32_t altitudeGetBaroRela(void)
+int32_t altitudeGetBaroRelaAlt(void)
 {
 	return BaroAlt_rela;
 }

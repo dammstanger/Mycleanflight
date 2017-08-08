@@ -40,4 +40,4 @@ int32_t altitudeGetNoneImuVel(void);
 int32_t altitudeGetAltHold(void);
 int32_t altitudeGetsetVel(void);
 int16_t altitudeGetMwradarAlt(void);
-int32_t altitudeGetBaroRela(void);
+int32_t altitudeGetBaroRelaAlt(void);
