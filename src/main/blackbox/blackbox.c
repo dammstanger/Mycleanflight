@@ -991,7 +991,7 @@ static void loadMainState(void)
 //    }
 
     blackboxCurrent->magADC[0] = altitudeHoldGetEstimatedAltitude();
-    blackboxCurrent->magADC[1] = altitudeGetImuBasedAlt();
+    blackboxCurrent->magADC[1] = altitudeGetCFaccAlt();
     blackboxCurrent->magADC[2] = altitudeGetMwradarAlt();
 
 #endif

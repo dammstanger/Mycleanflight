@@ -34,7 +34,7 @@ void updateIRrangfdAltHoldState(void);
 int32_t altitudeHoldGetEstimatedAltitude(void);
 int32_t altitudeGetCfVel(void);
 int32_t altitudeGetImuBasedVel(void);
-int32_t altitudeGetImuBasedAlt(void);
+int32_t altitudeGetCFaccAlt(void);
 int32_t altitudeGetBaroAlt(void);
 int32_t altitudeGetNoneImuVel(void);
 int32_t altitudeGetAltHold(void);

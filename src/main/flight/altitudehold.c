@@ -283,6 +283,7 @@ int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, floa
 static float altimu_debug = 0.0f;
 static float velimu_debug = 0.0f;
 static float velcf_debug = 0.0f;
+static float altCFacc_debug = 0.0f;
 static float noneimuVel_debug = 0.0f;
 static int32_t BaroAlt_debug = 0;
 static int32_t mwradarAlt_debug = 0;
@@ -337,7 +338,7 @@ void calculateEstimatedAltitude(uint32_t currentTime)
     }
 
 	#ifdef MWRADAR
-		if(ARMING_FLAG(ARMED))
+		if(ARMING_FLAG(ARMED) && rcCommand[THROTTLE]>=1250)
 			baroCalculateDaltaAlt(&BaroAlt_rela);
 		else
 			BaroAlt_rela = EstAlt_tmp;
@@ -348,9 +349,9 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 		}
 	#endif
 
-	baroCalculateAltitude();
+	baroCalculateAltitude();							//根据气压计更新BaroAlt
 	BaroAlt_debug = BaroAlt;
-	EstAlt_tmp = BaroAlt;
+	EstAlt_tmp = BaroAlt;								//EstAlt_tmp 首先=BaroAlt
 
 #else
     EstAlt_tmp = 0;
@@ -445,10 +446,6 @@ void calculateEstimatedAltitude(uint32_t currentTime)
 		}
 	}
 
-    if (debugMode == DEBUG_MWRADAR)
-    {
-        debug[2] = EstAlt_tmp;
-    }
 #endif
 
     dt = accTimeSum * 1e-6f; // delta acc reading time in seconds
@@ -460,23 +457,22 @@ void calculateEstimatedAltitude(uint32_t currentTime)
         accZ_tmp = 0;
     }
     vel_acc = accZ_tmp * accVelScale * (float)accTimeSum;		//accTimeSum的acc积分出来的垂直速度 dv= a*dt
+    imuVel += vel_acc;											// v = v + dv 累加出速度
 
     // Integrator - Altitude in cm								位移公式由acc计算得到的垂直位置
     dx = (vel_acc * 0.5f) * dt + estVel * dt;            		// integrate velocity to get distance dx = (1/2)*a*dt^2 + v0*dt  alt = alt +dx
     accAlt += dx;
-    altimu_debug = accAlt;
-#ifdef BARO
+    #ifdef BARO
     accAlt = accAlt * barometerConfig()->baro_cf_alt + (float)EstAlt_tmp * (1.0f - barometerConfig()->baro_cf_alt);    // complementary filter for altitude estimation (baro & acc)
 #endif															//baro_cf_alt默认0.965
-    imuVel += vel_acc;						// v = v + dv 累加出速度
 
     velimu_debug = imuVel;
-
-
-if (debugMode == DEBUG_ALT_HOLD){
-    debug[1] = accSum[2] / accSumCount; // acceleration
-    debug[2] = imuVel;                  // velocity
-    debug[3] = accAlt;                  // height
+    altCFacc_debug = accAlt;
+    altimu_debug += dx;
+if (debugMode == DEBUG_MWRADAR){
+//    debug[2] = accSum[2] / accSumCount; 		// acceleration
+    debug[2] = imuVel;                  		// velocity
+    debug[3] = altimu_debug;                 	// height
 }
 
     imuResetAccelerationSum();			//使用acc累加的各种量后清零
@@ -515,15 +511,11 @@ if (debugMode == DEBUG_ALT_HOLD){
 #endif
 
     int32_t d_EstAlt_tmp = EstAlt_tmp - EstAlt_tmp_last;
+	noneimuVel_debug = d_EstAlt_tmp;
+
     EstAlt_tmp_last = EstAlt_tmp;
     if(d_EstAlt_tmp<=20){														//如果高度数据跳跃超过极限，则速度使用历史值
     	noneimuvel = d_EstAlt_tmp * 1000000.0f / dTime;		//单位：cm/s
-
-    	noneimuVel_debug = noneimuvel;
-        if (debugMode == DEBUG_MWRADAR)
-        {
-            debug[3] = noneimuvel;
-        }
 
 		noneimuvel = constrain(noneimuvel, -1500, 1500);  // constrain baro velocity +/- 1500cm/s
 		noneimuvel = applyDeadband(noneimuvel, 10);       // to reduce noise near zero
@@ -551,9 +543,9 @@ int32_t altitudeHoldGetEstimatedAltitude(void)
     return EstAlt;
 }
 
-int32_t altitudeGetImuBasedAlt(void)
+int32_t altitudeGetCFaccAlt(void)
 {
-	return (int32_t)altimu_debug;
+	return (int32_t)altCFacc_debug;
 }
 
 
