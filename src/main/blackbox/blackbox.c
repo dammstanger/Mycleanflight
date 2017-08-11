@@ -950,6 +950,7 @@ static void loadMainState(void)
 //    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
 //        blackboxCurrent->axisPID_I[i] = axisPID_I[i];
 //    }
+    blackboxCurrent->axisPID_I[0] = attitude.values.yaw;
     blackboxCurrent->axisPID_I[1] = altitudeGetBaroRelaAlt();
     blackboxCurrent->axisPID_I[2] = altitudeGetsetVel();
 //    for (i = 0; i < XYZ_AXIS_COUNT; i++) {

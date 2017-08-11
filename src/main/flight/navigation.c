@@ -54,6 +54,7 @@
 #include "flight/imu.h"
 
 #include "fc/fc_serial.h"
+#include "fc/fc_debug.h"
 
 #include "io/beeper.h"
 #include "io/serial.h"
@@ -209,7 +210,7 @@ static void reset_PID(PID *pid)
 #define NAV_SLOW_NAV               true
 #define NAV_BANK_MAX               3000 // 30deg max banking when navigating (just for security and testing)
 
-static float dTnav;             // Delta Time in milliseconds for navigation computations, updated with every good GPS read
+static float dTnav;             // Delta Time in seconds for navigation computations, updated with every good GPS read
 static int16_t actual_speed[2] = { 0, 0 };
 static float GPS_scaleLonDown = 1.0f;  // this is used to offset the shrinking longitude as we go towards the poles
 
@@ -261,7 +262,7 @@ static uint16_t fraction3[2];
 // This is the angle from the copter to the "next_WP" location
 // with the addition of Crosstrack error in degrees * 100
 static int32_t nav_bearing;
-// saves the bearing at takeof (1deg = 1) used to rotate to takeoff direction when arrives at home
+// saves the bearing at takeoff (1deg = 1) used to rotate to takeoff direction when arrives at home
 static int16_t nav_takeoff_bearing;
 
 void GPS_calculateDistanceAndDirectionToHome(void)
@@ -285,7 +286,7 @@ void onGpsNewData(void)
     uint16_t speed;
 
 
-    if (!(STATE(GPS_FIX) && GPS_numSat >= 5)) {
+    if (!(STATE(GPS_FIX) && GPS_numSat >= 5)) {					//如果状态不是GPS_FIX 或 星数<5颗，则返回
         return;
     }
 
@@ -321,10 +322,10 @@ void onGpsNewData(void)
     // Calculate time delta for navigation loop, range 0-1.0f, in seconds
     //
     // Time for calculating x,y speed and navigation pids
-    dTnav = (float)(millis() - nav_loopTimer) / 1000.0f;
+    dTnav = (float)(millis() - nav_loopTimer) / 1000.0f;						//单位应该是秒 s
     nav_loopTimer = millis();
-    // prevent runup from bad GPS
-    dTnav = MIN(dTnav, 1.0f);
+    // prevent runup from bad GPS 防止因差的GPS消息而迅速增大
+    dTnav = MIN(dTnav, 1.0f);													//限制在1s以内
 
     GPS_calculateDistanceAndDirectionToHome();
 
@@ -673,6 +674,10 @@ void updateGpsStateForHomeAndHoldMode(void)
     } else {
         GPS_angle[AI_ROLL] = (nav[LON] * cos_yaw_x - nav[LAT] * sin_yaw_y) / 10;
         GPS_angle[AI_PITCH] = (nav[LON] * sin_yaw_y + nav[LAT] * cos_yaw_x) / 10;
+    }
+    if(debugMode == DEBUG_GPS){
+    	debug[0] = GPS_angle[AI_ROLL];
+    	debug[1] = GPS_angle[AI_PITCH];
     }
 }
 

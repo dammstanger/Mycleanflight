@@ -56,6 +56,9 @@
 #define USE_MAG_HMC5883
 #define MAG_HMC5883_ALIGN CW270_DEG
 
+#define GPS
+
+
 #define USE_FLASHFS
 #define USE_FLASH_M25P16
 
@@ -170,7 +173,7 @@
 #define ENABLE_BLACKBOX_LOGGING_ON_SPIFLASH_BY_DEFAULT
 
 //#define DISPLAY				//20170503
-//#define GPS
+
 //#define GTUNE
 //#define SERIAL_RX
 //#define TELEMETRY

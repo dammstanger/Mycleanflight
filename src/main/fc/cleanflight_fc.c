@@ -607,7 +607,7 @@ void processRx(void)
 	}
 
 //IRrangfd  dammstanger 20140721	将radar模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
-		if(rcModeIsActive(BOXMWRADAR) && canUseMwradarMode){
+	if(rcModeIsActive(BOXMWRADAR) && canUseMwradarMode){
 
 		if (!FLIGHT_MODE(MWRADAR_MODE)) {
 #ifdef USE_PID_MW23
