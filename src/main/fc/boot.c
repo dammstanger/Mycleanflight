@@ -324,7 +324,6 @@ void init(void)
     // initialize IO (needed for all IO operations)
    IOInitGlobal();
 
-    debugMode = debugConfig()->debug_mode;		//调试模式
 
 #ifdef USE_EXTI
     EXTIInit();

@@ -22,6 +22,7 @@
 #include <platform.h>
 
 #include "build/build_config.h"
+#include "build/debug.h"
 
 #include "common/axis.h"
 #include "common/maths.h"
@@ -46,6 +47,7 @@
 #include "fc/rc_controls.h"
 #include "fc/rc_adjustments.h"
 #include "fc/config.h"
+#include "fc/fc_debug.h"
 
 #include "io/beeper.h"
 #include "io/serial.h"
@@ -161,6 +163,8 @@ static void activateConfig(void)
     activateControlRateConfig();
 
     resetAdjustmentStates();
+
+    debugMode = debugConfig()->debug_mode;		//调试模式
 
     useRcControlsConfig(modeActivationProfile()->modeActivationConditions);
 
