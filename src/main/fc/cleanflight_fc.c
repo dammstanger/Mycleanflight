@@ -1005,7 +1005,7 @@ bool taskUpdateRxCheck(uint32_t currentDeltaTime)
     return shouldProcessRx(currentTime);
 }
 
-void taskUpdateRxMain(void)
+void taskUpdateRxMain(void)				//20ms
 {
     processRx();
     isRXDataNew = true;

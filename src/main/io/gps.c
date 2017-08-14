@@ -879,7 +879,7 @@ void _update_checksum(uint8_t *data, uint8_t len, uint8_t *ck_a, uint8_t *ck_b)
     }
 }
 
-
+//parse解析数据
 static bool UBLOX_parse_gps(void)
 {
     uint32_t i;
