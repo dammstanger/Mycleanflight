@@ -46,6 +46,7 @@
 #include "fc/config.h"
 #include "fc/runtime_config.h"
 #include "fc/fc_serial.h"
+#include "fc/fc_debug.h"
 
 #include "io/serial.h"
 #include "io/display.h"
