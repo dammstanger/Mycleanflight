@@ -146,8 +146,6 @@ void recalculateMagneticDeclination(void)
 //    } else {
 //        magneticDeclination = 0.0f; // TODO investigate if this is actually needed if there is no mag sensor or if the value stored in the config should be used.
 //    }
-    if(debugMode == DEBUG_GPS){
-    	debug[2] = magneticDeclination;
-    }
+
 }
 #endif

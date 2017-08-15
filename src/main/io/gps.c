@@ -920,6 +920,11 @@ static bool UBLOX_parse_gps(void)
         GPS_speed = _buffer.velned.speed_2d;    // cm/s
         GPS_ground_course = (uint16_t) (_buffer.velned.heading_2d / 10000);     // Heading 2D deg * 100000 rescaled to deg * 10
         _new_speed = true;
+
+        if(debugMode == DEBUG_GPS){
+        	debug[2] = GPS_ground_course;
+        }
+
         break;
     case MSG_SVINFO:
         *gpsPacketLogChar = LOG_UBLOX_SVINFO;

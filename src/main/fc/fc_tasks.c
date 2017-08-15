@@ -55,7 +55,7 @@ cfTask_t cfTasks[] = {
         .taskName = "PID",
         .checkFunc = taskPidCheck,
         .taskFunc = taskPid,
-        .desiredPeriod = TASK_PERIOD_HZ(8000),
+        .desiredPeriod = TASK_PERIOD_HZ(8000),				//实际与gyro相同，为1kHz
         .staticPriority = TASK_PRIORITY_REALTIME,
     },
 
