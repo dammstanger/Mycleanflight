@@ -676,8 +676,8 @@ void updateGpsStateForHomeAndHoldMode(void)
         GPS_angle[AI_PITCH] = (nav[LON] * sin_yaw_y + nav[LAT] * cos_yaw_x) / 10;
     }
     if(debugMode == DEBUG_GPS){
-    	debug[0] = GPS_angle[AI_ROLL];
-    	debug[1] = GPS_angle[AI_PITCH];
+    	debug[0] = GPS_angle[AI_ROLL]*10;
+    	debug[1] = GPS_angle[AI_PITCH]*10;
     }
 }
 

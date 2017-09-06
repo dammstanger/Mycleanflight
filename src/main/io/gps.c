@@ -923,7 +923,8 @@ static bool UBLOX_parse_gps(void)
         _new_speed = true;
 
         if(debugMode == DEBUG_GPS){
-        	debug[2] = GPS_ground_course;
+        	debug[2] = GPS_speed;
+        	debug[3] = GPS_ground_course;
         }
 
         break;
