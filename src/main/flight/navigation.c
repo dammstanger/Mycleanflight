@@ -678,6 +678,8 @@ void updateGpsStateForHomeAndHoldMode(void)
     if(debugMode == DEBUG_GPS){
     	debug[0] = GPS_angle[AI_ROLL]*10;
     	debug[1] = GPS_angle[AI_PITCH]*10;
+		debug[2] = error[LON];
+		debug[3] = error[LAT];
     }
 }
 

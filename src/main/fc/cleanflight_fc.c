@@ -245,7 +245,7 @@ static void updateRcCommands(void)
         dynD8[axis] = (uint16_t)pidProfile()->D8[axis] * prop1 / 100;
 #endif
 
-        if (rcData[axis] < rxConfig()->midrc) {
+        if (rcData[axis] < rxConfig()->midrc) {							//小于中位值时，命令为负值
             rcCommand[axis] = -rcCommand[axis];
         }
     }
@@ -261,6 +261,7 @@ static void updateRcCommands(void)
         int16_t rcCommand_PITCH = rcCommand[PITCH] * cosDiff + rcCommand[ROLL] * sinDiff;
         rcCommand[ROLL] = rcCommand[ROLL] * cosDiff - rcCommand[PITCH] * sinDiff;
         rcCommand[PITCH] = rcCommand_PITCH;
+
     }
 }
 
@@ -629,12 +630,13 @@ void processRx(void)
         if (rcModeIsActive(BOXHEADFREE)) {
             if (!FLIGHT_MODE(HEADFREE_MODE)) {
                 ENABLE_FLIGHT_MODE(HEADFREE_MODE);
+                headFreeModeHold = DECIDEGREES_TO_DEGREES(attitude.values.yaw);		//dammstanger 20170907
             }
         } else {
             DISABLE_FLIGHT_MODE(HEADFREE_MODE);
         }
         if (rcModeIsActive(BOXHEADADJ)) {
-            headFreeModeHold = DECIDEGREES_TO_DEGREES(attitude.values.yaw); // acquire new heading
+            headFreeModeHold = DECIDEGREES_TO_DEGREES(attitude.values.yaw); 		// acquire new heading
         }
     }
 #endif
