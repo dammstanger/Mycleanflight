@@ -433,8 +433,9 @@ void updateMagHold(void)
         if (dif >= +180)
             dif -= 360;
         dif *= -rcControlsConfig()->yaw_control_direction;
-        if (STATE(SMALL_ANGLE))
-            rcCommand[YAW] -= dif * pidProfile()->P8[PIDMAG] / 30;    // 18 deg
+        if (STATE(SMALL_ANGLE)){
+        	rcCommand[YAW] -= dif * pidProfile()->P8[PIDMAG] / 30;    // 18 deg
+        }
     } else
         magHold = DECIDEGREES_TO_DEGREES(attitude.values.yaw);
 }
@@ -768,6 +769,15 @@ void subTaskMainSubprocesses(void)
 
 #ifdef MAG
         if (sensors(SENSOR_MAG)) {
+
+        	//-----From iNAV:
+//            uint8_t headingHoldState = getHeadingHoldState();
+//
+//            if (headingHoldState == HEADING_HOLD_UPDATE_HEADING) {
+//                updateHeadingHoldTarget(DECIDEGREES_TO_DEGREES(attitude.values.yaw));
+//            }
+            //-----
+
             updateMagHold();
         }
 #endif

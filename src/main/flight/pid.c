@@ -44,9 +44,14 @@
 
 #include "fc/rc_controls.h"
 #include "fc/rate_profile.h"
+#include "fc/runtime_config.h"
 
 #include "flight/pid.h"
 #include "flight/imu.h"
+
+//====From iNAV
+float headingHoldCosZLimit;
+//=====
 
 uint32_t targetPidLooptime = 0;
 
@@ -168,6 +173,19 @@ void pidInitFilters(const pidProfile_t *pidProfile)
     }
 }
 
+void pidInit(uint32_t pidLooptime)
+{
+	pidSetTargetLooptime(pidLooptime);
+
+	pidInitFilters(pidProfile());
+
+	u8 maxRollPtichangle = 45;
+    // Calculate max overall tilt (max pitch + max roll combined) as a limit to heading hold
+    headingHoldCosZLimit = cos_approx(DECIDEGREES_TO_RADIANS(maxRollPtichangle)) *
+                           cos_approx(DECIDEGREES_TO_RADIANS(maxRollPtichangle));
+}
+
+
 void pidResetITerm(void)
 {
     for (int axis = 0; axis < 3; axis++) {
@@ -270,3 +288,36 @@ int calcHorizonLevelStrength(uint16_t rxConfigMidrc, int horizonTiltEffect,
     }
     return constrain(horizonLevelStrength, 0, 100);
 }
+
+//From iNAV========HeadingHold Control=======
+
+
+static uint8_t getHeadingHoldState()
+{
+    // Don't apply heading hold if overall tilt is greater than maximum angle inclination
+    if (getCosTiltAngle() < headingHoldCosZLimit) {
+        return HEADING_HOLD_DISABLED;
+    }
+
+#if defined(NAV)
+    int navHeadingState = navigationGetHeadingControlState();
+    // NAV will prevent MAG_MODE from activating, but require heading control
+    if (navHeadingState != NAV_HEADING_CONTROL_NONE) {
+        // Apply maghold only if heading control is in auto mode
+        if (navHeadingState == NAV_HEADING_CONTROL_AUTO) {
+            return HEADING_HOLD_ENABLED;
+        }
+    }
+    else
+#endif
+    if (ABS(rcCommand[YAW]) == 0 && FLIGHT_MODE(MAG_MODE)) {
+        return HEADING_HOLD_ENABLED;
+    } else {
+        return HEADING_HOLD_UPDATE_HEADING;
+    }
+
+    return HEADING_HOLD_UPDATE_HEADING;
+}
+
+
+

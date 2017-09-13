@@ -56,6 +56,12 @@ typedef enum {
     HORIZON_TILT_MODE_EXPERT
 } horizonTiltMode_e;
 
+enum {
+    HEADING_HOLD_DISABLED = 0,
+    HEADING_HOLD_UPDATE_HEADING,
+    HEADING_HOLD_ENABLED
+};
+
 typedef struct pidProfile_s {
     uint8_t  P8[PID_ITEM_COUNT];
     uint8_t  I8[PID_ITEM_COUNT];
@@ -90,6 +96,7 @@ float pidScaleITermToRcInput(int axis);
 void pidFilterIsSetCheck(const pidProfile_t *pidProfile);
 
 float getdT(void);
+void pidInit(uint32_t pidLooptime);
 void pidInitFilters(const pidProfile_t *pidProfile);
 void pidSetController(pidControllerType_e type);
 void pidSetTargetLooptime(uint32_t pidLooptime);
@@ -98,3 +105,13 @@ void pidResetITerm(void);
 
 int calcHorizonLevelStrength(uint16_t rxConfigMidrc, int horizonTiltEffect,
         uint8_t horizonTiltMode, int horizonSensitivity);
+
+void updateHeadingHoldTarget(int16_t heading);
+void resetHeadingHoldTarget(int16_t heading);
+int16_t getHeadingHoldTarget();
+
+//debug
+
+s16 debug_GetantiWindupScaler10(void);
+s16 debug_GetITerm(void);
+s16 debug_GetnewOutputLimited(void);

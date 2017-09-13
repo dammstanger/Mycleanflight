@@ -950,9 +950,16 @@ static void loadMainState(void)
 //    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
 //        blackboxCurrent->axisPID_I[i] = axisPID_I[i];
 //    }
-    blackboxCurrent->axisPID_I[0] = attitude.values.yaw;
-    blackboxCurrent->axisPID_I[1] = altitudeGetBaroRelaAlt();
-    blackboxCurrent->axisPID_I[2] = altitudeGetsetVel();
+    if (1) {
+        blackboxCurrent->axisPID_I[0] = debug_GetantiWindupScaler10();
+        blackboxCurrent->axisPID_I[1] = debug_GetITerm();
+        blackboxCurrent->axisPID_I[2] = debug_GetnewOutputLimited();
+    }
+    else{
+        blackboxCurrent->axisPID_I[0] = attitude.values.yaw;
+        blackboxCurrent->axisPID_I[1] = altitudeGetBaroRelaAlt();
+        blackboxCurrent->axisPID_I[2] = altitudeGetsetVel();
+    }
 //    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
 //        blackboxCurrent->axisPID_D[i] = axisPID_D[i];
 //    }

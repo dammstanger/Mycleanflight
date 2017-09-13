@@ -611,8 +611,9 @@ void init(void)
 
     const uint16_t pidPeriodUs = US_FROM_HZ(gyro.sampleFrequencyHz);
 
-    pidSetTargetLooptime(pidPeriodUs * gyroConfig()->pid_process_denom);
-    pidInitFilters(pidProfile());
+//    pidSetTargetLooptime(pidPeriodUs * gyroConfig()->pid_process_denom);
+//    pidInitFilters(pidProfile());
+    pidInit(pidPeriodUs);
 
 #ifdef USE_SERVOS
     mixerInitialiseServoFiltering(targetPidLooptime);

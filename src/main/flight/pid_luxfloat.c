@@ -71,6 +71,12 @@ extern uint8_t motorCount;
 extern int32_t axisPID_P[3], axisPID_I[3], axisPID_D[3];
 #endif
 
+//DEBUG
+s16 debug_antiWindupScaler10 = 0;
+s16 debug_newOutputLimited = 0;
+s16 debug_ITerm;
+//
+
 // constants to scale pidLuxFloat so output is same as pidMultiWiiRewrite
 static const float luxPTermScale = 1.0f / 128;
 static const float luxITermScale = 1000000.0f / 0x1000000;
@@ -96,21 +102,6 @@ STATIC_UNIT_TESTED int16_t pidLuxFloatCore(int axis, const pidProfile_t *pidProf
             PTerm = constrainf(PTerm, -pidProfile->yaw_p_limit, pidProfile->yaw_p_limit);
         }
     }
-
-    // -----calculate I component
-    float ITerm = lastITermf[axis] + luxITermScale * rateError * getdT() * pidProfile->I8[axis];
-    // limit maximum integrator value to prevent WindUp - accumulating extreme values when system is saturated.
-    // I coefficient (I8) moved before integration to make limiting independent from PID settings
-    ITerm = constrainf(ITerm, -PID_MAX_I, PID_MAX_I);
-    // Anti windup protection
-    if (rcModeIsActive(BOXAIRMODE)) {
-        if (STATE(ANTI_WINDUP) || motorLimitReached) {
-            ITerm = constrainf(ITerm, -ITermLimitf[axis], ITermLimitf[axis]);
-        } else {
-            ITermLimitf[axis] = ABS(ITerm);
-        }
-    }
-    lastITermf[axis] = ITerm;
 
     // -----calculate D component
     float DTerm;
@@ -147,6 +138,40 @@ STATIC_UNIT_TESTED int16_t pidLuxFloatCore(int axis, const pidProfile_t *pidProf
         DTerm = constrainf(DTerm, -PID_MAX_D, PID_MAX_D);
     }
 
+    //From iNAV:
+    // TODO: Get feedback from mixer on available correction range for each axis
+    const float newOutput = PTerm + DTerm + lastITermf[axis];
+    const float newOutputLimited = constrainf(newOutput, -512, +512);
+
+    // -----calculate I component
+    //From iNAV: Prevent strong Iterm accumulation during stick inputs
+    const float yawItermIgnoreRate = 180.0;
+    const float rollPitchItermIgnoreRate = 200.0;
+    const float integratorThreshold = (axis == YAW) ? yawItermIgnoreRate : rollPitchItermIgnoreRate;
+    const float antiWindupScaler = 1.0;//constrainf(1.0f - (ABS(angleRate) / integratorThreshold), 0.0f, 1.0f);
+
+    float ITerm = lastITermf[axis] + (luxITermScale * antiWindupScaler * rateError * getdT() * pidProfile->I8[axis]);
+    			  //+  (luxITermScale * (newOutputLimited - newOutput) * getdT() * pidProfile->I8[axis]);
+    //debug
+    if(axis==ROLL){
+		debug_newOutputLimited = newOutputLimited;
+		debug_antiWindupScaler10 = antiWindupScaler*10;
+		debug_ITerm = ITerm;
+    }
+
+    // limit maximum integrator value to prevent WindUp - accumulating extreme values when system is saturated.
+    // I coefficient (I8) moved before integration to make limiting independent from PID settings
+    ITerm = constrainf(ITerm, -PID_MAX_I, PID_MAX_I);
+    // Anti windup protection
+    if (rcModeIsActive(BOXAIRMODE)) {
+        if (STATE(ANTI_WINDUP) || motorLimitReached) {
+            ITerm = constrainf(ITerm, -ITermLimitf[axis], ITermLimitf[axis]);
+        } else {
+            ITermLimitf[axis] = ABS(ITerm);
+        }
+    }
+    lastITermf[axis] = ITerm;
+
 #ifdef BLACKBOX
     axisPID_P[axis] = PTerm;
     axisPID_I[axis] = ITerm;
@@ -154,12 +179,13 @@ STATIC_UNIT_TESTED int16_t pidLuxFloatCore(int axis, const pidProfile_t *pidProf
 #endif
     GET_PID_LUX_FLOAT_CORE_LOCALS(axis);
     // -----calculate total PID output
-    return lrintf(PTerm + ITerm + DTerm);
+    return lrintf(newOutputLimited);		//lrintf(PTerm + ITerm + DTerm);
 }
 
 void pidLuxFloat(const pidProfile_t *pidProfile, const controlRateConfig_t *controlRateConfig,
         uint16_t max_angle_inclination, const rollAndPitchTrims_t *angleTrim, const rxConfig_t *rxConfig)
 {
+
     float horizonLevelStrength = 0.0f;
     if (FLIGHT_MODE(HORIZON_MODE)) {
         // (convert 0-100 range to 0.0-1.0 range)
@@ -213,6 +239,24 @@ void pidLuxFloat(const pidProfile_t *pidProfile, const controlRateConfig_t *cont
         }
 #endif
     }
+}
+
+
+
+
+s16 debug_GetantiWindupScaler10()
+{
+	return debug_antiWindupScaler10;
+}
+
+s16 debug_GetITerm()
+{
+	return debug_ITerm;
+}
+
+s16 debug_GetnewOutputLimited()
+{
+	return debug_newOutputLimited;
 }
 
 #endif

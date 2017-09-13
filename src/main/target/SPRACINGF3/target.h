@@ -54,10 +54,15 @@
 #define MAG
 // //#define USE_MAG_AK8975				//20170503
 #define USE_MAG_HMC5883
-#define MAG_HMC5883_ALIGN CW270_DEG
+#define MAG_HMC5883_ALIGN CW270_DEG_FLIP
 
 #define GPS
 
+// *************** NAV *****************************
+//#define NAV
+//#define NAV_AUTO_MAG_DECLINATION
+//#define NAV_GPS_GLITCH_DETECTION
+//#define NAV_MAX_WAYPOINTS     60
 
 #define USE_FLASHFS
 #define USE_FLASH_M25P16
