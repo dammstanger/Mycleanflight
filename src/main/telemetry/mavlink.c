@@ -355,9 +355,9 @@ void mavlinkSendPosition(void)
 
     mavlink_msg_gps_global_origin_pack(0, 200, &mavMsg,
         // latitude Latitude (WGS84), expressed as * 1E7
-        GPS_home[LAT],
+        GPS_home.lat,
         // longitude Longitude (WGS84), expressed as * 1E7
-        GPS_home[LON],
+        GPS_home.lon,
         // altitude Altitude(WGS84), expressed as * 1000
         0); // FIXME
     msgLength = mavlink_msg_to_send_buffer(mavBuffer, &mavMsg);

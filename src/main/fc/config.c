@@ -68,7 +68,8 @@
 #include "flight/imu.h"
 #include "flight/failsafe.h"
 #include "flight/pid.h"
-#include "flight/navigation.h"
+//dammstanger OLDNAV
+//#include "flight/navigation.h"
 
 
 // FIXME remove the includes below when target specific configuration is moved out of this file
@@ -172,7 +173,8 @@ static void activateConfig(void)
     pidSetController(pidProfile()->pidController);
 
 #ifdef GPS
-    gpsUsePIDs(pidProfile());
+    //dammstanger OLDNAV
+//    gpsUsePIDs(pidProfile());
 #endif
 
     useFailsafeConfig();

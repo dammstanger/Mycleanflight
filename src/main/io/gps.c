@@ -54,7 +54,7 @@
 
 #include "flight/gps_conversion.h"
 #include "flight/pid.h"
-#include "flight/navigation.h"
+//#include "flight/navigation.h"
 
 
 #ifdef GPS
@@ -84,6 +84,8 @@ static char *gpsPacketLogChar = gpsPacketLog;
 // **********************
 // GPS
 // **********************
+gpsSolutionData_t gpsSol;
+
 int32_t GPS_coord[2];               // LAT/LON
 
 uint8_t GPS_numSat;
@@ -365,6 +367,18 @@ void gpsInitHardware(void)
     }
 }
 
+//--iNAV---
+uint16_t gpsConstrainEPE(uint32_t epe)
+{
+    return (epe > 99999) ? 9999 : epe; // max 99.99m error
+}
+
+uint16_t gpsConstrainHDOP(uint32_t hdop)
+{
+    return (hdop > 99999) ? 9999 : hdop; // max 99.99m error
+}
+//--
+
 void gpsThread(void)
 {
     // Extra delay for at least 2 seconds after booting to give GPS time to initialise
@@ -433,8 +447,8 @@ static void gpsNewData(uint16_t c)
 #if 0
     debug[3] = GPS_update;
 #endif
-
-    onGpsNewData();
+//dammstanger OLDNAV
+//    onGpsNewData();
 }
 
 bool gpsNewFrame(uint8_t c)
@@ -894,6 +908,14 @@ static bool UBLOX_parse_gps(void)
         GPS_coord[LON] = _buffer.posllh.longitude;
         GPS_coord[LAT] = _buffer.posllh.latitude;
         GPS_altitude = _buffer.posllh.altitude_msl / 10 / 100;  //alt in m
+
+        gpsSol.llh.lon = _buffer.posllh.longitude;
+        gpsSol.llh.lat = _buffer.posllh.latitude;
+        gpsSol.llh.alt = _buffer.posllh.altitude_msl / 10;  //alt in cm
+        gpsSol.eph = gpsConstrainEPE(_buffer.posllh.horizontal_accuracy / 10);
+        gpsSol.epv = gpsConstrainEPE(_buffer.posllh.vertical_accuracy / 10);
+        gpsSol.flags.validEPE = 1;
+
         if (next_fix) {
             ENABLE_STATE(GPS_FIX);
         } else {
@@ -914,12 +936,24 @@ static bool UBLOX_parse_gps(void)
             DISABLE_STATE(GPS_FIX);
         GPS_numSat = _buffer.solution.satellites;
         GPS_hdop = _buffer.solution.position_DOP;
+
+        gpsSol.numSat = _buffer.solution.satellites;
+        gpsSol.hdop = gpsConstrainHDOP(_buffer.solution.position_DOP);
         break;
     case MSG_VELNED:
         *gpsPacketLogChar = LOG_UBLOX_VELNED;
         // speed_3d                        = _buffer.velned.speed_3d;  // cm/s
         GPS_speed = _buffer.velned.speed_2d;    // cm/s
         GPS_ground_course = (uint16_t) (_buffer.velned.heading_2d / 10000);     // Heading 2D deg * 100000 rescaled to deg * 10
+
+		gpsSol.groundSpeed = _buffer.velned.speed_2d;    // cm/s
+		gpsSol.groundCourse = (uint16_t) (_buffer.velned.heading_2d / 10000);     // Heading 2D deg * 100000 rescaled to deg * 10
+		gpsSol.velNED[0] = _buffer.velned.ned_north;
+		gpsSol.velNED[1] = _buffer.velned.ned_east;
+		gpsSol.velNED[2] = _buffer.velned.ned_down;
+		gpsSol.flags.validVelNE = 1;
+		gpsSol.flags.validVelD = 1;
+
         _new_speed = true;
 
 //        if(debugMode == DEBUG_GPS){
@@ -947,6 +981,7 @@ static bool UBLOX_parse_gps(void)
     // we only return true when we get new position and speed data
     // this ensures we don't use stale data
     if (_new_position && _new_speed) {
+    	gpsSol.flags.gpsHeartbeat = !gpsSol.flags.gpsHeartbeat;
         _new_speed = _new_position = false;
         return true;
     }

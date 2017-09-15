@@ -70,8 +70,9 @@
 #include "flight/altitudehold.h"
 #include "flight/failsafe.h"
 #include "flight/imu.h"
-#include "flight/navigation.h"
 #include "flight/pid.h"
+
+#include "navigation_new/navigation.h"
 
 #include "fc/runtime_config.h"
 #include "fc/config.h"
@@ -409,10 +410,11 @@ static bool testBlackboxConditionUncached(FlightLogFieldCondition condition)
         case FLIGHT_LOG_FIELD_CONDITION_TRICOPTER:
             return mixerConfig()->mixerMode == MIXER_TRI || mixerConfig()->mixerMode == MIXER_CUSTOM_TRI;
 
-        case FLIGHT_LOG_FIELD_CONDITION_NONZERO_PID_D_0:
-        case FLIGHT_LOG_FIELD_CONDITION_NONZERO_PID_D_1:
-        case FLIGHT_LOG_FIELD_CONDITION_NONZERO_PID_D_2:
-            return pidProfile()->D8[condition - FLIGHT_LOG_FIELD_CONDITION_NONZERO_PID_D_0] != 0;
+//        case FLIGHT_LOG_FIELD_CONDITION_NONZERO_PID_D_0:
+//        case FLIGHT_LOG_FIELD_CONDITION_NONZERO_PID_D_1:
+//        case FLIGHT_LOG_FIELD_CONDITION_NONZERO_PID_D_2:
+//            return pidProfile()->D8[condition - FLIGHT_LOG_FIELD_CONDITION_NONZERO_PID_D_0] != 0;
+        return true;
 
         case FLIGHT_LOG_FIELD_CONDITION_MAG:
 #ifdef MAG
@@ -780,15 +782,6 @@ static void writeSlowFrameIfNeeded(bool allowPeriodicWrite)
     }
 }
 
-static int gcd(int num, int denom)
-{
-    if (denom == 0) {
-        return num;
-    }
-
-    return gcd(denom, num % denom);
-}
-
 static void validateBlackboxConfig()
 {
     int div;
@@ -898,12 +891,12 @@ static void writeGPSHomeFrame()
 {
     blackboxWrite('H');
 
-    blackboxWriteSignedVB(GPS_home[0]);
-    blackboxWriteSignedVB(GPS_home[1]);
+    blackboxWriteSignedVB(GPS_home.lat);
+    blackboxWriteSignedVB(GPS_home.lon);
     //TODO it'd be great if we could grab the GPS current time and write that too
 
-    gpsHistory.GPS_home[0] = GPS_home[0];
-    gpsHistory.GPS_home[1] = GPS_home[1];
+    gpsHistory.GPS_home[0] = GPS_home.lat;
+    gpsHistory.GPS_home[1] = GPS_home.lon;
 }
 
 static void writeGPSFrame()
@@ -964,8 +957,8 @@ static void loadMainState(void)
 //        blackboxCurrent->axisPID_D[i] = axisPID_D[i];
 //    }
 
-    blackboxCurrent->axisPID_D[0] = altitudeGetAltHold();
-    blackboxCurrent->axisPID_D[1] = zbMw_get_distance();
+//    blackboxCurrent->axisPID_D[0] = altitudeGetAltHold();
+//    blackboxCurrent->axisPID_D[1] = zbMw_get_distance();
 //    blackboxCurrent->axisPID_D[2] = altitudeGetsetVel();
 
     for (i = 0; i < 4; i++) {
@@ -980,9 +973,9 @@ static void loadMainState(void)
 //        blackboxCurrent->accSmooth[i] = accSmooth[i];
 //    }
 
-    blackboxCurrent->accSmooth[0] = altitudeGetImuBasedVel();
-    blackboxCurrent->accSmooth[1] = altitudeGetNoneImuVel();
-    blackboxCurrent->accSmooth[2] = altitudeGetCfVel();
+//    blackboxCurrent->accSmooth[0] = altitudeGetImuBasedVel();
+//    blackboxCurrent->accSmooth[1] = altitudeGetNoneImuVel();
+//    blackboxCurrent->accSmooth[2] = altitudeGetCfVel();
 
     for (i = 0; i < motorCount; i++) {
         blackboxCurrent->motor[i] = motor[i];
@@ -998,14 +991,14 @@ static void loadMainState(void)
 //        blackboxCurrent->magADC[i] = magADC[i];
 //    }
 
-    blackboxCurrent->magADC[0] = altitudeHoldGetEstimatedAltitude();
-    blackboxCurrent->magADC[1] = altitudeGetCFaccAlt();
-    blackboxCurrent->magADC[2] = altitudeGetMwradarAlt();
+//    blackboxCurrent->magADC[0] = altitudeHoldGetEstimatedAltitude();
+//    blackboxCurrent->magADC[1] = altitudeGetCFaccAlt();
+//    blackboxCurrent->magADC[2] = altitudeGetMwradarAlt();
 
 #endif
 
 #ifdef BARO
-    blackboxCurrent->BaroAlt = altitudeGetBaroAlt();
+//    blackboxCurrent->BaroAlt = altitudeGetBaroAlt();
 #endif
 
 #ifdef SONAR
@@ -1340,7 +1333,7 @@ static void blackboxLogIteration()
              * We write it periodically so that if one Home Frame goes missing, the GPS coordinates can
              * still be interpreted correctly.
              */
-            if (GPS_home[0] != gpsHistory.GPS_home[0] || GPS_home[1] != gpsHistory.GPS_home[1]
+            if (GPS_home.lat != gpsHistory.GPS_home[0] || GPS_home.lon != gpsHistory.GPS_home[1]
                 || (blackboxPFrameIndex == BLACKBOX_I_INTERVAL / 2 && blackboxIFrameIndex % 128 == 0)) {
 
                 writeGPSHomeFrame();

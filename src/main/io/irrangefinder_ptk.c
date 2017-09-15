@@ -57,7 +57,7 @@
 #include "io/irrangefinder_ptk.h"
 
 #include "flight/pid.h"
-#include "flight/navigation.h"
+//#include "flight/navigation.h"
 
 
 #define REVDATASIZE 4

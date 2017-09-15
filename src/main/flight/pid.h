@@ -25,19 +25,19 @@
 #define YAW_P_LIMIT_MIN 100                 // Maximum value for yaw P limiter
 #define YAW_P_LIMIT_MAX 500                 // Maximum value for yaw P limiter
 
-typedef enum {
-    PIDROLL,
-    PIDPITCH,
-    PIDYAW,
-    PIDALT,
-    PIDPOS,
-    PIDPOSR,
-    PIDNAVR,
-    PIDLEVEL,
-    PIDMAG,
-    PIDVEL,
-    PID_ITEM_COUNT
-} pidIndex_e;
+//typedef enum {
+//    PIDROLL,
+//    PIDPITCH,
+//    PIDYAW,
+//    PIDALT,
+//    PIDPOS,
+//    PIDPOSR,
+//    PIDNAVR,
+//    PIDLEVEL,
+//    PIDMAG,
+//    PIDVEL,
+//    PID_ITEM_COUNT
+//} pidIndex_e;
 
 typedef enum {
     PID_CONTROLLER_MW23 = 0,
@@ -62,10 +62,38 @@ enum {
     HEADING_HOLD_ENABLED
 };
 
+typedef enum {
+    /* PID              MC      FW  */
+    PID_ROLL,       //   +       +
+    PID_PITCH,      //   +       +
+    PID_YAW,        //   +       +
+    PID_POS_Z,      //   +       +
+    PID_POS_XY,     //   +       +
+    PID_VEL_XY,     //   +       n/a
+    PID_SURFACE,    //   n/a     n/a
+    PID_LEVEL,      //   +       +
+    PID_HEADING,    //   +       +
+    PID_VEL_Z,      //   +       n/a
+    PID_ITEM_COUNT
+} pidIndex_e;
+
+typedef struct pid8_s {
+    uint8_t P;
+    uint8_t I;
+    uint8_t D;
+} pid8_t;
+
+typedef struct pidBank_s {
+    pid8_t  pid[PID_ITEM_COUNT];
+} pidBank_t;
+
 typedef struct pidProfile_s {
-    uint8_t  P8[PID_ITEM_COUNT];
-    uint8_t  I8[PID_ITEM_COUNT];
-    uint8_t  D8[PID_ITEM_COUNT];
+//    uint8_t  P8[PID_ITEM_COUNT];
+//    uint8_t  I8[PID_ITEM_COUNT];
+//    uint8_t  D8[PID_ITEM_COUNT];
+    pidBank_t bank_fw;
+    pidBank_t bank_mc;
+
     uint8_t  pidController;
     uint16_t yaw_p_limit;                   // set P term limit (fixed value was 300)
     uint16_t dterm_lpf_hz;                  // Delta Filter in hz
@@ -105,6 +133,8 @@ void pidResetITerm(void);
 
 int calcHorizonLevelStrength(uint16_t rxConfigMidrc, int horizonTiltEffect,
         uint8_t horizonTiltMode, int horizonSensitivity);
+
+int16_t pidAngleToRcCommand(float angleDeciDegrees, int16_t maxInclination);
 
 void updateHeadingHoldTarget(int16_t heading);
 void resetHeadingHoldTarget(int16_t heading);

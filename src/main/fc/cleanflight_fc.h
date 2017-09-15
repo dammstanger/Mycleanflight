@@ -17,13 +17,25 @@
 
 #pragma once
 
+typedef enum disarmReason_e {
+    DISARM_NONE         = 0,
+    DISARM_TIMEOUT      = 1,
+    DISARM_STICKS       = 2,
+    DISARM_SWITCH_3D    = 3,
+    DISARM_SWITCH       = 4,
+    DISARM_KILLSWITCH   = 5,
+    DISARM_FAILSAFE     = 6,
+    DISARM_NAVIGATION   = 7
+} disarmReason_t;
+
+
 extern int16_t magHold;
 extern int16_t telemTemperature1;
 
 void applyAndSaveAccelerometerTrimsDelta(rollAndPitchTrims_t *rollAndPitchTrimsDelta);
 void handleInflightCalibrationStickPosition();
 
-void mwDisarm(void);
+void mwDisarm(disarmReason_t disarmReason);
 void mwArm(void);
 
 bool isCalibrating(void);

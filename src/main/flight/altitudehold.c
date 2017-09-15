@@ -65,7 +65,7 @@ int32_t altHoldThrottleAdjustment = 0;
 int32_t AltHold;
 int32_t vario = 0;                      // variometer in cm/s
 
-
+#ifndef NAV
 #if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADAR)
 
 static int16_t initialRawThrottleHold;
@@ -238,10 +238,10 @@ void updateMwradarAltHoldState(void)
 }
 
 
-bool isThrustFacingDownwards(attitudeEulerAngles_t *attitude)
-{
-    return ABS(attitude->values.roll) < DEGREES_80_IN_DECIDEGREES && ABS(attitude->values.pitch) < DEGREES_80_IN_DECIDEGREES;
-}
+//bool isThrustFacingDownwards(attitudeEulerAngles_t *attitude)
+//{
+//    return ABS(attitude->values.roll) < DEGREES_80_IN_DECIDEGREES && ABS(attitude->values.pitch) < DEGREES_80_IN_DECIDEGREES;
+//}
 
 int32_t calculateAltHoldThrottleAdjustment(int32_t vel_tmp, float accZ_tmp, float accZ_old)
 {
@@ -590,3 +590,4 @@ int32_t altitudeGetBaroRelaAlt(void)
 
 #endif
 
+#endif //#ifndef NAV

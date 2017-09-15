@@ -51,6 +51,7 @@ float biquadFilterApply(biquadFilter_t *filter, float input);
 void pt1FilterInit(pt1Filter_t *filter, uint8_t f_cut, float dT);
 float pt1FilterApply(pt1Filter_t *filter, float input);
 float pt1FilterApply4(pt1Filter_t *filter, float input, uint8_t f_cut, float dT);
+void pt1FilterReset(pt1Filter_t *filter, float input);
 
 int32_t filterApplyAverage(int32_t input, uint8_t averageCount, int32_t averageState[DELTA_MAX_SAMPLES]);
 float filterApplyAveragef(float input, uint8_t averageCount, float averageState[DELTA_MAX_SAMPLES]);

@@ -64,6 +64,11 @@ float pt1FilterApply4(pt1Filter_t *filter, float input, uint8_t f_cut, float dT)
     return filter->state;
 }
 
+void pt1FilterReset(pt1Filter_t *filter, float input)
+{
+    filter->state = input;
+}
+
 static void biquadFilterInit(biquadFilter_t *filter, float filterFreq, uint32_t sampleDeltaUs, float Q, biquadFilterType_e filterType)
 {
     // setup variables

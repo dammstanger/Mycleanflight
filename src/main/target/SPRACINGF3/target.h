@@ -59,10 +59,10 @@
 #define GPS
 
 // *************** NAV *****************************
-//#define NAV
-//#define NAV_AUTO_MAG_DECLINATION
-//#define NAV_GPS_GLITCH_DETECTION
-//#define NAV_MAX_WAYPOINTS     60
+#define NAV
+#define NAV_AUTO_MAG_DECLINATION
+#define NAV_GPS_GLITCH_DETECTION
+#define NAV_MAX_WAYPOINTS     60
 
 #define USE_FLASHFS
 #define USE_FLASH_M25P16

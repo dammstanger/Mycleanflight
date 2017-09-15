@@ -49,6 +49,8 @@
 #include "flight/pid.h"
 #include "flight/imu.h"
 
+#include "navigation_new/navigation.h"
+
 //====From iNAV
 float headingHoldCosZLimit;
 //=====
@@ -89,34 +91,93 @@ PG_REGISTER_PROFILE_WITH_RESET_TEMPLATE(pidProfile_t, pidProfile, PG_PID_PROFILE
 
 PG_RESET_TEMPLATE(pidProfile_t, pidProfile,
     .pidController = PID_CONTROLLER_LUX_FLOAT,
-    .P8[PIDROLL] = 40,
-    .I8[PIDROLL] = 30,
-    .D8[PIDROLL] = 23,
-    .P8[PIDPITCH] = 40,
-    .I8[PIDPITCH] = 30,
-    .D8[PIDPITCH] = 23,
-    .P8[PIDYAW] = 85,
-    .I8[PIDYAW] = 45,
-    .D8[PIDYAW] = 0,
-    .P8[PIDALT] = 50,
-    .I8[PIDALT] = 0,
-    .D8[PIDALT] = 0,
-    .P8[PIDPOS] = 15,   // POSHOLD_P * 100
-    .I8[PIDPOS] = 0,    // POSHOLD_I * 100
-    .D8[PIDPOS] = 0,
-    .P8[PIDPOSR] = 34,  // POSHOLD_RATE_P * 10
-    .I8[PIDPOSR] = 14,  // POSHOLD_RATE_I * 100
-    .D8[PIDPOSR] = 53,  // POSHOLD_RATE_D * 1000
-    .P8[PIDNAVR] = 25,  // NAV_P * 10
-    .I8[PIDNAVR] = 33,  // NAV_I * 100
-    .D8[PIDNAVR] = 83,  // NAV_D * 1000
-    .P8[PIDLEVEL] = 20,
-    .I8[PIDLEVEL] = 10,
-    .D8[PIDLEVEL] = 75,
-    .P8[PIDMAG] = 40,
-    .P8[PIDVEL] = 120,
-    .I8[PIDVEL] = 45,
-    .D8[PIDVEL] = 1,
+
+    .bank_mc = {
+        .pid = {
+            [PID_ROLL] =    { 40, 30, 23 },
+            [PID_PITCH] =   { 40, 30, 23 },
+            [PID_YAW] =     { 85, 45, 0 },
+            [PID_LEVEL] = {
+                .P = 20,    // Self-level strength
+                .I = 15,    // Self-leveing low-pass frequency (0 - disabled)
+                .D = 75,    // 75% horizon strength
+            },
+            [PID_HEADING] = { 60, 0, 0 },
+            [PID_POS_XY] = {
+                .P = 65,   // NAV_POS_XY_P * 100
+                .I = 120,  // posDecelerationTime * 100
+                .D = 10,   // posResponseExpo * 100
+            },
+            [PID_VEL_XY] = {
+                .P = 180,  // NAV_VEL_XY_P * 100
+                .I = 15,   // NAV_VEL_XY_I * 100
+                .D = 100,  // NAV_VEL_XY_D * 100
+            },
+            [PID_POS_Z] = {
+                .P = 50,    // NAV_POS_Z_P * 100
+                .I = 0,     // not used
+                .D = 0,     // not used
+            },
+            [PID_VEL_Z] = {
+                .P = 100,   // NAV_VEL_Z_P * 100
+                .I = 50,    // NAV_VEL_Z_I * 100
+                .D = 10,    // NAV_VEL_Z_D * 100
+            }
+        }
+    },
+
+    .bank_fw = {
+        .pid = {
+            [PID_ROLL] =    { 5, 7, 50 },
+            [PID_PITCH] =   { 5, 7, 50 },
+            [PID_YAW] =     { 6, 10, 60 },
+            [PID_LEVEL] = {
+                .P = 20,    // Self-level strength
+                .I = 5,     // Self-leveing low-pass frequency (0 - disabled)
+                .D = 75,    // 75% horizon strength
+            },
+            [PID_HEADING] = { 60, 0, 0 },
+            [PID_POS_Z] = {
+                .P = 50,    // FW_POS_Z_P * 100
+                .I = 0,     // not used
+                .D = 0,     // not used
+            },
+            [PID_POS_XY] = {
+                .P = 75,     // FW_NAV_P * 100
+                .I = 5,      // FW_NAV_I * 100
+                .D = 8,      // FW_NAV_D * 100
+            }
+        }
+    },
+//
+//    .P8[PIDROLL] = 40,
+//    .I8[PIDROLL] = 30,
+//    .D8[PIDROLL] = 23,
+//    .P8[PIDPITCH] = 40,
+//    .I8[PIDPITCH] = 30,
+//    .D8[PIDPITCH] = 23,
+//    .P8[PIDYAW] = 85,
+//    .I8[PIDYAW] = 45,
+//    .D8[PIDYAW] = 0,
+//    .P8[PIDALT] = 50,
+//    .I8[PIDALT] = 0,
+//    .D8[PIDALT] = 0,
+//    .P8[PIDPOS] = 15,   // POSHOLD_P * 100
+//    .I8[PIDPOS] = 0,    // POSHOLD_I * 100
+//    .D8[PIDPOS] = 0,
+//    .P8[PIDPOSR] = 34,  // POSHOLD_RATE_P * 10
+//    .I8[PIDPOSR] = 14,  // POSHOLD_RATE_I * 100
+//    .D8[PIDPOSR] = 53,  // POSHOLD_RATE_D * 1000
+//    .P8[PIDNAVR] = 25,  // NAV_P * 10
+//    .I8[PIDNAVR] = 33,  // NAV_I * 100
+//    .D8[PIDNAVR] = 83,  // NAV_D * 1000
+//    .P8[PIDLEVEL] = 20,
+//    .I8[PIDLEVEL] = 10,
+//    .D8[PIDLEVEL] = 75,
+//    .P8[PIDMAG] = 40,
+//    .P8[PIDVEL] = 120,
+//    .I8[PIDVEL] = 45,
+//    .D8[PIDVEL] = 1,
 
     .yaw_p_limit = YAW_P_LIMIT_MAX,
     .yaw_lpf_hz = 0,
@@ -288,6 +349,14 @@ int calcHorizonLevelStrength(uint16_t rxConfigMidrc, int horizonTiltEffect,
     }
     return constrain(horizonLevelStrength, 0, 100);
 }
+
+
+int16_t pidAngleToRcCommand(float angleDeciDegrees, int16_t maxInclination)
+{
+    angleDeciDegrees = constrainf(angleDeciDegrees, (float) -maxInclination, (float) maxInclination);
+    return scaleRangef((float) angleDeciDegrees, (float) -maxInclination, (float) maxInclination, -500.0f, 500.0f);
+}
+
 
 //From iNAV========HeadingHold Control=======
 

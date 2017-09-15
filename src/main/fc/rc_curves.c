@@ -36,7 +36,7 @@
 static int16_t lookupPitchRollRC[PITCH_LOOKUP_LENGTH];      // lookup table for expo & RC rate PITCH+ROLL
 static int16_t lookupYawRC[YAW_LOOKUP_LENGTH];              // lookup table for expo & RC rate YAW
 static int16_t lookupThrottleRC[THROTTLE_LOOKUP_LENGTH];    // lookup table for expo & mid THROTTLE
-
+int16_t lookupThrottleRCMid;                         		// THROTTLE curve mid point
 
 void generatePitchRollCurve(void)
 {
@@ -54,6 +54,8 @@ void generateYawCurve(void)
 
 void generateThrottleCurve(void)
 {
+    lookupThrottleRCMid = motorConfig()->minthrottle + (int32_t)(motorConfig()->maxthrottle - motorConfig()->minthrottle) * currentControlRateProfile->thrMid8 / 100; // [MINTHROTTLE;MAXTHROTTLE]
+
     for (int i = 0; i < THROTTLE_LOOKUP_LENGTH; i++) {
         const int16_t tmp = 10 * i - currentControlRateProfile->thrMid8;
         uint8_t y = 1;
@@ -83,3 +85,10 @@ int16_t rcLookupThrottle(int tmp)
     const int tmp2 = tmp / 100;
     return lookupThrottleRC[tmp2] + (tmp - tmp2 * 100) * (lookupThrottleRC[tmp2 + 1] - lookupThrottleRC[tmp2]) / 100;
 }
+
+int16_t rcLookupThrottleMid(void)
+{
+    return lookupThrottleRCMid;
+}
+
+

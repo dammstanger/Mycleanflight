@@ -51,7 +51,8 @@
 #include "flight/pid.h"
 #include "config/config_unittest.h"
 #include "flight/imu.h"
-#include "flight/navigation.h"
+//dammstanger OLDNAV
+//#include "flight/navigation.h"
 #include "flight/gtune.h"
 #include "flight/mixer.h"
 
@@ -169,8 +170,11 @@ void pidMultiWiiRewrite(const pidProfile_t *pidProfile, const controlRateConfig_
                 // calculate error angle and limit the angle to the max inclination
                 // multiplication of rcCommand corresponds to changing the sticks scaling here
 #ifdef GPS
-                const int32_t errorAngle = constrain(2 * rcCommand[axis] + GPS_angle[axis], -((int)max_angle_inclination), max_angle_inclination)
-                        - attitude.raw[axis] + angleTrim->raw[axis];
+            	//dammstanger OLDNAV
+            	const int32_t errorAngle = 0;
+//                const int32_t errorAngle = constrain(2 * rcCommand[axis] + GPS_angle[axis], -((int)max_angle_inclination), max_angle_inclination)
+//                        - attitude.raw[axis] + angleTrim->raw[axis];
+            	//==
 #else
                 const int32_t errorAngle = constrain(2 * rcCommand[axis], -((int)max_angle_inclination), max_angle_inclination)
                         - attitude.raw[axis] + angleTrim->raw[axis];

@@ -34,6 +34,29 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define ABS(x) ((x) > 0 ? (x) : -(x))
 
+#define DEGREES_TO_CENTIDEGREES(angle) ((angle) * 100)
+#define CENTIDEGREES_TO_DEGREES(angle) ((angle) / 100)
+
+#define CENTIDEGREES_TO_DECIDEGREES(angle) ((angle) / 10)
+#define DECIDEGREES_TO_CENTIDEGREES(angle) ((angle) * 10)
+
+#define DEGREES_TO_DECIDEGREES(angle) ((angle) * 10)
+#define DECIDEGREES_TO_DEGREES(angle) ((angle) / 10)
+
+#define DEGREES_PER_DEKADEGREE 10
+#define DEGREES_TO_DEKADEGREES(angle) ((angle) / DEGREES_PER_DEKADEGREE)
+#define DEKADEGREES_TO_DEGREES(angle) ((angle) * DEGREES_PER_DEKADEGREE)
+
+#define DEGREES_TO_RADIANS(angle) ((angle) * RAD)
+#define RADIANS_TO_DEGREES(angle) ((angle) / RAD)
+#define DECIDEGREES_TO_RADIANS(angle) (((angle) / 10.0f) * RAD)
+#define RADIANS_TO_DECIDEGREES(angle) (((angle) * 10.0f) / RAD)
+
+#define RADIANS_TO_CENTIDEGREES(angle) (((angle) * 100.0f) / RAD)
+#define CENTIDEGREES_TO_RADIANS(angle) (((angle) / 100.0f) * RAD)
+
+
+
 typedef struct stdev_s
 {
     float m_oldM, m_newM, m_oldS, m_newS;
@@ -77,11 +100,16 @@ float devStandardDeviation(stdev_t *dev);
 float degreesToRadians(int16_t degrees);
 
 int scaleRange(int x, int srcMin, int srcMax, int destMin, int destMax);
+float scaleRangef(float x, float srcMin, float srcMax, float destMin, float destMax);
 
 void normalizeV(struct fp_vector *src, struct fp_vector *dest);
 
 void rotateV(struct fp_vector *v, fp_angles_t *delta);
 void buildRotationMatrix(fp_angles_t *delta, float matrix[3][3]);
+
+int gcd(int num, int denom);
+int32_t wrap_18000(int32_t angle);
+int32_t wrap_36000(int32_t angle);
 
 int32_t quickMedianFilter3(int32_t * v);
 int32_t quickMedianFilter5(int32_t * v);

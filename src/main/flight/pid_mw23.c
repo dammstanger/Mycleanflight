@@ -49,7 +49,8 @@
 
 #include "flight/pid.h"
 #include "flight/imu.h"
-#include "flight/navigation.h"
+//dammstanger OLDNAV
+//#include "flight/navigation.h"
 #include "flight/gtune.h"
 #include "flight/mixer.h"
 
@@ -118,8 +119,11 @@ void pidMultiWii23(const pidProfile_t *pidProfile, const controlRateConfig_t *co
         if (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE)) {   // axis relying on ACC
             // 50 degrees max inclination
 #ifdef GPS
-            errorAngle = constrain(2 * rcCommand[axis] + GPS_angle[axis], -((int) max_angle_inclination),
-                +max_angle_inclination) - attitude.raw[axis] + angleTrim->raw[axis];
+        	//dammstanger OLDNAV
+        	errorAngle = 0;
+//            errorAngle = constrain(2 * rcCommand[axis] + GPS_angle[axis], -((int) max_angle_inclination),
+//                +max_angle_inclination) - attitude.raw[axis] + angleTrim->raw[axis];
+        	//==
 #else
             errorAngle = constrain(2 * rcCommand[axis], -((int) max_angle_inclination),
                 +max_angle_inclination) - attitude.raw[axis] + angleTrim->raw[axis];

@@ -30,6 +30,11 @@
 #include "config/config_reset.h"
 
 #include "drivers/system.h"
+#include "drivers/sensor.h"
+#include "drivers/accgyro.h"
+
+#include "sensors/sensors.h"
+#include "sensors/acceleration.h"
 
 #include "rx/rx.h"
 
@@ -38,6 +43,7 @@
 #include "fc/rc_controls.h"
 #include "fc/runtime_config.h"
 #include "fc/config.h"
+#include "fc/cleanflight_fc.h"
 
 #include "flight/failsafe.h"
 
@@ -88,6 +94,14 @@ void failsafeInit(void)
 
     return;
 }
+
+#ifdef NAV
+bool failsafeMayRequireNavigationMode(void)
+{
+    return failsafeConfig()->failsafe_procedure == FAILSAFE_PROCEDURE_RTH;
+}
+#endif
+
 
 failsafePhase_e failsafePhase()
 {
@@ -188,7 +202,7 @@ void failsafeUpdateState(void)
             case FAILSAFE_IDLE:
                 if (armed) {
                     // Track throttle command below minimum time
-                    if (THROTTLE_HIGH == calculateThrottleStatus(rxConfig(), rcControlsConfig()->deadband3d_throttle)) {
+                    if (THROTTLE_HIGH == calculateThrottleStatus()) {
                         failsafeState.throttleLowPeriod = millis() + failsafeConfig()->failsafe_throttle_low_delay * MILLIS_PER_TENTH_SECOND;
                     }
                     // Kill switch logic (must be independent of receivingRxData to skip PERIOD_RXDATA_FAILURE delay before disarming)
@@ -199,7 +213,7 @@ void failsafeUpdateState(void)
                         failsafeState.receivingRxDataPeriodPreset = PERIOD_OF_1_SECONDS;    // require 1 seconds of valid rxData
                         reprocessState = true;
                     } else if (!receivingRxData) {
-                        if (millis() > failsafeState.throttleLowPeriod) {
+                        if (millis() > failsafeState.throttleLowPeriod || STATE(NAV_MOTOR_STOP_OR_IDLE)) {
                             // JustDisarm: throttle was LOW for at least 'failsafe_throttle_low_delay' seconds
                             failsafeActivate();
                             failsafeState.phase = FAILSAFE_LANDED;      // skip auto-landing procedure
@@ -261,7 +275,7 @@ void failsafeUpdateState(void)
 
             case FAILSAFE_LANDED:
                 ENABLE_ARMING_FLAG(PREVENT_ARMING); // To prevent accidently rearming by an intermittent rx link
-                mwDisarm();
+                mwDisarm(DISARM_FAILSAFE);
                 failsafeState.receivingRxDataPeriod = millis() + failsafeState.receivingRxDataPeriodPreset; // set required period of valid rxData
                 failsafeState.phase = FAILSAFE_RX_LOSS_MONITORING;
                 reprocessState = true;

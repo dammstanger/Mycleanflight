@@ -58,7 +58,8 @@
 
 
 #include "flight/pid.h"
-#include "flight/navigation.h"
+//dammstanger OLDNAV
+//#include "flight/navigation.h"
 #include "flight/failsafe.h"
 
 #include "fc/cleanflight_fc.h"
@@ -73,6 +74,11 @@ PG_REGISTER_PROFILE(modeActivationProfile_t, modeActivationProfile, PG_MODE_ACTI
 // true if arming is done via the sticks (as opposed to a switch)
 static bool isUsingSticksToArm = true;
 
+#ifdef NAV
+// true if pilot has any of GPS modes configured
+static bool isUsingNAVModes = false;
+#endif
+
 int16_t rcCommand[4];           // interval [1000;2000] for THROTTLE and [-500;+500] for ROLL/PITCH/YAW
 
 STATIC_UNIT_TESTED uint32_t rcModeActivationMask; // one bit per mode defined in boxId_e
@@ -80,6 +86,7 @@ STATIC_UNIT_TESTED uint32_t rcModeActivationMask; // one bit per mode defined in
 PG_RESET_TEMPLATE(rcControlsConfig_t, rcControlsConfig,
     .deadband = 0,
     .yaw_deadband = 0,
+	.pos_hold_deadband = 20,
     .alt_hold_deadband = 40,
     .alt_hold_fast_change = 1,
     .yaw_control_direction = 1,
@@ -98,17 +105,25 @@ bool isUsingSticksForArming(void)
     return isUsingSticksToArm;
 }
 
+#if defined(NAV)
+bool isUsingNavigationModes(void)
+{
+    return isUsingNAVModes;
+}
+#endif
+
 
 bool areSticksInApModePosition(uint16_t ap_mode)
 {
     return ABS(rcCommand[ROLL]) < ap_mode && ABS(rcCommand[PITCH]) < ap_mode;
 }
 
-throttleStatus_e calculateThrottleStatus(rxConfig_t *rxConfig, uint16_t deadband3d_throttle)
+throttleStatus_e calculateThrottleStatus(void)
 {
-    if (feature(FEATURE_3D) && (rcData[THROTTLE] > (rxConfig->midrc - deadband3d_throttle) && rcData[THROTTLE] < (rxConfig->midrc + deadband3d_throttle)))
+	const uint16_t deadband3d_throttle = rcControlsConfig()->deadband3d_throttle;
+    if (feature(FEATURE_3D) && (rcData[THROTTLE] > (rxConfig()->midrc - deadband3d_throttle) && rcData[THROTTLE] < (rxConfig()->midrc + deadband3d_throttle)))
         return THROTTLE_LOW;
-    else if (!feature(FEATURE_3D) && (rcData[THROTTLE] < rxConfig->mincheck))
+    else if (!feature(FEATURE_3D) && (rcData[THROTTLE] < rxConfig()->mincheck))
         return THROTTLE_LOW;
 
     return THROTTLE_HIGH;
@@ -161,9 +176,9 @@ void processRcStickPositions(rxConfig_t *rxConfig, throttleStatus_e throttleStat
 
             if (ARMING_FLAG(ARMED) && rxIsReceivingSignal() && !failsafeIsActive()  ) {
                 if (disarm_kill_switch) {
-                    mwDisarm();
+                    mwDisarm(DISARM_SWITCH);
                 } else if (throttleStatus == THROTTLE_LOW) {
-                    mwDisarm();
+                    mwDisarm(DISARM_SWITCH);
                 }
             }
         }
@@ -177,7 +192,7 @@ void processRcStickPositions(rxConfig_t *rxConfig, throttleStatus_e throttleStat
         // Disarm on throttle down + yaw
         if (rcSticks == THR_LO + YAW_LO + PIT_CE + ROL_CE) {
             if (ARMING_FLAG(ARMED))
-                mwDisarm();
+                mwDisarm(DISARM_STICKS);
             else {
                 beeper(BEEPER_DISARM_REPEAT);    // sound tone while stick held
                 rcDelayCommand = 0;              // reset so disarm tone will repeat
@@ -186,7 +201,7 @@ void processRcStickPositions(rxConfig_t *rxConfig, throttleStatus_e throttleStat
             // Disarm on roll (only when retarded_arm is enabled)
         if (retarded_arm && (rcSticks == THR_LO + YAW_CE + PIT_CE + ROL_LO)) {
             if (ARMING_FLAG(ARMED))
-                mwDisarm();
+                mwDisarm(DISARM_STICKS);
             else {
                 beeper(BEEPER_DISARM_REPEAT);    // sound tone while stick held
                 rcDelayCommand = 0;              // reset so disarm tone will repeat
@@ -208,7 +223,8 @@ void processRcStickPositions(rxConfig_t *rxConfig, throttleStatus_e throttleStat
 
 #ifdef GPS
         if (feature(FEATURE_GPS)) {
-            GPS_reset_home_position();
+        	//dammstanger OLDNAV
+//            GPS_reset_home_position();
         }
 #endif
 
@@ -361,5 +377,11 @@ int32_t getRcStickDeflection(int32_t axis, uint16_t midrc)
 void useRcControlsConfig(modeActivationCondition_t *modeActivationConditions)
 {
     isUsingSticksToArm = !rcModeIsActivationConditionPresent(modeActivationConditions, BOXARM);
+
+#ifdef NAV
+    isUsingNAVModes = rcModeIsActivationConditionPresent(modeActivationConditions, BOXNAVPOSHOLD) ||
+    					rcModeIsActivationConditionPresent(modeActivationConditions, BOXNAVRTH) ||
+						rcModeIsActivationConditionPresent(modeActivationConditions, BOXNAVWP);
+#endif
 }
 

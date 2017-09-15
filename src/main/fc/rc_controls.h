@@ -21,15 +21,15 @@ typedef enum {
     BOXARM = 0,
     BOXANGLE,
     BOXHORIZON,
-    BOXBARO,
+	BOXNAVALTHOLD,
     // BOXVARIO,
     BOXMAG,
     BOXHEADFREE,
     BOXHEADADJ,
     BOXCAMSTAB,
     BOXCAMTRIG,
-    BOXGPSHOME,
-    BOXGPSHOLD,
+	BOXNAVRTH,
+	BOXNAVPOSHOLD,
     BOXPASSTHRU,
     BOXBEEPERON,
     BOXLEDMAX,
@@ -48,8 +48,8 @@ typedef enum {
     BOXFAILSAFE,
     BOXAIRMODE,
     BOXVTX,
-	BOXIRRANGFD,
-	BOXMWRADAR,
+	BOXNAVWP,
+	BOXSURFACE,
     CHECKBOX_ITEM_COUNT
 } boxId_e;
 
@@ -138,6 +138,7 @@ extern int16_t rcCommand[4];
 typedef struct rcControlsConfig_s {
     uint8_t deadband;                       // introduce a deadband around the stick center for pitch and roll axis. Must be greater than zero.
     uint8_t yaw_deadband;                   // introduce a deadband around the stick center for yaw axis. Must be greater than zero.
+    uint8_t pos_hold_deadband;				// Adds ability to adjust the Hold-position when moving the sticks (assisted mode)
     uint8_t alt_hold_deadband;              // defines the neutral zone of throttle stick during altitude hold, default setting is +/-40
     uint8_t alt_hold_fast_change;           // when disabled, turn off the althold when throttle stick is out of deadband defined with alt_hold_deadband; when enabled, altitude changes slowly proportional to stick movement
     int8_t yaw_control_direction;           // change control direction of yaw (inverted, normal)
@@ -160,7 +161,7 @@ bool areUsingSticksToArm(void);
 
 bool areSticksInApModePosition(uint16_t ap_mode);
 struct rxConfig_s;
-throttleStatus_e calculateThrottleStatus(struct rxConfig_s *rxConfig, uint16_t deadband3d_throttle);
+throttleStatus_e calculateThrottleStatus(void);
 rollPitchStatus_e calculateRollPitchCenterStatus(struct rxConfig_s *rxConfig);
 void processRcStickPositions(struct rxConfig_s *rxConfig, throttleStatus_e throttleStatus, bool retarded_arm, bool disarm_kill_switch);
 
@@ -170,6 +171,7 @@ bool rcModeIsActivationConditionPresent(modeActivationCondition_t *modeActivatio
 
 
 bool isUsingSticksForArming(void);
+bool isUsingNavigationModes(void);
 
 int32_t getRcStickDeflection(int32_t axis, uint16_t midrc);
 

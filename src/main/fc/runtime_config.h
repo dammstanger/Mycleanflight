@@ -34,17 +34,17 @@ typedef enum {
     ANGLE_MODE      = (1 << 0),
     HORIZON_MODE    = (1 << 1),
     MAG_MODE        = (1 << 2),
-    BARO_MODE       = (1 << 3),
-    GPS_HOME_MODE   = (1 << 4),
-    GPS_HOLD_MODE   = (1 << 5),
+    NAV_ALTHOLD_MODE= (1 << 3), // old BARO
+    NAV_RTH_MODE    = (1 << 4), // old GPS_HOME
+    NAV_POSHOLD_MODE= (1 << 5), // old GPS_HOLD
     HEADFREE_MODE   = (1 << 6),
-    UNUSED_MODE     = (1 << 7), // old autotune
+	NAV_LAUNCH_MODE = (1 << 7), // old autotune
     PASSTHRU_MODE   = (1 << 8),
     SONAR_MODE      = (1 << 9),
     FAILSAFE_MODE   = (1 << 10),
     GTUNE_MODE      = (1 << 11),
-	IRRANGFD_MODE	= (1 << 12),
-	MWRADAR_MODE	= (1 << 13),
+	NAV_WP_MODE     = (1 << 12),
+
 } flightModeFlags_e;
 
 extern uint16_t flightModeFlags;
@@ -57,17 +57,18 @@ extern uint16_t flightModeFlags;
 // Each boxId_e is at index of flightModeFlags_e bit, value is -1 if boxId_e does not exist.
 // It is much more memory efficient than full map (uint32_t -> uint8_t)
 #define FLIGHT_MODE_BOXID_MAP_INITIALIZER {                             \
-        BOXANGLE, BOXHORIZON, BOXMAG, BOXBARO, BOXGPSHOME, BOXGPSHOLD,  \
+        BOXANGLE, BOXHORIZON, BOXMAG, BOXNAVALTHOLD, BOXNAVRTH, BOXNAVPOSHOLD,  \
         BOXHEADFREE, -1, BOXPASSTHRU, BOXSONAR, BOXFAILSAFE, BOXGTUNE}  \
         /**/
 
 typedef enum {
-    GPS_FIX_HOME    = (1 << 0),
-    GPS_FIX         = (1 << 1),
-    CALIBRATE_MAG   = (1 << 2),
-    SMALL_ANGLE     = (1 << 3),
-    FIXED_WING      = (1 << 4),                   // set when in flying_wing or airplane mode. currently used by althold selection code
-    ANTI_WINDUP     = (1 << 5),
+    GPS_FIX_HOME    		= (1 << 0),
+    GPS_FIX         		= (1 << 1),
+    CALIBRATE_MAG   		= (1 << 2),
+    SMALL_ANGLE     		= (1 << 3),
+    FIXED_WING     			= (1 << 4),     // set when in flying_wing or airplane mode. currently used by althold selection code
+    ANTI_WINDUP     		= (1 << 5),
+	NAV_MOTOR_STOP_OR_IDLE  = (1 << 6),     // navigation requests MOTOR_STOP or motor idle regardless of throttle stick, will only activate if MOTOR_STOP feature is available
 } stateFlags_t;
 
 #define DISABLE_STATE(mask) (stateFlags &= ~(mask))
@@ -84,4 +85,3 @@ void sensorsSet(uint32_t mask);
 void sensorsClear(uint32_t mask);
 uint32_t sensorsMask(void);
 
-void mwDisarm(void);

@@ -96,8 +96,9 @@
 #include "flight/pid.h"
 #include "flight/imu.h"
 #include "flight/failsafe.h"
-#include "flight/navigation.h"
 #include "flight/altitudehold.h"
+
+#include "navigation_new/navigation.h"
 
 #include "blackbox/blackbox.h"
 
@@ -139,15 +140,15 @@ static const box_t boxes[CHECKBOX_ITEM_COUNT] = {
     { "ARM",       BOXARM,        0 },
     { "ANGLE",     BOXANGLE,      1 },
     { "HORIZON",   BOXHORIZON,    2 },
-    { "BARO",      BOXBARO,       3 },
+    { "BARO",      BOXNAVALTHOLD, 3 },
   //{ "VARIO",     BOXVARIO,      4 },
     { "MAG",       BOXMAG,        5 },
     { "HEADFREE",  BOXHEADFREE,   6 },
     { "HEADADJ",   BOXHEADADJ,    7 },
     { "CAMSTAB",   BOXCAMSTAB,    8 },
     { "CAMTRIG",   BOXCAMTRIG,    9 },
-    { "GPS HOME",  BOXGPSHOME,   10 },
-    { "GPS HOLD",  BOXGPSHOLD,   11 },
+    { "NAVRTH",    BOXNAVRTH,    10 },
+    { "NAVPOSHOLD",BOXNAVPOSHOLD,11 },
     { "PASSTHRU",  BOXPASSTHRU,  12 },
     { "BEEPER",    BOXBEEPERON,  13 },
     { "LEDMAX",    BOXLEDMAX,    14 },
@@ -166,8 +167,8 @@ static const box_t boxes[CHECKBOX_ITEM_COUNT] = {
     { "FAILSAFE",  BOXFAILSAFE,  27 },
     { "AIR MODE",  BOXAIRMODE,   28 },
     { "VTX",       BOXVTX,       29 },
-    { "IRRANGFD",  BOXIRRANGFD,  30 },
-	{ "MWRADAR",  BOXMWRADAR,  	 31 },
+    { "NAVWP",     BOXNAVWP,     30 },
+	{ "SURFACE",   BOXSURFACE,   31 },
 };
 
 // mask of enabled IDs, calculated on start based on enabled features. boxId_e is used as bit index.
@@ -301,7 +302,7 @@ static void initActiveBoxIds(void)
 
 #ifdef BARO
     if (sensors(SENSOR_BARO)) {
-        ena |= 1 << BOXBARO;
+        ena |= 1 << BOXNAVALTHOLD;
     }
 #endif
 
@@ -318,8 +319,9 @@ static void initActiveBoxIds(void)
 
 #ifdef GPS
     if (feature(FEATURE_GPS)) {
-        ena |= 1 << BOXGPSHOME;
-        ena |= 1 << BOXGPSHOLD;
+        ena |= 1 << BOXNAVRTH;
+        ena |= 1 << BOXNAVPOSHOLD;
+        ena |= 1 << BOXNAVWP;
     }
 #endif
 
@@ -350,15 +352,9 @@ static void initActiveBoxIds(void)
         ena |= 1 << BOXSONAR;
     }
 
-#ifdef IRRANGFD
-    if (feature(FEATURE_IRRANGFD)){
-        ena |= 1 << BOXIRRANGFD;
-    }
-#endif
-
 #ifdef MWRADAR
     if (feature(FEATURE_MWRADAR)){
-        ena |= 1 << BOXMWRADAR;
+        ena |= 1 << BOXSURFACE;
     }
 #endif
 
@@ -659,8 +655,8 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
             break;
 
         case MSP_ALTITUDE:
-#if defined(BARO) || defined(SONAR) || defined(IRRANGFD) || defined(MWRADAR)
-            sbufWriteU32(dst, altitudeHoldGetEstimatedAltitude());
+#if (defined(BARO) || defined(IRRANGFD) || defined(MWRADAR)) && defined(NAV)
+//            sbufWriteU32(dst, altitudeHoldGetEstimatedAltitude());
             sbufWriteU16(dst, vario);
 #else
             sbufWriteU32(dst, 0);
@@ -711,9 +707,16 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
 
         case MSP_PID:
             for (int i = 0; i < PID_ITEM_COUNT; i++) {
-                sbufWriteU8(dst, pidProfile()->P8[i]);
-                sbufWriteU8(dst, pidProfile()->I8[i]);
-                sbufWriteU8(dst, pidProfile()->D8[i]);
+            	if(STATE(FIXED_WING)){
+                    sbufWriteU8(dst, pidProfile()->bank_fw.pid[i].P);
+                    sbufWriteU8(dst, pidProfile()->bank_fw.pid[i].I);
+                    sbufWriteU8(dst, pidProfile()->bank_fw.pid[i].D);
+            	}
+            	else{
+                    sbufWriteU8(dst, pidProfile()->bank_mc.pid[i].P);
+                    sbufWriteU8(dst, pidProfile()->bank_mc.pid[i].I);
+                    sbufWriteU8(dst, pidProfile()->bank_mc.pid[i].D);
+            	}
             }
             break;
 
@@ -793,20 +796,22 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
             break;
 
         case MSP_COMP_GPS:
-            sbufWriteU16(dst, GPS_distanceToHome);
-            sbufWriteU16(dst, GPS_directionToHome);
-            sbufWriteU8(dst, GPS_update & 1);
+//dammstanger OLDNAV
+//            sbufWriteU16(dst, GPS_distanceToHome);
+//            sbufWriteU16(dst, GPS_directionToHome);
+//            sbufWriteU8(dst, GPS_update & 1);
             break;
 
         case MSP_WP: {
             uint8_t wp_no = sbufReadU8(src);    // get the wp number
             int32_t lat = 0, lon = 0;
             if (wp_no == 0) {
-                lat = GPS_home[LAT];
-                lon = GPS_home[LON];
+                lat = GPS_home.lat;
+                lon = GPS_home.lon;
             } else if (wp_no == 16) {
-                lat = GPS_hold[LAT];
-                lon = GPS_hold[LON];
+            	//dammstanger OLDNAV
+//                lat = GPS_hold[LAT];
+//                lon = GPS_hold[LON];
             }
             sbufWriteU8(dst, wp_no);
             sbufWriteU32(dst, lat);
@@ -1116,10 +1121,17 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
 
         case MSP_SET_PID:
             for (int i = 0; i < PID_ITEM_COUNT; i++) {
-                    pidProfile()->P8[i] = sbufReadU8(src);
-                    pidProfile()->I8[i] = sbufReadU8(src);
-                    pidProfile()->D8[i] = sbufReadU8(src);
-                }
+            	if(STATE(FIXED_WING)){
+					pidProfile()->bank_fw.pid[i].P = sbufReadU8(src);
+					pidProfile()->bank_fw.pid[i].I = sbufReadU8(src);
+					pidProfile()->bank_fw.pid[i].D = sbufReadU8(src);
+            	}
+            	else{
+					pidProfile()->bank_mc.pid[i].P = sbufReadU8(src);
+					pidProfile()->bank_mc.pid[i].I = sbufReadU8(src);
+					pidProfile()->bank_mc.pid[i].D = sbufReadU8(src);
+            	}
+            }
             break;
 
         case MSP_SET_MODE_RANGE: {
@@ -1445,21 +1457,23 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
             sbufReadU16(src);                            // future: to set heading (deg)
             sbufReadU16(src);                            // future: to set time to stay (ms)
             sbufReadU8(src);                             // future: to set nav flag
-            if (wp_no == 0) {
-                GPS_home[LAT] = lat;
-                GPS_home[LON] = lon;
-                DISABLE_FLIGHT_MODE(GPS_HOME_MODE);     // with this flag, GPS_set_next_wp will be called in the next loop -- OK with SERIAL GPS / OK with I2C GPS
-                ENABLE_STATE(GPS_FIX_HOME);
-                if (alt != 0)
-                    AltHold = alt;                      // temporary implementation to test feature with apps
-            } else if (wp_no == 16) {                   // OK with SERIAL GPS  --  NOK for I2C GPS / needs more code dev in order to inject GPS coord inside I2C GPS
-                GPS_hold[LAT] = lat;
-                GPS_hold[LON] = lon;
-                if (alt != 0)
-                    AltHold = alt;                      // temporary implementation to test feature with apps
-                nav_mode = NAV_MODE_WP;
-                GPS_set_next_wp(&GPS_hold[LAT], &GPS_hold[LON]);
-            }
+//dammstanger OLDNAV
+//            if (wp_no == 0) {
+//                GPS_home.lat = lat;
+//                GPS_home.lon = lon;
+//                DISABLE_FLIGHT_MODE(GPS_HOME_MODE);     // with this flag, GPS_set_next_wp will be called in the next loop -- OK with SERIAL GPS / OK with I2C GPS
+//                ENABLE_STATE(GPS_FIX_HOME);
+//                if (alt != 0)
+//                    AltHold = alt;                      // temporary implementation to test feature with apps
+//            } else if (wp_no == 16) {                   // OK with SERIAL GPS  --  NOK for I2C GPS / needs more code dev in order to inject GPS coord inside I2C GPS
+//                GPS_hold[LAT] = lat;
+//                GPS_hold[LON] = lon;
+//                if (alt != 0)
+//                    AltHold = alt;                      // temporary implementation to test feature with apps
+//                nav_mode = NAV_MODE_WP;
+//                GPS_set_next_wp(&GPS_hold[LAT], &GPS_hold[LON]);
+//            }
+//==
             break;
         }
 #endif

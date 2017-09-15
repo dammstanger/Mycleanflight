@@ -57,6 +57,12 @@ typedef enum {
     GPS_AUTOBAUD_ON
 } gpsAutoBaud_e;
 
+typedef enum {
+    GPS_NO_FIX = 0,
+    GPS_FIX_2D,
+    GPS_FIX_3D
+} gpsFixType_e;
+
 #define GPS_BAUDRATE_MAX GPS_BAUDRATE_9600
 
 typedef struct gpsConfig_s {
@@ -73,6 +79,12 @@ typedef struct gpsCoordinateDDDMMmmmm_s {
     int16_t mmmm;
 } gpsCoordinateDDDMMmmmm_t;
 
+/* LLH Location in NEU axis system */
+typedef struct gpsLocation_s {
+    int32_t lat;    // Lattitude * 1e+7
+    int32_t lon;    // Longitude * 1e+7
+    int32_t alt;    // Altitude in centimeters (meters * 100)
+} gpsLocation_t;
 
 typedef enum {
     GPS_MESSAGE_STATE_IDLE = 0,
@@ -82,6 +94,31 @@ typedef enum {
 } gpsMessageState_e;
 
 #define GPS_MESSAGE_STATE_ENTRY_COUNT (GPS_MESSAGE_STATE_MAX + 1)
+
+typedef struct gpsSolutionData_s {
+    struct {
+        unsigned gpsHeartbeat   : 1;     // Toggle each update
+        unsigned validVelNE     : 1;
+        unsigned validVelD      : 1;
+        unsigned validMag       : 1;
+        unsigned validEPE       : 1;    // EPH/EPV values are valid - actual accuracy
+    } flags;
+
+    gpsFixType_e fixType;
+    uint8_t numSat;
+
+    gpsLocation_t llh;
+    int16_t       magData[3];
+    int16_t       velNED[3];
+
+    int16_t groundSpeed;
+    int16_t groundCourse;
+
+    uint16_t eph;   // horizontal accuracy (cm)
+    uint16_t epv;   // vertical accuracy (cm)
+
+    uint16_t hdop;  // generic HDOP value (*100)
+} gpsSolutionData_t;
 
 typedef struct gpsData_s {
     uint8_t state;                  // GPS thread state. Used for detecting cable disconnects and configuring attached devices
@@ -117,6 +154,7 @@ extern uint8_t GPS_svinfo_quality[16];     // Bitfield Qualtity
 extern uint8_t GPS_svinfo_cno[16];         // Carrier to Noise Ratio (Signal Strength)
 
 extern uint32_t GPS_garbageByteCount;
+extern gpsSolutionData_t gpsSol;
 
 #define GPS_DBHZ_MIN 0
 #define GPS_DBHZ_MAX 55

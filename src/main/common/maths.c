@@ -99,6 +99,35 @@ float acos_approx(float x)
 }
 #endif
 
+//---求最大公约数---
+int gcd(int num, int denom)
+{
+    if (denom == 0) {
+        return num;
+    }
+
+    return gcd(denom, num % denom);
+}
+
+int32_t wrap_18000(int32_t angle)
+{
+    if (angle > 18000)
+        angle -= 36000;
+    if (angle < -18000)
+        angle += 36000;
+    return angle;
+}
+
+int32_t wrap_36000(int32_t angle)
+{
+    if (angle > 36000)
+        angle -= 36000;
+    if (angle < 0)
+        angle += 36000;
+    return angle;
+}
+
+
 int32_t applyDeadband(int32_t value, int32_t deadband)
 {
     if (ABS(value) < deadband) {
@@ -169,6 +198,12 @@ int scaleRange(int x, int srcMin, int srcMax, int destMin, int destMax)
 {
     long int a = ((long int) destMax - (long int) destMin) * ((long int) x - (long int) srcMin);
     long int b = (long int) srcMax - (long int) srcMin;
+    return ((a / b) - (destMax - destMin)) + destMax;
+}
+
+float scaleRangef(float x, float srcMin, float srcMax, float destMin, float destMax) {
+    float a = (destMax - destMin) * (x - srcMin);
+    float b = srcMax - srcMin;
     return ((a / b) - (destMax - destMin)) + destMax;
 }
 

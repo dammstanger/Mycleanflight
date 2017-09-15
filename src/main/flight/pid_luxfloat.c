@@ -51,7 +51,8 @@
 #include "flight/pid.h"
 #include "config/config_unittest.h"
 #include "flight/imu.h"
-#include "flight/navigation.h"
+//dammstanger OLDNAV
+//#include "flight/navigation.h"
 #include "flight/gtune.h"
 #include "flight/mixer.h"
 
@@ -92,7 +93,7 @@ STATIC_UNIT_TESTED int16_t pidLuxFloatCore(int axis, const pidProfile_t *pidProf
     const float rateError = angleRate - gyroRate;
 
     // -----calculate P component
-    float PTerm = luxPTermScale * rateError * pidProfile->P8[axis] * PIDweight[axis] / 100;
+    float PTerm = luxPTermScale * rateError * pidProfile->bank_mc.pid[axis].P * PIDweight[axis] / 100;
     // Constrain YAW by yaw_p_limit value if not servo driven, in that case servolimits apply
     if (axis == YAW) {
         if (pidProfile->yaw_lpf_hz) {
@@ -105,7 +106,7 @@ STATIC_UNIT_TESTED int16_t pidLuxFloatCore(int axis, const pidProfile_t *pidProf
 
     // -----calculate D component
     float DTerm;
-    if (pidProfile->D8[axis] == 0) {
+    if (pidProfile->bank_mc.pid[axis].D == 0) {
         // optimisation for when D8 is zero, often used by YAW axis
         DTerm = 0;
     } else {
@@ -134,7 +135,7 @@ STATIC_UNIT_TESTED int16_t pidLuxFloatCore(int axis, const pidProfile_t *pidProf
             }
         }
 
-        DTerm = luxDTermScale * delta * pidProfile->D8[axis] * PIDweight[axis] / 100;
+        DTerm = luxDTermScale * delta * pidProfile->bank_mc.pid[axis].D * PIDweight[axis] / 100;
         DTerm = constrainf(DTerm, -PID_MAX_D, PID_MAX_D);
     }
 
@@ -150,7 +151,7 @@ STATIC_UNIT_TESTED int16_t pidLuxFloatCore(int axis, const pidProfile_t *pidProf
     const float integratorThreshold = (axis == YAW) ? yawItermIgnoreRate : rollPitchItermIgnoreRate;
     const float antiWindupScaler = 1.0;//constrainf(1.0f - (ABS(angleRate) / integratorThreshold), 0.0f, 1.0f);
 
-    float ITerm = lastITermf[axis] + (luxITermScale * antiWindupScaler * rateError * getdT() * pidProfile->I8[axis]);
+    float ITerm = lastITermf[axis] + (luxITermScale * antiWindupScaler * rateError * getdT() * pidProfile->bank_mc.pid[axis].I);
     			  //+  (luxITermScale * (newOutputLimited - newOutput) * getdT() * pidProfile->I8[axis]);
     //debug
     if(axis==ROLL){
@@ -190,7 +191,7 @@ void pidLuxFloat(const pidProfile_t *pidProfile, const controlRateConfig_t *cont
     if (FLIGHT_MODE(HORIZON_MODE)) {
         // (convert 0-100 range to 0.0-1.0 range)
         horizonLevelStrength = (float)calcHorizonLevelStrength(rxConfig->midrc, pidProfile->horizon_tilt_effect,
-                pidProfile->horizon_tilt_mode, pidProfile->D8[PIDLEVEL]) / 100.0f;
+                pidProfile->horizon_tilt_mode, pidProfile->bank_mc.pid[PID_LEVEL].D) / 100.0f;
     }
 
     // ----------PID controller----------
@@ -205,26 +206,27 @@ void pidLuxFloat(const pidProfile_t *pidProfile, const controlRateConfig_t *cont
         } else {
             // control is GYRO based for ACRO and HORIZON - direct sticks control is applied to rate PID
             angleRate = (float)((rate + 27) * rcCommand[axis]) / 16.0f; // 200dps to 1200dps max roll/pitch rate
-            if (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE)||
-            	FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(IRRANGFD_MODE) || FLIGHT_MODE(MWRADAR_MODE)) {	//baro IRRANGFD MWRADAR模式也改为自水平控制
+            if (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE)) {	//baro IRRANGFD MWRADAR模式也改为自水平控制
                 // calculate error angle and limit the angle to the max inclination
                 // multiplication of rcCommand corresponds to changing the sticks scaling here
 #ifdef GPS
-                const float errorAngle = constrain(2 * rcCommand[axis] + GPS_angle[axis], -((int)max_angle_inclination), max_angle_inclination)
-                        - attitude.raw[axis] + angleTrim->raw[axis];
+            	//dammstanger OLDNAV
+            	const float errorAngle = 0;
+//                const float errorAngle = constrain(2 * rcCommand[axis] + GPS_angle[axis], -((int)max_angle_inclination), max_angle_inclination)
+//                        - attitude.raw[axis] + angleTrim->raw[axis];
+            	//==
 #else
                 const float errorAngle = constrain(2 * rcCommand[axis], -((int)max_angle_inclination), max_angle_inclination)
                         - attitude.raw[axis] + angleTrim->raw[axis];
 #endif
-                if (FLIGHT_MODE(ANGLE_MODE)||FLIGHT_MODE(BARO_MODE)||
-                	FLIGHT_MODE(IRRANGFD_MODE)||FLIGHT_MODE(MWRADAR_MODE)) {			//baro IRRANGFD模式也改为自水平控制,目标角速度使用与angle模式相同
-                    // ANGLE mode or BARO mode
-                    angleRate = errorAngle * pidProfile->P8[PIDLEVEL] / 16.0f;
+                if (FLIGHT_MODE(ANGLE_MODE)) {
+                    // ANGLE mode
+                    angleRate = errorAngle * pidProfile->bank_mc.pid[PID_LEVEL].P / 16.0f;
                 } else {
                     // HORIZON mode
                     // mix in errorAngle to desired angleRate to add a little auto-level feel.
                     // horizonLevelStrength has been scaled to the stick input
-                    angleRate += errorAngle * pidProfile->I8[PIDLEVEL] * horizonLevelStrength / 16.0f;
+                    angleRate += errorAngle * pidProfile->bank_mc.pid[PID_LEVEL].I * horizonLevelStrength / 16.0f;
                 }
             }
         }

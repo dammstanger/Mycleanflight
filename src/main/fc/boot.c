@@ -120,7 +120,8 @@
 #include "flight/mixer.h"
 #include "flight/servos.h"
 #include "flight/failsafe.h"
-#include "flight/navigation.h"
+//dammstanger OLDNAV
+//#include "flight/navigation.h"
 
 #include "osd/osd_element.h"
 #include "osd/osd.h"
@@ -633,7 +634,8 @@ void init(void)
 #ifdef GPS
     if (feature(FEATURE_GPS)) {
         gpsInit();
-        navigationInit(pidProfile());
+        //dammstanger OLDNAV
+//        navigationInit(pidProfile());
     }
 #endif
 
@@ -652,7 +654,7 @@ void init(void)
 #ifdef MWRADAR
     if (feature(FEATURE_MWRADAR)) {
      	mwradarInit();
-     	generateAltTransCurve(mwradar.mwradarMaxAltWithTiltCm - mwradar.mwradarCfAltCm);
+//     	generateAltTransCurve(mwradar.mwradarMaxAltWithTiltCm - mwradar.mwradarCfAltCm);
     }
 #endif
 

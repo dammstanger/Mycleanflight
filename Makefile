@@ -361,10 +361,14 @@ OSD_COMMON_SRC = \
 #dammstanger 20170623  add sensors/irrangefinder.c 
 #dammstanger 20170718  add io/mwradar_zb.c 
 #dammstanger 20170718  add sensors/mwradar_zb.c 
+#dammstanger 20170913  delete  flight/navigation.c
 HIGHEND_SRC = \
 		   flight/gtune.c \
-		   flight/navigation.c \
 		   flight/gps_conversion.c \
+		   navigation_new/navigation_geo.c \
+		   navigation_new/navigation_multicopter.c \
+		   navigation_new/navigation_pos_estimator.c \
+		   navigation_new/navigation.c \
 		   common/colorconversion.c \
 		   io/irrangefinder_ptk.c \
 		   io/mwradar_zb.c \

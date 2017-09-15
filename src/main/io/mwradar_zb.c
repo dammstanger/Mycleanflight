@@ -57,7 +57,7 @@
 #include "io/mwradar_zb.h"
 
 #include "flight/pid.h"
-#include "flight/navigation.h"
+//#include "flight/navigation.h"
 
 
 #if defined(MWRADAR) && defined(USE_ZB005)

@@ -20,6 +20,7 @@
 int16_t rcLookupPitchRoll(int rcVal);
 int16_t rcLookupYaw(int rcYaw);
 int16_t rcLookupThrottle(int rcThrottle);
+int16_t rcLookupThrottleMid(void);
 
 void generatePitchRollCurve(void);
 void generateYawCurve(void);

@@ -65,7 +65,7 @@
 #include "sensors/voltage.h"
 #include "sensors/amperage.h"
 #include "sensors/battery.h"
-#include "sensors/irrangefinder.h"
+#include "sensors/mwradar.h"
 
 #include "io/beeper.h"
 #include "io/display.h"
@@ -95,7 +95,8 @@
 #include "flight/altitudehold.h"
 #include "flight/failsafe.h"
 #include "flight/gtune.h"
-#include "flight/navigation.h"
+//dammstanger OLDNAV
+//#include "flight/navigation.h"
 
 #include "osd/osd_element.h"
 #include "osd/osd.h"
@@ -105,6 +106,7 @@
 
 #include "fc/runtime_config.h"
 #include "fc/config.h"
+#include "fc/cleanflight_fc.h"
 #include "config/feature.h"
 
 // June 2013     V2.2-dev
@@ -137,6 +139,7 @@ extern uint8_t PIDweight[3];
 extern uint8_t dynP8[3], dynI8[3], dynD8[3];
 
 static bool isRXDataNew;
+static disarmReason_t lastDisarmReason = DISARM_NONE;
 
 extern pidControllerFuncPtr pid_controller;
 
@@ -239,10 +242,10 @@ static void updateRcCommands(void)
             PIDweight[axis] = 100;
         }
 #ifdef USE_PID_MW23
-        // FIXME axis indexes into pids.  use something like lookupPidIndex(rc_alias_e alias) to reduce coupling.
-        dynP8[axis] = (uint16_t)pidProfile()->P8[axis] * prop1 / 100;
-        dynI8[axis] = (uint16_t)pidProfile()->I8[axis] * prop1 / 100;
-        dynD8[axis] = (uint16_t)pidProfile()->D8[axis] * prop1 / 100;
+//        // FIXME axis indexes into pids.  use something like lookupPidIndex(rc_alias_e alias) to reduce coupling.
+//        dynP8[axis] = (uint16_t)pidProfile()->P8[axis] * prop1 / 100;
+//        dynI8[axis] = (uint16_t)pidProfile()->I8[axis] * prop1 / 100;
+//        dynD8[axis] = (uint16_t)pidProfile()->D8[axis] * prop1 / 100;
 #endif
 
         if (rcData[axis] < rxConfig()->midrc) {							//小于中位值时，命令为负值
@@ -317,9 +320,10 @@ static void updateLEDs(void)
     }
 }
 
-void mwDisarm(void)
+void mwDisarm(disarmReason_t disarmReason)
 {
     if (ARMING_FLAG(ARMED)) {
+    	lastDisarmReason = disarmReason;
         DISABLE_ARMING_FLAG(ARMED);
 
 #ifdef BLACKBOX
@@ -331,6 +335,11 @@ void mwDisarm(void)
         beeper(BEEPER_DISARMING);      // emit disarm tone
     }
 }
+
+//disarmReason_t getDisarmReason(void)
+//{
+//    return lastDisarmReason;
+//}
 
 #define TELEMETRY_FUNCTION_MASK (FUNCTION_TELEMETRY_FRSKY | FUNCTION_TELEMETRY_HOTT | FUNCTION_TELEMETRY_SMARTPORT | FUNCTION_TELEMETRY_LTM | FUNCTION_TELEMETRY_MAVLINK | FUNCTION_TELEMETRY_IBUS)
 
@@ -424,21 +433,21 @@ void updateInflightCalibrationState(void)
     }
 }
 
-void updateMagHold(void)
-{
-    if (ABS(rcCommand[YAW]) < 15 && FLIGHT_MODE(MAG_MODE)) {
-        int16_t dif = DECIDEGREES_TO_DEGREES(attitude.values.yaw) - magHold;
-        if (dif <= -180)
-            dif += 360;
-        if (dif >= +180)
-            dif -= 360;
-        dif *= -rcControlsConfig()->yaw_control_direction;
-        if (STATE(SMALL_ANGLE)){
-        	rcCommand[YAW] -= dif * pidProfile()->P8[PIDMAG] / 30;    // 18 deg
-        }
-    } else
-        magHold = DECIDEGREES_TO_DEGREES(attitude.values.yaw);
-}
+//void updateMagHold(void)
+//{
+//    if (ABS(rcCommand[YAW]) < 15 && FLIGHT_MODE(MAG_MODE)) {
+//        int16_t dif = DECIDEGREES_TO_DEGREES(attitude.values.yaw) - magHold;
+//        if (dif <= -180)
+//            dif += 360;
+//        if (dif >= +180)
+//            dif -= 360;
+//        dif *= -rcControlsConfig()->yaw_control_direction;
+//        if (STATE(SMALL_ANGLE)){
+//        	rcCommand[YAW] -= dif * pidProfile()->P8[PIDMAG] / 30;    // 18 deg
+//        }
+//    } else
+//        magHold = DECIDEGREES_TO_DEGREES(attitude.values.yaw);
+//}
 
 void processRx(void)
 {
@@ -449,7 +458,7 @@ void processRx(void)
     // in 3D mode, we need to be able to disarm by switch at any time
     if (feature(FEATURE_3D)) {
         if (!rcModeIsActive(BOXARM))
-            mwDisarm();
+            mwDisarm(DISARM_SWITCH_3D);
     }
 
     updateRSSI(currentTime);
@@ -463,7 +472,7 @@ void processRx(void)
         failsafeUpdateState();
     }
 
-    throttleStatus_e throttleStatus = calculateThrottleStatus(rxConfig(), rcControlsConfig()->deadband3d_throttle);
+    throttleStatus_e throttleStatus = calculateThrottleStatus();
     rollPitchStatus_e rollPitchStatus =  calculateRollPitchCenterStatus(rxConfig());
 
     /* In airmode Iterm should be prevented to grow when Low thottle and Roll + Pitch Centered.
@@ -499,7 +508,7 @@ void processRx(void)
                     && (int32_t)(disarmAt - millis()) < 0
                 ) {
                     // auto-disarm configured and delay is over
-                    mwDisarm();
+                    mwDisarm(DISARM_TIMEOUT);
                     armedBeeperOn = false;
                 } else {
                     // still armed; do warning beeps while armed
@@ -544,16 +553,16 @@ void processRx(void)
     }
 
     bool canUseHorizonMode = true;
-    bool canUseBaroMode = true;
-    bool canUseIRrangfdMode = true;
-    bool canUseMwradarMode = true;
-//angle and failsafe
+//    bool canUseBaroMode = true;
+//    bool canUseIRrangfdMode = true;
+//    bool canUseMwradarMode = true;
+
     if ((rcModeIsActive(BOXANGLE) || (feature(FEATURE_FAILSAFE) && failsafeIsActive())) && (sensors(SENSOR_ACC))) {
         // bumpless transfer to Level mode
         canUseHorizonMode = false;
-        canUseBaroMode = false;
-        canUseIRrangfdMode = false;
-        canUseMwradarMode = false;
+//        canUseBaroMode = false;
+//        canUseIRrangfdMode = false;
+//        canUseMwradarMode = false;
 
         if (!FLIGHT_MODE(ANGLE_MODE)) {
 #ifdef USE_PID_MW23
@@ -586,37 +595,37 @@ void processRx(void)
         LED1_OFF;
     }
 
-//baro  dammstanger 20140705	将baro模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
-    if(rcModeIsActive(BOXBARO) && canUseBaroMode){
-
-		if (!FLIGHT_MODE(BARO_MODE)) {
-#ifdef USE_PID_MW23
-			pidResetITermAngle();
-#endif
-//			ENABLE_FLIGHT_MODE(BARO_MODE);		//已经在updateAltHoldState()中使能了，这里不用。
-		}
-	}
-
-//IRrangfd  dammstanger 20140706	将IRrangfd模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
-	if(rcModeIsActive(BOXIRRANGFD) && canUseIRrangfdMode){
-
-		if (!FLIGHT_MODE(IRRANGFD_MODE)) {
-#ifdef USE_PID_MW23
-			pidResetITermAngle();
-#endif
-//			ENABLE_FLIGHT_MODE(IRRANGFD_MODE);		//已经在updateIRrangfdAltHoldState()中使能了，这里不用。
-		}
-	}
-
-//IRrangfd  dammstanger 20140721	将radar模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
-	if(rcModeIsActive(BOXMWRADAR) && canUseMwradarMode){
-
-		if (!FLIGHT_MODE(MWRADAR_MODE)) {
-#ifdef USE_PID_MW23
-			pidResetITermAngle();
-#endif
-		}
-	}
+////baro  dammstanger 20140705	将baro模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
+//    if(rcModeIsActive(BOXBARO) && canUseBaroMode){
+//
+//		if (!FLIGHT_MODE(BARO_MODE)) {
+//#ifdef USE_PID_MW23
+//			pidResetITermAngle();
+//#endif
+////			ENABLE_FLIGHT_MODE(BARO_MODE);		//已经在updateAltHoldState()中使能了，这里不用。
+//		}
+//	}
+//
+////IRrangfd  dammstanger 20140706	将IRrangfd模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
+//	if(rcModeIsActive(BOXIRRANGFD) && canUseIRrangfdMode){
+//
+//		if (!FLIGHT_MODE(IRRANGFD_MODE)) {
+//#ifdef USE_PID_MW23
+//			pidResetITermAngle();
+//#endif
+////			ENABLE_FLIGHT_MODE(IRRANGFD_MODE);		//已经在updateIRrangfdAltHoldState()中使能了，这里不用。
+//		}
+//	}
+//
+////IRrangfd  dammstanger 20140721	将radar模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
+//	if(rcModeIsActive(BOXMWRADAR) && canUseMwradarMode){
+//
+//		if (!FLIGHT_MODE(MWRADAR_MODE)) {
+//#ifdef USE_PID_MW23
+//			pidResetITermAngle();
+//#endif
+//		}
+//	}
 
 #ifdef  MAG
     if (sensors(SENSOR_ACC) || sensors(SENSOR_MAG)) {
@@ -644,7 +653,8 @@ void processRx(void)
 
 #ifdef GPS
     if (sensors(SENSOR_GPS)) {
-        updateGpsWaypointsAndMode();
+    	//dammstanger OLDNAV
+//        updateGpsWaypointsAndMode();
     }
 #endif
 
@@ -760,11 +770,11 @@ void subTaskMainSubprocesses(void)
         // this must be called here since applyAltHold directly manipulates rcCommands[]
         updateRcCommands();
 
-        if (sensors(SENSOR_BARO) || sensors(SENSOR_SONAR) || sensors(SENSOR_IRRANGFD) || sensors(SENSOR_MWRADAR)) {
-            if (FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(SONAR_MODE) || FLIGHT_MODE(IRRANGFD_MODE)  || FLIGHT_MODE(MWRADAR_MODE) ) {
-                applyAltHold();
-            }
-        }
+//        if (sensors(SENSOR_BARO) || sensors(SENSOR_SONAR) || sensors(SENSOR_IRRANGFD) || sensors(SENSOR_MWRADAR)) {
+//            if (FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(SONAR_MODE) || FLIGHT_MODE(IRRANGFD_MODE)  || FLIGHT_MODE(MWRADAR_MODE) ) {
+//                applyAltHold();
+//            }
+//        }
 #endif
 
 #ifdef MAG
@@ -778,7 +788,7 @@ void subTaskMainSubprocesses(void)
 //            }
             //-----
 
-            updateMagHold();
+//            updateMagHold();
         }
 #endif
 
@@ -800,17 +810,19 @@ void subTaskMainSubprocesses(void)
     }
     //倾角补偿
     if (throttleCorrectionConfig()->throttle_correction_value &&
-       (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE) || FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(IRRANGFD_MODE) || FLIGHT_MODE(MWRADAR_MODE))) {		//dammstanger 20170706
-        rcCommand[THROTTLE] += calculateThrottleAngleCorrection(throttleCorrectionConfig()->throttle_correction_value);
+//       (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE) || FLIGHT_MODE(BARO_MODE) || FLIGHT_MODE(IRRANGFD_MODE) || FLIGHT_MODE(MWRADAR_MODE))) {		//dammstanger 20170706
+	(FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE))) {
+		rcCommand[THROTTLE] += calculateThrottleAngleCorrection(throttleCorrectionConfig()->throttle_correction_value);
     }
     //对控制指令滤波
     processRcCommand();
 
 #ifdef GPS
     if (sensors(SENSOR_GPS)) {
-        if ((FLIGHT_MODE(GPS_HOME_MODE) || FLIGHT_MODE(GPS_HOLD_MODE)) && STATE(GPS_FIX_HOME)) {
-            updateGpsStateForHomeAndHoldMode();
-        }
+//       if ((FLIGHT_MODE(GPS_HOME_MODE) || FLIGHT_MODE(GPS_HOLD_MODE)) && STATE(GPS_FIX_HOME)) {
+        	//dammstanger OLDNAV
+//            updateGpsStateForHomeAndHoldMode();
+//        }
     }
 #endif
 
@@ -1000,7 +1012,7 @@ void taskUpdateBattery(void)
             if (batteryConfig()->amperageMeterSource == AMPERAGE_METER_ADC) {
                 amperageUpdateMeter(ibatTimeSinceLastServiced);
             } else {
-                throttleStatus_e throttleStatus = calculateThrottleStatus(rxConfig(), rcControlsConfig()->deadband3d_throttle);
+                throttleStatus_e throttleStatus = calculateThrottleStatus();
                 bool throttleLowAndMotorStop = (throttleStatus == THROTTLE_LOW && feature(FEATURE_MOTOR_STOP));
                 int32_t throttleOffset = (int32_t)rcCommand[THROTTLE] - 1000;
 
@@ -1030,7 +1042,7 @@ void taskUpdateRxMain(void)				//20ms
 
 #ifdef BARO
     if (sensors(SENSOR_BARO)) {
-        updateAltHoldState();
+//        updateAltHoldState();
     }
 #endif
 
@@ -1051,7 +1063,7 @@ void taskUpdateRxMain(void)				//20ms
 #ifdef MWRADAR
 
     if (sensors(SENSOR_MWRADAR)) {
-    	updateMwradarAltHoldState();
+//    	updateMwradarAltHoldState();
     }
 #endif
 }
@@ -1138,7 +1150,7 @@ void taskCalculateAltitude(void)
         || sensors(SENSOR_MWRADAR)
 #endif
 		) {
-        calculateEstimatedAltitude(currentTime);
+//        calculateEstimatedAltitude(currentTime);
     }
 }
 #endif

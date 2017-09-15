@@ -41,12 +41,12 @@
 #endif
 
 
-
+#define SKIP_PID_MWREWRITE
 #ifndef SKIP_PID_MWREWRITE
 #define USE_PID_MWREWRITE
 #endif
 
-//#define SKIP_PID_MW23	// dammstanger	20170508
+#define SKIP_PID_MW23	// dammstanger	20170915
 #ifndef SKIP_PID_MW23
 #define USE_PID_MW23
 #endif

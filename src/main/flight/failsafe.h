@@ -52,8 +52,16 @@ typedef enum {
 
 typedef enum {
     FAILSAFE_PROCEDURE_AUTO_LANDING = 0,
-    FAILSAFE_PROCEDURE_DROP_IT
+    FAILSAFE_PROCEDURE_DROP_IT,
+    FAILSAFE_PROCEDURE_RTH,
+    FAILSAFE_PROCEDURE_NONE
 } failsafeProcedure_e;
+
+typedef enum {
+    RTH_IDLE = 0,               // RTH is waiting
+    RTH_IN_PROGRESS,            // RTH is active
+    RTH_HAS_LANDED              // RTH is active and has landed.
+} rthState_e;
 
 typedef struct failsafeState_s {
     int16_t events;
@@ -78,7 +86,7 @@ void useFailsafeConfig();
 
 void failsafeStartMonitoring(void);
 void failsafeUpdateState(void);
-
+bool failsafeMayRequireNavigationMode(void);
 failsafePhase_e failsafePhase();
 bool failsafeIsMonitoring(void);
 bool failsafeIsActive(void);

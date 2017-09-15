@@ -46,6 +46,7 @@
 #include "fc/rc_curves.h"
 #include "fc/rc_adjustments.h"
 #include "fc/config.h"
+#include "fc/runtime_config.h"
 
 #include "rx/rx.h"
 
@@ -160,100 +161,182 @@ void applyStepAdjustment(controlRateConfig_t *controlRateConfig, uint8_t adjustm
             break;
         case ADJUSTMENT_PITCH_ROLL_P:
         case ADJUSTMENT_PITCH_P:
-            setAdjustment(&pidProfile()->P8[PIDPITCH],ADJUSTMENT_PITCH_P,delta,PID_MIN,PID_MAX);
+        	if(!STATE(FIXED_WING))
+        		setAdjustment(&pidProfile()->bank_mc.pid[PID_PITCH].P,ADJUSTMENT_PITCH_P,delta,PID_MIN,PID_MAX);
+        	else
+        		setAdjustment(&pidProfile()->bank_fw.pid[PID_PITCH].P,ADJUSTMENT_PITCH_P,delta,PID_MIN,PID_MAX);
             if (adjustmentFunction == ADJUSTMENT_PITCH_P) {
                 break;
             }
             // follow though for combined ADJUSTMENT_PITCH_ROLL_P
         case ADJUSTMENT_ROLL_P:
-            setAdjustment(&pidProfile()->P8[PIDROLL],ADJUSTMENT_ROLL_P,delta,PID_MIN,PID_MAX);
+        	if(!STATE(FIXED_WING))
+        		setAdjustment(&pidProfile()->bank_mc.pid[PID_ROLL].P,ADJUSTMENT_ROLL_P,delta,PID_MIN,PID_MAX);
+        	else
+        		setAdjustment(&pidProfile()->bank_fw.pid[PID_ROLL].P,ADJUSTMENT_ROLL_P,delta,PID_MIN,PID_MAX);
             break;
         case ADJUSTMENT_PITCH_ROLL_I:
         case ADJUSTMENT_PITCH_I:
-            setAdjustment(&pidProfile()->I8[PIDPITCH],ADJUSTMENT_PITCH_I,delta,PID_MIN,PID_MAX);
+        	if(!STATE(FIXED_WING))
+        		setAdjustment(&pidProfile()->bank_mc.pid[PID_PITCH].I,ADJUSTMENT_PITCH_I,delta,PID_MIN,PID_MAX);
+        	else
+        		setAdjustment(&pidProfile()->bank_fw.pid[PID_PITCH].I,ADJUSTMENT_PITCH_I,delta,PID_MIN,PID_MAX);
+            break;
             if (adjustmentFunction == ADJUSTMENT_PITCH_I) {
                 break;
             }
             // follow though for combined ADJUSTMENT_PITCH_ROLL_I
         case ADJUSTMENT_ROLL_I:
-           setAdjustment(&pidProfile()->I8[PIDROLL],ADJUSTMENT_ROLL_I,delta,PID_MIN,PID_MAX);
+        	if(!STATE(FIXED_WING))
+        		setAdjustment(&pidProfile()->bank_mc.pid[PID_ROLL].I,ADJUSTMENT_ROLL_I,delta,PID_MIN,PID_MAX);
+        	else
+        		setAdjustment(&pidProfile()->bank_fw.pid[PID_ROLL].I,ADJUSTMENT_ROLL_I,delta,PID_MIN,PID_MAX);
             break;
         case ADJUSTMENT_PITCH_ROLL_D:
         case ADJUSTMENT_PITCH_D:
-            setAdjustment(&pidProfile()->D8[PIDPITCH],ADJUSTMENT_PITCH_D,delta,PID_MIN,PID_MAX);
+        	if(!STATE(FIXED_WING))
+        		setAdjustment(&pidProfile()->bank_mc.pid[PID_PITCH].D,ADJUSTMENT_PITCH_D,delta,PID_MIN,PID_MAX);
+        	else
+        		setAdjustment(&pidProfile()->bank_fw.pid[PID_PITCH].D,ADJUSTMENT_PITCH_D,delta,PID_MIN,PID_MAX);
             if (adjustmentFunction == ADJUSTMENT_PITCH_D) {
                 break;
             }
             // follow though for combined ADJUSTMENT_PITCH_ROLL_D
         case ADJUSTMENT_ROLL_D:
-            setAdjustment(&pidProfile()->D8[PIDROLL],ADJUSTMENT_ROLL_D,delta,PID_MIN,PID_MAX);
+        	if(!STATE(FIXED_WING))
+        		setAdjustment(&pidProfile()->bank_mc.pid[PID_ROLL].D,ADJUSTMENT_ROLL_D,delta,PID_MIN,PID_MAX);
+        	else
+        		setAdjustment(&pidProfile()->bank_fw.pid[PID_ROLL].D,ADJUSTMENT_ROLL_D,delta,PID_MIN,PID_MAX);
             break;
     }
 
     uint8_t* ptr = NULL;
     switch (adjustmentFunction) {
         case ADJUSTMENT_YAW_P:
-            ptr = &pidProfile()->P8[PIDYAW];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_YAW].P;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_YAW].P;
             break;
         case ADJUSTMENT_YAW_I:
-            ptr = &pidProfile()->I8[PIDYAW];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_YAW].I;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_YAW].I;
             break;
         case ADJUSTMENT_YAW_D:
-            ptr = &pidProfile()->D8[PIDYAW];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_YAW].D;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_YAW].D;
             break;
         case ADJUSTMENT_LEVEL_P:
-            ptr = &pidProfile()->P8[PIDLEVEL];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_LEVEL].P;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_LEVEL].P;
             break;
         case ADJUSTMENT_LEVEL_I:
-            ptr = &pidProfile()->I8[PIDLEVEL];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_LEVEL].I;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_LEVEL].I;
             break;
         case ADJUSTMENT_LEVEL_D:
-            ptr = &pidProfile()->D8[PIDLEVEL];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_LEVEL].D;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_LEVEL].D;
             break;
         case ADJUSTMENT_ALT_P:
-            ptr = &pidProfile()->P8[PIDALT];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_POS_Z].P;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_POS_Z].P;
             break;
         case ADJUSTMENT_ALT_I:
-            ptr = &pidProfile()->I8[PIDALT];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_POS_Z].I;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_POS_Z].I;
             break;
         case ADJUSTMENT_ALT_D:
-            ptr = &pidProfile()->D8[PIDALT];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_POS_Z].D;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_POS_Z].D;
             break;
         case ADJUSTMENT_POS_P:
-            ptr = &pidProfile()->P8[PIDPOS];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_POS_XY].P;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_POS_XY].P;
             break;
         case ADJUSTMENT_POS_I:
-            ptr = &pidProfile()->I8[PIDPOS];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_POS_XY].I;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_POS_XY].I;
             break;
         case ADJUSTMENT_POSR_P:
-            ptr = &pidProfile()->P8[PIDPOSR];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_VEL_XY].P;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_VEL_XY].P;
             break;
         case ADJUSTMENT_POSR_I:
-            ptr = &pidProfile()->I8[PIDPOSR];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_VEL_XY].I;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_VEL_XY].I;
             break;
         case ADJUSTMENT_POSR_D:
-            ptr = &pidProfile()->D8[PIDPOSR];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_VEL_XY].D;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_VEL_XY].D;
             break;
-       case ADJUSTMENT_NAVR_P:
-            ptr = &pidProfile()->P8[PIDNAVR];
-            break;
-        case ADJUSTMENT_NAVR_I:
-            ptr = &pidProfile()->I8[PIDNAVR];
-            break;
-        case ADJUSTMENT_NAVR_D:
-            ptr = &pidProfile()->D8[PIDNAVR];
-            break;
+//       case ADJUSTMENT_NAVR_P:
+//       	if(!STATE(FIXED_WING))
+//       		ptr = &pidProfile()->bank_mc.pid[PID_VEL_XY].P;
+//       	else
+//       		ptr = &pidProfile()->bank_fw.pid[PID_VEL_XY].P;
+//            break;
+//        case ADJUSTMENT_NAVR_I:
+//        	if(!STATE(FIXED_WING))
+//        		ptr = &pidProfile()->bank_mc.pid[PID_VEL_XY].P;
+//        	else
+//        		ptr = &pidProfile()->bank_fw.pid[PID_VEL_XY].P;
+//            break;
+//        case ADJUSTMENT_NAVR_D:
+//        	if(!STATE(FIXED_WING))
+//        		ptr = &pidProfile()->bank_mc.pid[PID_VEL_XY].P;
+//        	else
+//        		ptr = &pidProfile()->bank_fw.pid[PID_VEL_XY].P;
+//            break;
         case ADJUSTMENT_MAG_P:
-            ptr = &pidProfile()->P8[PIDMAG];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_HEADING].P;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_HEADING].P;
             break;
         case ADJUSTMENT_VEL_P:
-            ptr = &pidProfile()->P8[PIDVEL];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_VEL_Z].P;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_VEL_Z].P;
             break;
         case ADJUSTMENT_VEL_I:
-            ptr = &pidProfile()->I8[PIDVEL];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_VEL_Z].I;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_VEL_Z].I;
             break;
         case ADJUSTMENT_VEL_D:
-            ptr = &pidProfile()->D8[PIDVEL];
+        	if(!STATE(FIXED_WING))
+        		ptr = &pidProfile()->bank_mc.pid[PID_VEL_Z].D;
+        	else
+        		ptr = &pidProfile()->bank_fw.pid[PID_VEL_Z].D;
             break;
         default:
             break;

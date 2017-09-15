@@ -62,6 +62,8 @@
 // http://gentlenav.googlecode.com/files/fastRotations.pdf
 #define SPIN_RATE_LIMIT 20
 
+t_fp_vector imuMeasuredAccelBF;
+
 int32_t accSum[XYZ_AXIS_COUNT];
 
 uint32_t accTimeSum = 0;        // keep track for integration of acc
@@ -97,6 +99,32 @@ static float rMat[3][3];
 attitudeEulerAngles_t attitude = { { 0, 0, 0 } };     // absolute angle inclination in multiple of 0.1 degree    180 deg = 1800
 
 static float gyroScale;
+
+void imuTransformVectorBodyToEarth(t_fp_vector * v)
+{
+    /* From body frame to earth frame */
+    const float x = rMat[0][0] * v->V.X + rMat[0][1] * v->V.Y + rMat[0][2] * v->V.Z;
+    const float y = rMat[1][0] * v->V.X + rMat[1][1] * v->V.Y + rMat[1][2] * v->V.Z;
+    const float z = rMat[2][0] * v->V.X + rMat[2][1] * v->V.Y + rMat[2][2] * v->V.Z;
+
+    v->V.X = x;
+    v->V.Y = -y;
+    v->V.Z = z;
+}
+
+void imuTransformVectorEarthToBody(t_fp_vector * v)
+{
+    v->V.Y = -v->V.Y;
+
+    /* From earth frame to body frame */
+    const float x = rMat[0][0] * v->V.X + rMat[1][0] * v->V.Y + rMat[2][0] * v->V.Z;
+    const float y = rMat[0][1] * v->V.X + rMat[1][1] * v->V.Y + rMat[2][1] * v->V.Z;
+    const float z = rMat[0][2] * v->V.X + rMat[1][2] * v->V.Y + rMat[2][2] * v->V.Z;
+
+    v->V.X = x;
+    v->V.Y = y;
+    v->V.Z = z;
+}
 
 STATIC_UNIT_TESTED void imuComputeRotationMatrix(void)
 {
@@ -168,19 +196,6 @@ void imuResetAccelerationSum(void)
     accTimeSum = 0;
 }
 
-void imuTransformVectorBodyToEarth(t_fp_vector * v)
-{
-    float x,y,z;
-
-    /* From body frame to earth frame */
-    x = rMat[0][0] * v->V.X + rMat[0][1] * v->V.Y + rMat[0][2] * v->V.Z;
-    y = rMat[1][0] * v->V.X + rMat[1][1] * v->V.Y + rMat[1][2] * v->V.Z;
-    z = rMat[2][0] * v->V.X + rMat[2][1] * v->V.Y + rMat[2][2] * v->V.Z;
-
-    v->V.X = x;
-    v->V.Y = -y;
-    v->V.Z = z;
-}
 
 // rotate acc into Earth frame and calculate acceleration in it
 void imuCalculateAcceleration(uint32_t deltaT)
@@ -375,6 +390,9 @@ STATIC_UNIT_TESTED void imuUpdateEulerAngles(void)
     }
 }
 
+
+
+
 bool imuIsAircraftArmable(uint8_t arming_angle)
 {
     /* Update small angle state */
@@ -446,7 +464,28 @@ static void imuCalculateEstimatedAttitude(void)
     imuCalculateAcceleration(deltaT); // rotate acc vector into earth frame
 }
 
-void imuUpdateAccelerometer(rollAndPitchTrims_t *accelerometerTrims)
+//----iNAV----
+/* Calculate measured acceleration in body frame cm/s/s */
+static void imuUpdateMeasuredAcceleration(void)
+{
+    int axis;
+
+#ifdef ASYNC_GYRO_PROCESSING
+    for (axis = 0; axis < XYZ_AXIS_COUNT; axis++) {
+        imuMeasuredAccelBF.A[axis] = imuAccumulatedAcc[axis] / imuAccumulatedAccCount;
+        imuAccumulatedAcc[axis] = 0;
+    }
+    imuAccumulatedAccCount = 0;;
+#else
+    /* Convert acceleration to cm/s/s */
+    for (axis = 0; axis < XYZ_AXIS_COUNT; axis++) {
+        imuMeasuredAccelBF.A[axis] = accSmooth[axis] * (GRAVITY_CMSS / acc.acc_1G);
+    }
+#endif
+}
+
+
+void imuUpdateAccelerometer(rollAndPitchTrims_t *accelerometerTrims)			//1khz
 {
     if (sensors(SENSOR_ACC)) {
         updateAccelerationReadings(accelerometerTrims);
@@ -485,3 +524,15 @@ int16_t calculateThrottleAngleCorrection(uint8_t throttle_correction_value)
         angle = 900;
     return lrintf(throttle_correction_value * sin_approx(angle / (900.0f * M_PIf / 2.0f)));
 }
+
+bool isImuReady(void)
+{
+	return(isAccelerationCalibrationComplete() && sensors(SENSOR_ACC) && isGyroCalibrationComplete());
+}
+
+bool isImuHeadingValid(void)
+{
+    return (sensors(SENSOR_MAG) && isMagnetometerHealthy()) || (STATE(FIXED_WING) && sensors(SENSOR_GPS) && STATE(GPS_FIX));
+}
+
+
