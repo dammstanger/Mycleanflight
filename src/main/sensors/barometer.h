@@ -48,5 +48,5 @@ uint32_t baroUpdate(void);
 bool isBaroReady(void);
 int32_t baroCalculateAltitude(void);
 void baroCalculateDaltaAlt(int32_t *intgalt);
-void performBaroCalibrationCycle(void);
+//void performBaroCalibrationCycle(void);
 #endif

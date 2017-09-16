@@ -134,11 +134,13 @@ void pidResetITerm(void);
 int calcHorizonLevelStrength(uint16_t rxConfigMidrc, int horizonTiltEffect,
         uint8_t horizonTiltMode, int horizonSensitivity);
 
+float pidRateToRcCommand(float rateDPS, uint8_t rate);
 int16_t pidAngleToRcCommand(float angleDeciDegrees, int16_t maxInclination);
 
 void updateHeadingHoldTarget(int16_t heading);
 void resetHeadingHoldTarget(int16_t heading);
 int16_t getHeadingHoldTarget();
+uint8_t getHeadingHoldState();
 
 //debug
 

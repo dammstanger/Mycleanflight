@@ -54,7 +54,7 @@
 
 #include "flight/gps_conversion.h"
 #include "flight/pid.h"
-//#include "flight/navigation.h"
+#include "navigation_new/navigation.h"
 
 
 #ifdef GPS

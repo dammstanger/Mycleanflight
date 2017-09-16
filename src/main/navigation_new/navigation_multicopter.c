@@ -26,11 +26,9 @@
 #include "build/build_config.h"
 #include "build/debug.h"
 
-#include "drivers/system.h"
-
 #include "common/axis.h"
 #include "common/maths.h"
-//#include "common/filter.h"
+#include "common/time.h"
 
 #include "config/parameter_group.h"
 
@@ -83,7 +81,7 @@ static void updateAltitudeVelocityController_MC(timeDelta_t deltaMicros)
     // limit max vertical acceleration to 1/5G (~200 cm/s/s) if we are increasing velocity.
     // if we are decelerating - don't limit (allow better recovery from falling)
     if (ABS(targetVel) > ABS(posControl.desiredState.vel.V.Z)) {
-        const float maxVelDifference = US2S(deltaMicros) * (GRAVITY_CMSS / 5.0f);
+        const float maxVelDifference = US2S(deltaMicros) * (GRAVITY_CMS2 / 5.0f);
         posControl.desiredState.vel.V.Z = constrainf(targetVel, posControl.desiredState.vel.V.Z - maxVelDifference, posControl.desiredState.vel.V.Z + maxVelDifference);
     }
     else {
@@ -400,8 +398,8 @@ static void updatePositionAccelController_MC(timeDelta_t deltaMicros, float maxA
     const float accelRight = -accelN * posControl.actualState.sinYaw + accelE * posControl.actualState.cosYaw;
 
     // Calculate banking angles
-    const float desiredPitch = atan2_approx(accelForward, GRAVITY_CMSS);
-    const float desiredRoll = atan2_approx(accelRight * cos_approx(desiredPitch), GRAVITY_CMSS);
+    const float desiredPitch = atan2_approx(accelForward, GRAVITY_CMS2);
+    const float desiredRoll = atan2_approx(accelRight * cos_approx(desiredPitch), GRAVITY_CMS2);
 
     const int16_t maxBankAngle = DEGREES_TO_DECIDEGREES(navConfig()->mc.max_bank_angle);
     posControl.rcAdjustment[ROLL] = constrain(RADIANS_TO_DECIDEGREES(desiredRoll), -maxBankAngle, maxBankAngle);

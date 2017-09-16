@@ -27,6 +27,7 @@
 #include "common/axis.h"
 #include "common/maths.h"
 #include "common/filter.h"
+#include "common/time.h"
 
 #include "config/parameter_group.h"
 #include "config/parameter_group_ids.h"
@@ -51,8 +52,10 @@
 
 #include "navigation_new/navigation.h"
 
-//====From iNAV
+//====From iNAV---HeadingControl
+int16_t headingHoldTarget;
 float headingHoldCosZLimit;
+//static pt1Filter_t headingHoldRateFilter;
 //=====
 
 uint32_t targetPidLooptime = 0;
@@ -351,6 +354,16 @@ int calcHorizonLevelStrength(uint16_t rxConfigMidrc, int horizonTiltEffect,
 }
 
 
+/*
+Map stick positions to desired rotatrion rate in given axis.
+Rotation rate in dps at full stick deflection is defined by axis rate measured in dps/10
+Rate 20 means 200dps at full stick deflection
+*/
+float pidRateToRcCommand(float rateDPS, uint8_t rate)
+{
+    const float maxRateDPS = rate * 10.0f;
+    return scaleRangef(rateDPS, -maxRateDPS, maxRateDPS, -500.0f, 500.0f);
+}
 int16_t pidAngleToRcCommand(float angleDeciDegrees, int16_t maxInclination)
 {
     angleDeciDegrees = constrainf(angleDeciDegrees, (float) -maxInclination, (float) maxInclination);
@@ -360,8 +373,23 @@ int16_t pidAngleToRcCommand(float angleDeciDegrees, int16_t maxInclination)
 
 //From iNAV========HeadingHold Control=======
 
+void updateHeadingHoldTarget(int16_t heading)
+{
+    headingHoldTarget = heading;
+}
 
-static uint8_t getHeadingHoldState()
+void resetHeadingHoldTarget(int16_t heading)
+{
+    updateHeadingHoldTarget(heading);
+//    pt1FilterReset(&headingHoldRateFilter, 0.0f);
+}
+
+int16_t getHeadingHoldTarget() {
+    return headingHoldTarget;
+}
+
+
+uint8_t getHeadingHoldState()
 {
     // Don't apply heading hold if overall tilt is greater than maximum angle inclination
     if (getCosTiltAngle() < headingHoldCosZLimit) {

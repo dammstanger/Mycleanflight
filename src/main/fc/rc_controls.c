@@ -58,11 +58,10 @@
 
 
 #include "flight/pid.h"
-//dammstanger OLDNAV
-//#include "flight/navigation.h"
 #include "flight/failsafe.h"
 
 #include "fc/cleanflight_fc.h"
+#include "navigation_new/navigation.h"
 
 #define AIRMODE_DEADBAND 12
 

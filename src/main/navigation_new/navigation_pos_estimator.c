@@ -29,6 +29,7 @@
 
 #include "common/axis.h"
 #include "common/maths.h"
+#include "common/time.h"
 
 #include "config/parameter_group.h"
 #include "config/parameter_group_ids.h"
@@ -72,7 +73,7 @@
 
 #define INAV_GPS_ACCEPTANCE_EPE             500.0f  // 5m acceptance radius
 
-#define INAV_ACC_BIAS_ACCEPTANCE_VALUE      (GRAVITY_CMSS * 0.25f)   // Max accepted bias correction of 0.25G - unlikely we are going to be that much off anyway
+#define INAV_ACC_BIAS_ACCEPTANCE_VALUE      (GRAVITY_CMS2 * 0.25f)   // Max accepted bias correction of 0.25G - unlikely we are going to be that much off anyway
 
 #define INAV_GPS_GLITCH_RADIUS              250.0f  // 2.5m GPS glitch radius
 #define INAV_GPS_GLITCH_ACCEL               1000.0f // 10m/s/s max possible acceleration for GPS glitch detection
@@ -498,7 +499,7 @@ void updatePositionEstimator_SurfaceTopic(timeUs_t currentTimeUs)
  */
 static void updateIMUTopic(void)
 {
-    static float calibratedGravityCMSS = GRAVITY_CMSS;
+    static float calibratedGravityCMSS = GRAVITY_CMS2;
     static timeMs_t gravityCalibrationTimeout = 0;
 
     if (!isImuReady()) {

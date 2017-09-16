@@ -120,8 +120,7 @@
 #include "flight/mixer.h"
 #include "flight/servos.h"
 #include "flight/failsafe.h"
-//dammstanger OLDNAV
-//#include "flight/navigation.h"
+#include "navigation_new/navigation.h"
 
 #include "osd/osd_element.h"
 #include "osd/osd.h"
@@ -148,7 +147,6 @@ bool isUsingVTXSwitch(void);
 void mixerUsePWMIOConfiguration(pwmIOConfiguration_t *pwmIOConfiguration);
 void rxInit(modeActivationCondition_t *modeActivationConditions);
 
-void navigationInit(pidProfile_t *pidProfile);
 const sonarHardware_t *sonarGetHardwareConfiguration(amperageMeter_e amperageMeter);
 void sonarInit(const sonarHardware_t *sonarHardware);
 void irrangfdInit(void);
@@ -610,7 +608,7 @@ void init(void)
     mspInit();
     mspSerialInit();
 
-    const uint16_t pidPeriodUs = US_FROM_HZ(gyro.sampleFrequencyHz);
+    const uint16_t pidPeriodUs = US_FROM_HZ(gyro.sampleFrequencyHz) * gyroConfig()->pid_process_denom;
 
 //    pidSetTargetLooptime(pidPeriodUs * gyroConfig()->pid_process_denom);
 //    pidInitFilters(pidProfile());

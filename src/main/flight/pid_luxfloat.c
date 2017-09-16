@@ -31,6 +31,7 @@
 #include "common/axis.h"
 #include "common/maths.h"
 #include "common/filter.h"
+#include "common/time.h"
 
 #include "config/parameter_group.h"
 
@@ -51,10 +52,9 @@
 #include "flight/pid.h"
 #include "config/config_unittest.h"
 #include "flight/imu.h"
-//dammstanger OLDNAV
-//#include "flight/navigation.h"
 #include "flight/gtune.h"
 #include "flight/mixer.h"
+#include "navigation_new/navigation.h"
 
 extern float dT;
 extern uint8_t PIDweight[3];
@@ -183,6 +183,8 @@ STATIC_UNIT_TESTED int16_t pidLuxFloatCore(int axis, const pidProfile_t *pidProf
     return lrintf(newOutputLimited);		//lrintf(PTerm + ITerm + DTerm);
 }
 
+
+
 void pidLuxFloat(const pidProfile_t *pidProfile, const controlRateConfig_t *controlRateConfig,
         uint16_t max_angle_inclination, const rollAndPitchTrims_t *angleTrim, const rxConfig_t *rxConfig)
 {
@@ -203,22 +205,20 @@ void pidLuxFloat(const pidProfile_t *pidProfile, const controlRateConfig_t *cont
         if (axis == FD_YAW) {
             // YAW is always gyro-controlled (MAG correction is applied to rcCommand) 100dps to 1100dps max yaw rate
             angleRate = (float)((rate + 27) * rcCommand[YAW]) / 32.0f;
+            angleRate = constrainf(angleRate, -50, 50);							//旋转速度限制在+-50度
+
         } else {
             // control is GYRO based for ACRO and HORIZON - direct sticks control is applied to rate PID
             angleRate = (float)((rate + 27) * rcCommand[axis]) / 16.0f; // 200dps to 1200dps max roll/pitch rate
             if (FLIGHT_MODE(ANGLE_MODE) || FLIGHT_MODE(HORIZON_MODE)) {	//baro IRRANGFD MWRADAR模式也改为自水平控制
                 // calculate error angle and limit the angle to the max inclination
                 // multiplication of rcCommand corresponds to changing the sticks scaling here
-#ifdef GPS
-            	//dammstanger OLDNAV
-            	const float errorAngle = 0;
+
 //                const float errorAngle = constrain(2 * rcCommand[axis] + GPS_angle[axis], -((int)max_angle_inclination), max_angle_inclination)
 //                        - attitude.raw[axis] + angleTrim->raw[axis];
-            	//==
-#else
                 const float errorAngle = constrain(2 * rcCommand[axis], -((int)max_angle_inclination), max_angle_inclination)
                         - attitude.raw[axis] + angleTrim->raw[axis];
-#endif
+
                 if (FLIGHT_MODE(ANGLE_MODE)) {
                     // ANGLE mode
                     angleRate = errorAngle * pidProfile->bank_mc.pid[PID_LEVEL].P / 16.0f;

@@ -31,6 +31,7 @@
 #include "common/maths.h"
 #include "common/streambuf.h"
 #include "common/filter.h"
+#include "common/time.h"
 
 #include "config/parameter_group.h"
 #include "config/parameter_group_ids.h"
@@ -796,10 +797,9 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
             break;
 
         case MSP_COMP_GPS:
-//dammstanger OLDNAV
-//            sbufWriteU16(dst, GPS_distanceToHome);
-//            sbufWriteU16(dst, GPS_directionToHome);
-//            sbufWriteU8(dst, GPS_update & 1);
+            sbufWriteU16(dst, GPS_distanceToHome);
+            sbufWriteU16(dst, GPS_directionToHome);
+            sbufWriteU8(dst, GPS_update & 1);
             break;
 
         case MSP_WP: {
@@ -1087,7 +1087,7 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
             break;
 
         case MSP_SET_HEAD:
-            magHold = sbufReadU16(src);
+        	resetHeadingHoldTarget(sbufReadU16(src));
             break;
 
         case MSP_SET_RAW_RC: {

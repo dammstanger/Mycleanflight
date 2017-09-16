@@ -45,6 +45,8 @@ int32_t BaroAlt = 0;
 
 #ifdef BARO
 
+#define PRESSURE_SAMPLE_COUNT (barometerConfig()->baro_sample_count - 1)
+
 PG_REGISTER_PROFILE_WITH_RESET_TEMPLATE(barometerConfig_t, barometerConfig, PG_BAROMETER_CONFIG, 0);
 
 static int32_t baroGroundAltitude = 0;
@@ -67,6 +69,15 @@ bool isBaroCalibrationComplete(void)
 void baroSetCalibrationCycles(uint16_t calibrationCyclesRequired)
 {
     calibratingB = calibrationCyclesRequired;
+}
+
+static void performBaroCalibrationCycle(void)
+{
+    baroGroundPressure -= baroGroundPressure / 8;
+    baroGroundPressure += baroPressureSum / PRESSURE_SAMPLE_COUNT;
+    baroGroundAltitude = (1.0f - powf((baroGroundPressure / 8) / 101325.0f, 0.190295f)) * 4433000.0f;
+
+    calibratingB--;
 }
 
 static bool baroReady = false;
@@ -94,8 +105,6 @@ static int32_t applyBarometerMedianFilter(int32_t newPressureReading)
     else
         return newPressureReading;
 }
-
-#define PRESSURE_SAMPLE_COUNT (barometerConfig()->baro_sample_count - 1)
 
 static uint32_t recalculateBarometerTotal(uint8_t baroSampleCount, uint32_t pressureTotal, int32_t newPressureReading)
 {
@@ -167,6 +176,7 @@ int32_t baroCalculateAltitude(void)
         BaroAlt = lrintf((float)BaroAlt * barometerConfig()->baro_noise_lpf + (float)BaroAlt_tmp * (1.0f - barometerConfig()->baro_noise_lpf)); // additional LPF to reduce baro noise
     }
     else {
+    	performBaroCalibrationCycle();
         BaroAlt = 0;
     }
     return BaroAlt;
@@ -187,13 +197,5 @@ void baroCalculateDaltaAlt(int32_t *intgalt)
     }
 }
 
-void performBaroCalibrationCycle(void)
-{
-    baroGroundPressure -= baroGroundPressure / 8;
-    baroGroundPressure += baroPressureSum / PRESSURE_SAMPLE_COUNT;
-    baroGroundAltitude = (1.0f - powf((baroGroundPressure / 8) / 101325.0f, 0.190295f)) * 4433000.0f;
-
-    calibratingB--;
-}
 
 #endif /* BARO */

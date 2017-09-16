@@ -34,6 +34,12 @@ typedef struct failsafeConfig_s {
     uint8_t failsafe_kill_switch;           // failsafe switch action is 0: identical to rc link loss, 1: disarms instantly
     uint16_t failsafe_throttle_low_delay;   // Time throttle stick must have been below 'min_check' to "JustDisarm" instead of "full failsafe procedure".
     uint8_t failsafe_procedure;             // selected full failsafe procedure is 0: auto-landing, 1: Drop it
+
+    int16_t failsafe_fw_roll_angle;         // Settings to be applies during "LAND" procedure on a fixed-wing
+    int16_t failsafe_fw_pitch_angle;
+    int16_t failsafe_fw_yaw_rate;
+
+    uint16_t failsafe_stick_motion_threshold;
 } PG_PACKED failsafeConfig_t;
 
 typedef enum {

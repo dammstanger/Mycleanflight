@@ -28,6 +28,7 @@
 
 #include "common/axis.h"
 #include "common/maths.h"
+#include "common/time.h"
 
 #include "config/parameter_group.h"
 #include "config/parameter_group_ids.h"
@@ -86,7 +87,7 @@ extern uint8_t motorCount;
    http://diydrones.com/profiles/blogs/zero-pid-tunes-for-multirotors-part-2
    http://www.multiwii.com/forum/viewtopic.php?f=8&t=5190
    Gyrosetting 2000DPS
-   GyroScale = (1 / 16,4 ) * RADX(see board.h) = 0,001064225154 digit per rad/s
+   gyroScale_Adc2Rad = (1 / 16,4 ) * RADX(see board.h) = 0,001064225154 digit per rad/s
 
     pidProfile->gtune_lolimP[ROLL]   = 10;  [0..200] Lower limit of ROLL P during G tune.
     pidProfile->gtune_lolimP[PITCH]  = 10;  [0..200] Lower limit of PITCH P during G tune.

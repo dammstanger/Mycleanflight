@@ -119,6 +119,11 @@ static const uint8_t beep_gyroCalibrated[] = {
     20, 10, 20, 10, 20, 10, BEEPER_COMMAND_STOP
 };
 
+// two short beeps and a pause (first pause, then short beep)
+static const uint8_t beep_launchModeBeep[] = {
+    5, 5, 5, 100, BEEPER_COMMAND_STOP
+};
+
 // array used for variable # of beeps (reporting GPS sat count, etc)
 static uint8_t beep_multiBeeps[MAX_MULTI_BEEPS + 2];
 
@@ -170,6 +175,7 @@ static const beeperTableEntry_t beeperTable[] = {
     { BEEPER_ENTRY(BEEPER_MULTI_BEEPS,           13, beep_multiBeeps,      NULL) }, // FIXME having this listed makes no sense since the beep array will not be initialised.
     { BEEPER_ENTRY(BEEPER_DISARM_REPEAT,         14, beep_disarmRepeatBeep, "DISARM_REPEAT") },
     { BEEPER_ENTRY(BEEPER_ARMED,                 15, beep_armedBeep,       "ARMED") },
+	{ BEEPER_ENTRY(BEEPER_LAUNCH_MODE_ENABLED,   19, beep_launchModeBeep,  "LAUNCH_MODE") },
 };
 
 static const beeperTableEntry_t *currentBeeperEntry = NULL;

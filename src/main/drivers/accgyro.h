@@ -37,7 +37,7 @@ typedef struct gyro_s {
 typedef struct acc_s {
     sensorAccInitFuncPtr init;                              // initialize function
     sensorReadFuncPtr read;                                 // read 3 axis data function
-    uint16_t acc_1G;
+    uint16_t acc_1G;										// 1G加速度作用下加计输出的原始ADC值
     char revisionCode;                                      // a revision code for the sensor, if known
 } acc_t;
 

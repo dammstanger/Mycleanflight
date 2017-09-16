@@ -30,6 +30,7 @@
 
 #include "common/axis.h"
 #include "common/filter.h"
+#include "common/time.h"
 
 #include "config/parameter_group_ids.h"
 #include "config/parameter_group.h"
@@ -55,6 +56,7 @@
 #include "io/gps.h"
 
 #include "fc/runtime_config.h"
+#include "fc/fc_debug.h"
 
 // the limit (in degrees/second) beyond which we stop integrating
 // omega_I. At larger spin rates the DCM PI controller can get 'dizzy'
@@ -62,13 +64,24 @@
 // http://gentlenav.googlecode.com/files/fastRotations.pdf
 #define SPIN_RATE_LIMIT 20
 
+//----iNAV----
+
+#ifdef ASYNC_GYRO_PROCESSING
+/* Asynchronous update accumulators */
+static float imuAccumulatedRate[XYZ_AXIS_COUNT];
+static timeUs_t imuAccumulatedRateTimeUs;
+static float imuAccumulatedAcc[XYZ_AXIS_COUNT];
+static int   imuAccumulatedAccCount;
+#endif
+
 t_fp_vector imuMeasuredAccelBF;
+t_fp_vector imuMeasuredRotationBF;
 
-int32_t accSum[XYZ_AXIS_COUNT];
+//int32_t accSum[XYZ_AXIS_COUNT];
 
-uint32_t accTimeSum = 0;        // keep track for integration of acc
-int accSumCount = 0;
-float accVelScale;
+//uint32_t accTimeSum = 0;        // keep track for integration of acc
+//int accSumCount = 0;
+//float accVelScale;
 
 float throttleAngleScale;
 float fc_acc;
@@ -98,7 +111,7 @@ static float rMat[3][3];
 
 attitudeEulerAngles_t attitude = { { 0, 0, 0 } };     // absolute angle inclination in multiple of 0.1 degree    180 deg = 1800
 
-static float gyroScale;
+static float gyroScale_Adc2Rad;
 
 void imuTransformVectorBodyToEarth(t_fp_vector * v)
 {
@@ -168,8 +181,12 @@ void imuConfigure(
 void imuInit(void)
 {
     smallAngleCosZ = cos_approx(degreesToRadians(imuRuntimeConfig->small_angle));
-    gyroScale = gyro.scale * (M_PIf / 180.0f);  // gyro output scaled to rad per second
-    accVelScale = 9.80665f / acc.acc_1G / 10000.0f;
+    gyroScale_Adc2Rad = gyro.scale * (M_PIf / 180.0f);  // gyro output scaled to rad per second
+//    accVelScale = GRAVITY_MS2 / acc.acc_1G / 10000.0f;
+
+    for (int axis = 0; axis < XYZ_AXIS_COUNT; axis++) {
+        imuMeasuredAccelBF.A[axis] = 0;
+    }
 
     imuComputeRotationMatrix();
 }
@@ -187,54 +204,54 @@ float calculateAccZLowPassFilterRCTimeConstant(float accz_lpf_cutoff)
     return 0.5f / (M_PIf * accz_lpf_cutoff);
 }
 
-void imuResetAccelerationSum(void)
-{
-    accSum[0] = 0;
-    accSum[1] = 0;
-    accSum[2] = 0;
-    accSumCount = 0;
-    accTimeSum = 0;
-}
+//void imuResetAccelerationSum(void)
+//{
+//    accSum[0] = 0;
+//    accSum[1] = 0;
+//    accSum[2] = 0;
+//    accSumCount = 0;
+//    accTimeSum = 0;
+//}
 
 
-// rotate acc into Earth frame and calculate acceleration in it
-void imuCalculateAcceleration(uint32_t deltaT)
-{
-    static int32_t accZoffset = 0;
-    static float accz_smooth = 0;
-    float dT;
-    t_fp_vector accel_ned;
-
-    // deltaT is measured in us ticks
-    dT = (float)deltaT * 1e-6f;
-
-    accel_ned.V.X = accSmooth[0];			//单位依然是LSB
-    accel_ned.V.Y = accSmooth[1];
-    accel_ned.V.Z = accSmooth[2];
-
-    imuTransformVectorBodyToEarth(&accel_ned);
-
-    if (imuRuntimeConfig->acc_unarmedcal == 1) {			//??
-        if (!ARMING_FLAG(ARMED)) {
-            accZoffset -= accZoffset / 64;
-            accZoffset += accel_ned.V.Z;	//减去一个平均值再加上一个新的值，相当于64个值累加平均的效果
-            								//此过程要求水平放置 解锁 才准确
-        }
-        accel_ned.V.Z -= accZoffset / 64;  // compensate for gravitation on z-axis 减去z轴的重力加速度
-    } else
-        accel_ned.V.Z -= acc.acc_1G;
-
-    accz_smooth = accz_smooth + (dT / (fc_acc + dT)) * (accel_ned.V.Z - accz_smooth); // low pass filter fc_acc为时间常数
-
-    // apply Deadband to reduce integration drift and vibration influence
-    accSum[X] += applyDeadband(lrintf(accel_ned.V.X), accDeadband->xy);			//lrintf()四舍五入
-    accSum[Y] += applyDeadband(lrintf(accel_ned.V.Y), accDeadband->xy);
-    accSum[Z] += applyDeadband(lrintf(accz_smooth), accDeadband->z);
-
-    // sum up Values for later integration to get velocity and distance
-    accTimeSum += deltaT;
-    accSumCount++;
-}
+//// rotate acc into Earth frame and calculate acceleration in it
+//void imuCalculateAcceleration(uint32_t deltaT)
+//{
+//    static int32_t accZoffset = 0;
+//    static float accz_smooth = 0;
+//    float dT;
+//    t_fp_vector accel_ned;
+//
+//    // deltaT is measured in us ticks
+//    dT = (float)deltaT * 1e-6f;
+//
+//    accel_ned.V.X = accSmooth[0];			//单位依然是LSB
+//    accel_ned.V.Y = accSmooth[1];
+//    accel_ned.V.Z = accSmooth[2];
+//
+//    imuTransformVectorBodyToEarth(&accel_ned);
+//
+//    if (imuRuntimeConfig->acc_unarmedcal == 1) {			//??
+//        if (!ARMING_FLAG(ARMED)) {
+//            accZoffset -= accZoffset / 64;
+//            accZoffset += accel_ned.V.Z;	//减去一个平均值再加上一个新的值，相当于64个值累加平均的效果
+//            								//此过程要求水平放置 解锁 才准确
+//        }
+//        accel_ned.V.Z -= accZoffset / 64;  // compensate for gravitation on z-axis 减去z轴的重力加速度
+//    } else
+//        accel_ned.V.Z -= acc.acc_1G;
+//
+//    accz_smooth = accz_smooth + (dT / (fc_acc + dT)) * (accel_ned.V.Z - accz_smooth); // low pass filter fc_acc为时间常数
+//
+//    // apply Deadband to reduce integration drift and vibration influence
+//    accSum[X] += applyDeadband(lrintf(accel_ned.V.X), accDeadband->xy);			//lrintf()四舍五入
+//    accSum[Y] += applyDeadband(lrintf(accel_ned.V.Y), accDeadband->xy);
+//    accSum[Z] += applyDeadband(lrintf(accz_smooth), accDeadband->z);
+//
+//    // sum up Values for later integration to get velocity and distance
+//    accTimeSum += deltaT;
+//    accSumCount++;
+//}
 
 static float invSqrt(float x)
 {
@@ -266,6 +283,12 @@ static void imuMahonyAHRSupdate(float dt, float gx, float gy, float gz,
     float hx, hy, bx;
     float ex = 0, ey = 0, ez = 0;
     float qa, qb, qc;
+
+    if (debugMode == DEBUG_PIDLOOP) {debug[0] = RADIANS_TO_DEGREES(gx);
+    								debug[1] = RADIANS_TO_DEGREES(gy);
+    								debug[2] = RADIANS_TO_DEGREES(gyroADC[0] * gyroScale_Adc2Rad);
+    								debug[3] = RADIANS_TO_DEGREES(gyroADC[1] * gyroScale_Adc2Rad);
+    }
 
     // Calculate general spin rate (rad/s)
     float spin_rate = sqrtf(sq(gx) + sq(gy) + sq(gz));
@@ -388,10 +411,12 @@ STATIC_UNIT_TESTED void imuUpdateEulerAngles(void)
     } else {
         DISABLE_STATE(SMALL_ANGLE);
     }
+
+
 }
 
 
-
+float gyrotst[3]={0};
 
 bool imuIsAircraftArmable(uint8_t arming_angle)
 {
@@ -454,17 +479,61 @@ static void imuCalculateEstimatedAttitude(void)
 #endif
 
     imuMahonyAHRSupdate(deltaT * 1e-6f,
-                        gyroADC[X] * gyroScale, gyroADC[Y] * gyroScale, gyroADC[Z] * gyroScale,
-                        useAcc, accSmooth[X], accSmooth[Y], accSmooth[Z],
+//    					gyroADC[X] * gyroScale_Adc2Rad, gyroADC[Y] * gyroScale_Adc2Rad, gyroADC[Z] * gyroScale_Adc2Rad,
+//    					imuMeasuredRotationBF.V.X, imuMeasuredRotationBF.V.Y, imuMeasuredRotationBF.V.Z,
+    					gyrotst[0], gyrotst[1], gyrotst[2],
+//                        useAcc, imuMeasuredAccelBF.A[X], imuMeasuredAccelBF.A[Y], imuMeasuredAccelBF.A[Z],		//对于姿态补偿，ACC做低频量，不必追求短时的精度
+						useAcc, accSmooth[X], accSmooth[Y], accSmooth[Z],
                         useMag, magADC[X], magADC[Y], magADC[Z],
                         useYaw, rawYawError);
 
     imuUpdateEulerAngles();
 
-    imuCalculateAcceleration(deltaT); // rotate acc vector into earth frame
+//    imuCalculateAcceleration(deltaT); // rotate acc vector into earth frame
 }
 
 //----iNAV----
+
+#ifdef ASYNC_GYRO_PROCESSING
+void imuUpdateGyroscope(timeUs_t gyroUpdateDeltaUs)
+{
+    const float gyroUpdateDelta = gyroUpdateDeltaUs * 1e-6f;
+
+    for (int axis = 0; axis < 3; axis++) {
+        imuAccumulatedRate[axis] += gyroADC[axis] * gyroScale_Adc2Rad * gyroUpdateDelta;
+    }
+
+    imuAccumulatedRateTimeUs += gyroUpdateDeltaUs;
+}
+#endif
+
+/* Calculate rotation rate in rad/s in body frame */
+static void imuUpdateMeasuredRotationRate(void)
+{
+    int axis;
+
+#ifdef ASYNC_GYRO_PROCESSING
+    const float imuAccumulatedRateTime = imuAccumulatedRateTimeUs * 1e-6f;
+    imuAccumulatedRateTimeUs = 0;
+
+    for (axis = 0; axis < 3; axis++) {
+    	gyrotst[axis] = gyroADCf[axis] * gyroScale_Adc2Rad;//imuAccumulatedRate[axis] / imuAccumulatedRateTime;
+        imuMeasuredRotationBF.A[axis] = gyrotst[axis];
+        imuAccumulatedRate[axis] = 0.0f;
+    }
+#else
+    for (axis = 0; axis < 3; axis++) {
+        imuMeasuredRotationBF.A[axis] = gyroADCf[axis] * gyroScale_Adc2Rad;
+    }
+#endif
+
+
+//    if (debugMode == DEBUG_PIDLOOP) {debug[0] = RADIANS_TO_DEGREES(imuMeasuredRotationBF.A[0]);
+//									 debug[1] = RADIANS_TO_DEGREES(imuMeasuredRotationBF.A[1]);
+//									 debug[2] = RADIANS_TO_DEGREES(imuMeasuredRotationBF.A[2]);}
+}
+
+
 /* Calculate measured acceleration in body frame cm/s/s */
 static void imuUpdateMeasuredAcceleration(void)
 {
@@ -479,9 +548,12 @@ static void imuUpdateMeasuredAcceleration(void)
 #else
     /* Convert acceleration to cm/s/s */
     for (axis = 0; axis < XYZ_AXIS_COUNT; axis++) {
-        imuMeasuredAccelBF.A[axis] = accSmooth[axis] * (GRAVITY_CMSS / acc.acc_1G);
+        imuMeasuredAccelBF.A[axis] = accSmooth[axis] * (GRAVITY_CMS2 / acc.acc_1G);
     }
 #endif
+
+//    if (debugMode == DEBUG_PIDLOOP) {debug[3] = imuMeasuredAccelBF.A[2];}
+
 }
 
 
@@ -491,12 +563,21 @@ void imuUpdateAccelerometer(rollAndPitchTrims_t *accelerometerTrims)			//1khz
         updateAccelerationReadings(accelerometerTrims);
         isAccelUpdatedAtLeastOnce = true;
     }
+
+#ifdef ASYNC_GYRO_PROCESSING
+    for (int axis = 0; axis < XYZ_AXIS_COUNT; axis++) {
+        imuAccumulatedAcc[axis] += accSmooth[axis] * (GRAVITY_CMS2 / acc.acc_1G);
+    }
+    imuAccumulatedAccCount++;
+#endif
 }
 
 void imuUpdateAttitude(void)
 {
     if (sensors(SENSOR_ACC) && isAccelUpdatedAtLeastOnce) {
-        imuCalculateEstimatedAttitude();
+    	imuUpdateMeasuredRotationRate();		//陀螺仪测量更新
+    	imuUpdateMeasuredAcceleration();		//加速度计测量更新
+        imuCalculateEstimatedAttitude();		//
     } else {
         accSmooth[X] = 0;
         accSmooth[Y] = 0;

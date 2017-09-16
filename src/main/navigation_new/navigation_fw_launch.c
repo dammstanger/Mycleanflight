@@ -29,22 +29,21 @@
 
 #include "common/axis.h"
 #include "common/maths.h"
+#include "common/time.h"
 
-#include "config/feature.h"
+#include "config/parameter_group.h"
 
-#include "drivers/time.h"
+#include "drivers/system.h"
 #include "drivers/sensor.h"
-#include "drivers/accgyro/accgyro.h"
+#include "drivers/accgyro.h"
 
 #include "sensors/sensors.h"
-#include "sensors/rangefinder.h"
-#include "sensors/barometer.h"
 #include "sensors/acceleration.h"
 #include "sensors/boardalignment.h"
-#include "sensors/compass.h"
 
 #include "io/gps.h"
 #include "io/beeper.h"
+#include "io/motors.h"
 
 #include "flight/pid.h"
 #include "flight/imu.h"
@@ -54,8 +53,8 @@
 #include "fc/rc_controls.h"
 #include "fc/runtime_config.h"
 
-#include "navigation/navigation.h"
-#include "navigation/navigation_private.h"
+#include "navigation_new/navigation.h"
+#include "navigation_new/navigation_private.h"
 
 
 typedef struct FixedWingLaunchState_s {
@@ -78,7 +77,7 @@ static void updateFixedWingLaunchDetector(timeUs_t currentTimeUs)
 {
     const float swingVelocity = (ABS(imuMeasuredRotationBF.A[Z]) > SWING_LAUNCH_MIN_ROTATION_RATE) ? (imuMeasuredAccelBF.A[Y] / imuMeasuredRotationBF.A[Z]) : 0;
     const bool isForwardAccelerationHigh = (imuMeasuredAccelBF.A[X] > navConfig()->fw.launch_accel_thresh);
-    const bool isAircraftAlmostLevel = (calculateCosTiltAngle() >= cos_approx(DEGREES_TO_RADIANS(navConfig()->fw.launch_max_angle)));
+    const bool isAircraftAlmostLevel = (getCosTiltAngle() >= cos_approx(DEGREES_TO_RADIANS(navConfig()->fw.launch_max_angle)));
 
     const bool isBungeeLaunched = isForwardAccelerationHigh && isAircraftAlmostLevel;
     const bool isSwingLaunched = (swingVelocity > navConfig()->fw.launch_velocity_thresh) && (imuMeasuredAccelBF.A[X] > 0);
@@ -125,7 +124,7 @@ bool isFixedWingLaunchFinishedOrAborted(void)
 static void applyFixedWingLaunchIdleLogic(void)
 {
     // Until motors are started don't use PID I-term
-    pidResetErrorAccumulators();
+	pidResetITerm();
 
     // Throttle control logic
     if (navConfig()->fw.launch_idle_throttle <= motorConfig()->minthrottle) {

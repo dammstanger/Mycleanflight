@@ -28,25 +28,32 @@
 
 #include "common/axis.h"
 #include "common/maths.h"
-#include "common/filter.h"
+#include "common/time.h"
 
-#include "drivers/time.h"
+#include "config/parameter_group.h"
+
+#include "drivers/system.h"
+#include "drivers/sensor.h"
+#include "drivers/accgyro.h"
 
 #include "sensors/sensors.h"
 #include "sensors/acceleration.h"
 #include "sensors/boardalignment.h"
 
+#include "io/motors.h"
+
 #include "flight/pid.h"
 #include "flight/imu.h"
+#include "flight/failsafe.h"
 #include "flight/mixer.h"
 
 #include "fc/config.h"
-#include "fc/controlrate_profile.h"
 #include "fc/rc_controls.h"
 #include "fc/runtime_config.h"
+#include "fc/rate_profile.h"
 
-#include "navigation/navigation.h"
-#include "navigation/navigation_private.h"
+#include "navigation_new/navigation.h"
+#include "navigation_new/navigation_private.h"
 
 // If we are going slower than NAV_FW_MIN_VEL_SPEED_BOOST - boost throttle to fight against the wind
 #define NAV_FW_THROTTLE_SPEED_BOOST_GAIN        1.5f

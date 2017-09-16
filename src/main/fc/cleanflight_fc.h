@@ -29,7 +29,6 @@ typedef enum disarmReason_e {
 } disarmReason_t;
 
 
-extern int16_t magHold;
 extern int16_t telemTemperature1;
 
 void applyAndSaveAccelerometerTrimsDelta(rollAndPitchTrims_t *rollAndPitchTrimsDelta);

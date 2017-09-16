@@ -27,6 +27,7 @@
 #include "common/maths.h"
 #include "common/axis.h"
 #include "common/utils.h"
+#include "common/time.h"
 
 #include "config/parameter_group.h"
 #include "config/parameter_group_ids.h"
@@ -42,9 +43,6 @@
 #include "flight/pid.h"
 #include "flight/imu.h"
 
-#include "navigation_new/navigation.h"
-#include "navigation_new/navigation_private.h"
-
 #include "fc/config.h"
 
 #include "io/beeper.h"
@@ -55,6 +53,8 @@
 #include "fc/runtime_config.h"
 #include "fc/cleanflight_fc.h"
 
+#include "navigation_new/navigation.h"
+#include "navigation_new/navigation_private.h"
 
 
 

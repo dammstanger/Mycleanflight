@@ -29,6 +29,7 @@
 #include "common/encoding.h"
 #include "common/utils.h"
 #include "common/filter.h"
+#include "common/time.h"
 
 #include "config/parameter_group_ids.h"
 #include "config/parameter_group.h"

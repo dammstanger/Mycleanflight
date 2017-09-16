@@ -34,6 +34,7 @@
 #include "common/color.h"
 #include "common/typeconversion.h"
 #include "common/filter.h"
+#include "common/time.h"
 
 #include "config/parameter_group.h"
 #include "config/parameter_group_ids.h"
@@ -93,10 +94,9 @@
 #include "flight/imu.h"
 #include "flight/mixer.h"
 #include "flight/servos.h"
-//dammstanger OLDNAV
-//#include "flight/navigation.h"
 #include "flight/failsafe.h"
 #include "flight/altitudehold.h"
+#include "navigation_new/navigation.h"
 
 #include "telemetry/telemetry.h"
 #include "telemetry/frsky.h"
@@ -634,7 +634,7 @@ const clivalue_t valueTable[] = {
 	//    { "gps_nav_p",                 VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  200 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_mc.pid[PID_SURFACE].P) },
 	//    { "gps_nav_i",                 VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  200 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_mc.pid[PID_SURFACE].I) },
 	//    { "gps_nav_d",                 VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  200 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_mc.pid[PID_SURFACE].D) },
-	////dammstanger OLDNAV
+	//dammstanger OLDNAV
 	//    { "gps_wp_radius",              VAR_UINT16 | PROFILE_VALUE, .config.minmax = { 0,  2000 }, PG_NAVIGATION_CONFIG, offsetof(gpsProfile_t, gps_wp_radius) },
 	//
 	//    { "nav_controls_heading",       VAR_UINT8  | PROFILE_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_NAVIGATION_CONFIG, offsetof(gpsProfile_t, nav_controls_heading) },

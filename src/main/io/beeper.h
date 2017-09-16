@@ -37,6 +37,7 @@ typedef enum {
     BEEPER_READY_BEEP,              // Ring a tone when GPS is locked and ready
     BEEPER_MULTI_BEEPS,             // Internal value used by 'beeperConfirmationBeeps()'.
     BEEPER_ARMED,                   // Warning beeps when board is armed (repeats until board is disarmed or throttle is increased)
+	BEEPER_LAUNCH_MODE_ENABLED,
 } beeperMode_e;
 
 void beeper(beeperMode_e mode);

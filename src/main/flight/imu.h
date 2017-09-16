@@ -17,15 +17,17 @@
 
 #pragma once
 
-#define GRAVITY_CMSS    980.665f
+#define GRAVITY_CMS2    980.665f				//cm/s^2
+#define GRAVITY_MS2    9.80665f					//m/s^2
 
 extern t_fp_vector imuMeasuredAccelBF;         // cm/s/s
+extern t_fp_vector imuMeasuredRotationBF;       // rad/s
 
 extern int16_t throttleAngleCorrection;
-extern uint32_t accTimeSum;
-extern int accSumCount;
-extern float accVelScale;
-extern int32_t accSum[XYZ_AXIS_COUNT];
+//extern uint32_t accTimeSum;
+//extern int accSumCount;
+//extern float accVelScale;
+//extern int32_t accSum[XYZ_AXIS_COUNT];
 
 //#define DEGREES_TO_DECIDEGREES(angle) (angle * 10)
 //#define DECIDEGREES_TO_DEGREES(angle) (angle / 10)
@@ -79,6 +81,8 @@ void imuConfigure(
 );
 
 void imuUpdateAccelerometer(rollAndPitchTrims_t *accelerometerTrims);
+void imuUpdateGyroscope(timeUs_t gyroUpdateDeltaUs);
+
 void imuUpdateAttitude(void);
 float calculateThrottleAngleScale(uint16_t throttle_correction_angle);
 int16_t calculateThrottleAngleCorrection(uint8_t throttle_correction_value);

@@ -27,6 +27,8 @@
 #include "common/axis.h"
 #include "common/maths.h"
 #include "common/filter.h"
+#include "common/time.h"
+
 
 #include "config/parameter_group.h"
 #include "config/parameter_group_ids.h"
@@ -68,8 +70,7 @@
 #include "flight/imu.h"
 #include "flight/failsafe.h"
 #include "flight/pid.h"
-//dammstanger OLDNAV
-//#include "flight/navigation.h"
+#include "navigation_new/navigation.h"
 
 
 // FIXME remove the includes below when target specific configuration is moved out of this file
@@ -166,6 +167,10 @@ static void activateConfig(void)
     resetAdjustmentStates();
 
     debugMode = debugConfig()->debug_mode;		//调试模式
+
+#ifdef ASYNC_GYRO_PROCESSING
+    gyroConfig()->gyro_sync = true;				//如果开启了异步陀螺数据处理，则强制陀螺同步更新中断
+#endif
 
     useRcControlsConfig(modeActivationProfile()->modeActivationConditions);
 

@@ -95,8 +95,6 @@
 #include "flight/altitudehold.h"
 #include "flight/failsafe.h"
 #include "flight/gtune.h"
-//dammstanger OLDNAV
-//#include "flight/navigation.h"
 
 #include "osd/osd_element.h"
 #include "osd/osd.h"
@@ -108,6 +106,7 @@
 #include "fc/config.h"
 #include "fc/cleanflight_fc.h"
 #include "config/feature.h"
+#include "navigation_new/navigation.h"
 
 // June 2013     V2.2-dev
 
@@ -126,7 +125,6 @@ enum {
 uint16_t pidDeltaUs = 0;
 uint16_t gyroDeltaUs = 0;
 
-int16_t magHold;
 int16_t headFreeModeHold;
 
 uint8_t motorControlEnable = false;
@@ -433,21 +431,29 @@ void updateInflightCalibrationState(void)
     }
 }
 
-//void updateMagHold(void)
-//{
-//    if (ABS(rcCommand[YAW]) < 15 && FLIGHT_MODE(MAG_MODE)) {
-//        int16_t dif = DECIDEGREES_TO_DEGREES(attitude.values.yaw) - magHold;
-//        if (dif <= -180)
-//            dif += 360;
-//        if (dif >= +180)
-//            dif -= 360;
-//        dif *= -rcControlsConfig()->yaw_control_direction;
-//        if (STATE(SMALL_ANGLE)){
-//        	rcCommand[YAW] -= dif * pidProfile()->P8[PIDMAG] / 30;    // 18 deg
-//        }
-//    } else
-//        magHold = DECIDEGREES_TO_DEGREES(attitude.values.yaw);
-//}
+void updateMagHold(void)
+{
+    uint8_t headingHoldState = getHeadingHoldState();
+
+    if(headingHoldState == HEADING_HOLD_UPDATE_HEADING){
+        updateHeadingHoldTarget(DECIDEGREES_TO_DEGREES(attitude.values.yaw));
+    }
+    else if(headingHoldState == HEADING_HOLD_ENABLED) {
+        int16_t dif = DECIDEGREES_TO_DEGREES(attitude.values.yaw) - getHeadingHoldTarget();
+        if (dif <= -180)
+            dif += 360;
+        if (dif >= +180)
+            dif -= 360;
+        dif *= -rcControlsConfig()->yaw_control_direction;			//1或者-1
+        if (STATE(SMALL_ANGLE)){
+        	rcCommand[YAW] -= dif * pidProfile()->bank_mc.pid[PID_HEADING].P / 30;    // 18 deg
+        }
+    }
+    else{
+
+    }
+
+}
 
 void processRx(void)
 {
@@ -553,16 +559,11 @@ void processRx(void)
     }
 
     bool canUseHorizonMode = true;
-//    bool canUseBaroMode = true;
-//    bool canUseIRrangfdMode = true;
-//    bool canUseMwradarMode = true;
+
 
     if ((rcModeIsActive(BOXANGLE) || (feature(FEATURE_FAILSAFE) && failsafeIsActive())) && (sensors(SENSOR_ACC))) {
         // bumpless transfer to Level mode
         canUseHorizonMode = false;
-//        canUseBaroMode = false;
-//        canUseIRrangfdMode = false;
-//        canUseMwradarMode = false;
 
         if (!FLIGHT_MODE(ANGLE_MODE)) {
 #ifdef USE_PID_MW23
@@ -595,44 +596,12 @@ void processRx(void)
         LED1_OFF;
     }
 
-////baro  dammstanger 20140705	将baro模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
-//    if(rcModeIsActive(BOXBARO) && canUseBaroMode){
-//
-//		if (!FLIGHT_MODE(BARO_MODE)) {
-//#ifdef USE_PID_MW23
-//			pidResetITermAngle();
-//#endif
-////			ENABLE_FLIGHT_MODE(BARO_MODE);		//已经在updateAltHoldState()中使能了，这里不用。
-//		}
-//	}
-//
-////IRrangfd  dammstanger 20140706	将IRrangfd模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
-//	if(rcModeIsActive(BOXIRRANGFD) && canUseIRrangfdMode){
-//
-//		if (!FLIGHT_MODE(IRRANGFD_MODE)) {
-//#ifdef USE_PID_MW23
-//			pidResetITermAngle();
-//#endif
-////			ENABLE_FLIGHT_MODE(IRRANGFD_MODE);		//已经在updateIRrangfdAltHoldState()中使能了，这里不用。
-//		}
-//	}
-//
-////IRrangfd  dammstanger 20140721	将radar模式的姿态控制改为自水平控制 积分与angle模式一样 切换时清除
-//	if(rcModeIsActive(BOXMWRADAR) && canUseMwradarMode){
-//
-//		if (!FLIGHT_MODE(MWRADAR_MODE)) {
-//#ifdef USE_PID_MW23
-//			pidResetITermAngle();
-//#endif
-//		}
-//	}
-
 #ifdef  MAG
     if (sensors(SENSOR_ACC) || sensors(SENSOR_MAG)) {
         if (rcModeIsActive(BOXMAG)) {
             if (!FLIGHT_MODE(MAG_MODE)) {
                 ENABLE_FLIGHT_MODE(MAG_MODE);
-                magHold = DECIDEGREES_TO_DEGREES(attitude.values.yaw);
+                updateHeadingHoldTarget(DECIDEGREES_TO_DEGREES(attitude.values.yaw));
             }
         } else {
             DISABLE_FLIGHT_MODE(MAG_MODE);
@@ -748,7 +717,7 @@ void subTaskPidController(void)
         rxConfig()
     );
 
-    if (debugMode == DEBUG_PIDLOOP) {debug[2] = micros() - startTime;}
+//    if (debugMode == DEBUG_PIDLOOP) {debug[2] = micros() - startTime;}
 }
 
 void subTaskMainSubprocesses(void)
@@ -779,16 +748,7 @@ void subTaskMainSubprocesses(void)
 
 #ifdef MAG
         if (sensors(SENSOR_MAG)) {
-
-        	//-----From iNAV:
-//            uint8_t headingHoldState = getHeadingHoldState();
-//
-//            if (headingHoldState == HEADING_HOLD_UPDATE_HEADING) {
-//                updateHeadingHoldTarget(DECIDEGREES_TO_DEGREES(attitude.values.yaw));
-//            }
-            //-----
-
-//            updateMagHold();
+            updateMagHold();
         }
 #endif
 
@@ -835,7 +795,7 @@ void subTaskMainSubprocesses(void)
         handleBlackbox();
     }
 #endif
-    if (debugMode == DEBUG_PIDLOOP) {debug[1] = micros() - startTime;}
+//    if (debugMode == DEBUG_PIDLOOP) {debug[1] = micros() - startTime;}
 }
 
 void subTaskMotorUpdate(void)
@@ -859,7 +819,7 @@ void subTaskMotorUpdate(void)
     if (motorControlEnable) {
         writeMotors();
     }
-    if (debugMode == DEBUG_PIDLOOP) {debug[3] = micros() - startTime;}
+//    if (debugMode == DEBUG_PIDLOOP) {debug[3] = micros() - startTime;}
 }
 
 uint32_t gyroUpdateAt = 0;
@@ -895,11 +855,17 @@ uint8_t gyroReadyCounter = 0;
 
 void taskGyro(void)
 {
-	gyroUpdate();
+	const timeDelta_t startTimeUs = micros();
+	gyroUpdate();										//读取花费时间
     gyroUpdateAt += US_FROM_HZ(gyro.sampleFrequencyHz);
     gyroReadyCounter++;
 
     gyroDeltaUs = getTaskDeltaTime(TASK_SELF);
+
+#ifdef ASYNC_GYRO_PROCESSING
+    /* Update IMU for better accuracy */
+    imuUpdateGyroscope((timeUs_t)gyroDeltaUs + (micros() - startTimeUs));
+#endif
 
     if (debugMode == DEBUG_CYCLETIME) {
         debug[0] = gyroDeltaUs;
@@ -918,10 +884,13 @@ bool taskPidCheck(uint32_t currentDeltaTime)
     }
 
     bool shouldRunPid = false;
-    if (gyroConfig()->gyro_sync) {
-        shouldRunPid = gyroReadyCounter >= gyroConfig()->pid_process_denom;
+    if (gyroConfig()->gyro_sync && gyroReadyCounter >= gyroConfig()->pid_process_denom) {
+
+        shouldRunPid = true;
     }
-    shouldRunPid |= currentDeltaTime >= targetPidLooptime;
+    else if(currentDeltaTime >= targetPidLooptime){
+    	shouldRunPid = true;
+    }
 
     if (!shouldRunPid) {
         return false;
@@ -938,14 +907,13 @@ void taskPid(void)
     pidDeltaUs = currentTime - previousPidUpdateTime;
     previousPidUpdateTime = currentTime;
 
-    if (debugMode == DEBUG_PIDLOOP) {
-        debug[0] = pidDeltaUs;
-    }
+//    if (debugMode == DEBUG_PIDLOOP) {debug[0] = pidDeltaUs;}
 
+    subTaskMainSubprocesses();
     subTaskPidController();
 
     subTaskMotorUpdate();
-    subTaskMainSubprocesses();
+
 
     if (debugMode == DEBUG_GYRO_SYNC) {
         debug[2] = pidDeltaUs;
@@ -966,6 +934,7 @@ void taskUpdateAccelerometer(void)
 }
 
 void taskUpdateAttitude(void) {
+    //---
     imuUpdateAttitude();
 }
 
@@ -1102,6 +1071,8 @@ void taskUpdateBaro(void)
             rescheduleTask(TASK_SELF, newDeadline);
         }
     }
+
+    updatePositionEstimator_BaroTopic(currentTime);
 }
 #endif
 

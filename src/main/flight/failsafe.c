@@ -67,6 +67,10 @@ PG_RESET_TEMPLATE(failsafeConfig_t, failsafeConfig,
     .failsafe_off_delay = 200,         // 20sec
     .failsafe_throttle = 1000,         // default throttle off.
     .failsafe_throttle_low_delay = 100, // default throttle low delay for "just disarm" on failsafe condition
+    .failsafe_fw_roll_angle = -200,     // 20 deg left
+    .failsafe_fw_pitch_angle = 100,     // 10 deg dive (yes, positive means dive)
+    .failsafe_fw_yaw_rate = -45,        // 45 deg/s left yaw (left is negative, 8s for full turn)
+	.failsafe_stick_motion_threshold = 50,
 );
 
 static void failsafeReset(void)

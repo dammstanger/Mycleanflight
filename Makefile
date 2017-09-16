@@ -365,6 +365,8 @@ OSD_COMMON_SRC = \
 HIGHEND_SRC = \
 		   flight/gtune.c \
 		   flight/gps_conversion.c \
+		   navigation_new/navigation_fixedwing.c \
+		   navigation_new/navigation_fw_launch.c \
 		   navigation_new/navigation_geo.c \
 		   navigation_new/navigation_multicopter.c \
 		   navigation_new/navigation_pos_estimator.c \
