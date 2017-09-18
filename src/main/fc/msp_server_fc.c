@@ -657,7 +657,7 @@ int mspServerCommandHandler(mspPacket_t *cmd, mspPacket_t *reply)
 
         case MSP_ALTITUDE:
 #if (defined(BARO) || defined(IRRANGFD) || defined(MWRADAR)) && defined(NAV)
-//            sbufWriteU32(dst, altitudeHoldGetEstimatedAltitude());
+            sbufWriteU32(dst, 0);//altitudeHoldGetEstimatedAltitude());
             sbufWriteU16(dst, vario);
 #else
             sbufWriteU32(dst, 0);

@@ -479,9 +479,7 @@ static void imuCalculateEstimatedAttitude(void)
 #endif
 
     imuMahonyAHRSupdate(deltaT * 1e-6f,
-//    					gyroADC[X] * gyroScale_Adc2Rad, gyroADC[Y] * gyroScale_Adc2Rad, gyroADC[Z] * gyroScale_Adc2Rad,
-//    					imuMeasuredRotationBF.V.X, imuMeasuredRotationBF.V.Y, imuMeasuredRotationBF.V.Z,
-    					gyrotst[0], gyrotst[1], gyrotst[2],
+    					imuMeasuredRotationBF.A[X], imuMeasuredRotationBF.A[Y], imuMeasuredRotationBF.A[Z],
 //                        useAcc, imuMeasuredAccelBF.A[X], imuMeasuredAccelBF.A[Y], imuMeasuredAccelBF.A[Z],		//对于姿态补偿，ACC做低频量，不必追求短时的精度
 						useAcc, accSmooth[X], accSmooth[Y], accSmooth[Z],
                         useMag, magADC[X], magADC[Y], magADC[Z],
@@ -500,8 +498,8 @@ void imuUpdateGyroscope(timeUs_t gyroUpdateDeltaUs)
     const float gyroUpdateDelta = gyroUpdateDeltaUs * 1e-6f;
 
     for (int axis = 0; axis < 3; axis++) {
-//        imuAccumulatedRate[axis] += gyroADC[axis] * gyroScale_Adc2Rad * gyroUpdateDelta;
-        imuAccumulatedRate[axis] = gyroADC[axis] * gyroScale_Adc2Rad;
+        imuAccumulatedRate[axis] += gyroADC[axis] * gyroScale_Adc2Rad * gyroUpdateDeltaUs;//* gyroUpdateDelta;
+//        imuAccumulatedRate[axis] = gyroADC[axis] * gyroScale_Adc2Rad;
     }
 
     imuAccumulatedRateTimeUs += gyroUpdateDeltaUs;
@@ -518,8 +516,8 @@ static void imuUpdateMeasuredRotationRate(void)
     imuAccumulatedRateTimeUs = 0;
 
     for (axis = 0; axis < 3; axis++) {
-    	gyrotst[axis] = imuAccumulatedRate[axis]; /// imuAccumulatedRateTime;
-        imuMeasuredRotationBF.A[axis] = gyrotst[axis];
+//    	gyrotst[axis] = imuAccumulatedRate[axis]; /// imuAccumulatedRateTime;
+        imuMeasuredRotationBF.A[axis] = imuAccumulatedRate[axis] / imuAccumulatedRateTimeUs;//imuAccumulatedRateTime;
         imuAccumulatedRate[axis] = 0.0f;
     }
 #else
