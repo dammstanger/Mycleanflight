@@ -500,7 +500,8 @@ void imuUpdateGyroscope(timeUs_t gyroUpdateDeltaUs)
     const float gyroUpdateDelta = gyroUpdateDeltaUs * 1e-6f;
 
     for (int axis = 0; axis < 3; axis++) {
-        imuAccumulatedRate[axis] += gyroADC[axis] * gyroScale_Adc2Rad * gyroUpdateDelta;
+//        imuAccumulatedRate[axis] += gyroADC[axis] * gyroScale_Adc2Rad * gyroUpdateDelta;
+        imuAccumulatedRate[axis] = gyroADC[axis] * gyroScale_Adc2Rad;
     }
 
     imuAccumulatedRateTimeUs += gyroUpdateDeltaUs;
@@ -517,7 +518,7 @@ static void imuUpdateMeasuredRotationRate(void)
     imuAccumulatedRateTimeUs = 0;
 
     for (axis = 0; axis < 3; axis++) {
-    	gyrotst[axis] = gyroADCf[axis] * gyroScale_Adc2Rad;//imuAccumulatedRate[axis] / imuAccumulatedRateTime;
+    	gyrotst[axis] = imuAccumulatedRate[axis]; /// imuAccumulatedRateTime;
         imuMeasuredRotationBF.A[axis] = gyrotst[axis];
         imuAccumulatedRate[axis] = 0.0f;
     }
