@@ -966,13 +966,20 @@ static void loadMainState(void)
         blackboxCurrent->rcCommand[i] = rcCommand[i];
     }
 
-    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
-        blackboxCurrent->gyroADC[i] = gyroADC[i];
-    }
+//    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
+//        blackboxCurrent->gyroADC[i] = gyroADC[i];
+//    }
+//    blackboxCurrent->gyroADC[0] = debugGetGyroX100();
+//    blackboxCurrent->gyroADC[1] = debugGetGyroY100();
+//    blackboxCurrent->gyroADC[2] = debugGetGyroZ100();
+
 
 //    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
 //        blackboxCurrent->accSmooth[i] = accSmooth[i];
 //    }
+//    blackboxCurrent->accSmooth[0] = debugGetGyroAcclX100();
+//    blackboxCurrent->accSmooth[1] = debugGetGyroAcclY100();
+//    blackboxCurrent->accSmooth[2] = debugGetGyroAcclZ100();
 
 //    blackboxCurrent->accSmooth[0] = altitudeGetImuBasedVel();
 //    blackboxCurrent->accSmooth[1] = altitudeGetNoneImuVel();

@@ -50,8 +50,10 @@ typedef struct imuConfig_s {
     // IMU configuration
     uint16_t max_angle_inclination;         // max inclination allowed in angle (level) mode. default 500 (50 degrees).
     uint8_t small_angle;                    // Angle used for mag hold threshold.
-    uint16_t dcm_kp;                        // DCM filter proportional gain ( x 10000)
-    uint16_t dcm_ki;                        // DCM filter integral gain ( x 10000)
+    uint16_t dcm_kp_acc;                    // DCM filter proportional gain ( x 10000) for accelerometer
+    uint16_t dcm_ki_acc;                    // DCM filter integral gain ( x 10000) for accelerometer
+    uint16_t dcm_kp_mag;                    // DCM filter proportional gain ( x 10000) for magnetometer and GPS heading
+    uint16_t dcm_ki_mag;                    // DCM filter integral gain ( x 10000) for magnetometer and GPS heading
 } imuConfig_t;
 
 PG_DECLARE(imuConfig_t, imuConfig);
@@ -66,8 +68,10 @@ PG_DECLARE_PROFILE(throttleCorrectionConfig_t, throttleCorrectionConfig);
 typedef struct imuRuntimeConfig_s {
     uint8_t acc_cut_hz;
     uint8_t acc_unarmedcal;
-    float dcm_ki;
-    float dcm_kp;
+    float dcm_kp_acc;
+    float dcm_ki_acc;
+    float dcm_kp_mag;
+    float dcm_ki_mag;
     uint8_t small_angle;
 } imuRuntimeConfig_t;
 
@@ -102,3 +106,9 @@ bool isImuHeadingValid(void);
 void imuTransformVectorBodyToEarth(t_fp_vector * v);
 void imuTransformVectorEarthToBody(t_fp_vector * v);
 
+int16_t debugGetGyroX100();
+int16_t debugGetGyroY100();
+int16_t debugGetGyroZ100();
+int16_t debugGetGyroAcclX100();
+int16_t debugGetGyroAcclY100();
+int16_t debugGetGyroAcclZ100();
