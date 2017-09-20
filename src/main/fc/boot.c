@@ -637,6 +637,10 @@ void init(void)
     }
 #endif
 
+#ifdef NAV
+    navigationInit();
+#endif
+
 #ifdef SONAR
     if (feature(FEATURE_SONAR)) {
         sonarInit(sonarHardware);

@@ -94,11 +94,11 @@ extern const uint8_t __pg_resetdata_end[];
     } while(0)                                                          \
     /**/
 
-// Declare system config
+// Declare system config //	static inline _type* _name ## Mutable(void) { return &_name ## _System; }
 #define PG_DECLARE(_type, _name)                                        \
     extern _type _name ## _System;                                      \
     static inline _type* _name(void) { return &_name ## _System; }      \
-    struct _dummy                                                       \
+	struct _dummy                                                       \
     /**/
 
 // Declare system config array

@@ -160,6 +160,15 @@ STATIC_UNIT_TESTED void resetConf(void)
     }
 }
 
+#ifdef NAV
+void validateNavConfig(void)
+{
+    // Make sure minAlt is not more than maxAlt, maxAlt cannot be set lower than 500.
+    navConfig()->general.land_slowdown_minalt = MIN(navConfig()->general.land_slowdown_minalt, navConfig()->general.land_slowdown_maxalt - 100);
+}
+#endif
+
+
 static void activateConfig(void)
 {
     activateControlRateConfig();
@@ -177,10 +186,14 @@ static void activateConfig(void)
     pidInitFilters(pidProfile());
     pidSetController(pidProfile()->pidController);
 
-#ifdef GPS
+#ifdef NAV
+    navigationUsePIDs();
+#endif
+
+//#ifdef GPS
     //dammstanger OLDNAV
 //    gpsUsePIDs(pidProfile());
-#endif
+//#endif
 
     useFailsafeConfig();
     setAccelerationTrims(&sensorTrims()->accZero);
@@ -313,6 +326,11 @@ static void validateAndFixConfig(void)
     if (!isSerialConfigValid(serialConfig())) {
         PG_RESET_CURRENT(serialConfig);
     }
+
+#if defined(NAV)
+    // Ensure sane values of navConfig settings
+    validateNavConfig();
+#endif
 
 #if defined(USE_VCP)
     serialConfig()->portConfigs[0].functionMask = FUNCTION_MSP_SERVER;

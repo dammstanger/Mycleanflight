@@ -185,6 +185,12 @@ bool isCalibrating(void)
     }
 #endif
 
+#ifdef NAV
+    if (!navIsCalibrationComplete()) {
+        return true;
+    }
+#endif
+
     // Note: compass calibration is handled completely differently, outside of the main loop, see f.CALIBRATE_MAG
 
     return (!isAccelerationCalibrationComplete() && sensors(SENSOR_ACC)) || (!isGyroCalibrationComplete());
@@ -272,7 +278,8 @@ typedef enum {
     ARM_PREV_FAILSAFE   = 0x00815, //       0b100000010101  3 flashes - Failsafe mode
     ARM_PREV_ANGLE      = 0x02055, //     0b10000001010101  4 flashes - Maximum arming angle exceeded
     ARM_PREV_CALIB      = 0x08155, //   0b1000000101010101  5 flashes - Calibration active
-    ARM_PREV_OVERLOAD   = 0x20555  // 0b100000010101010101  6 flashes - System overload
+    ARM_PREV_OVERLOAD   = 0x20555,  // 0b100000010101010101  6 flashes - System overload
+	ARM_PREV_NAVBLOCK	= 0x81555  //						7 flashes - Nav has problem
 } armingPreventedReason_e;
 
 armingPreventedReason_e getArmingPreventionBlinkMask(void)
@@ -292,6 +299,11 @@ armingPreventedReason_e getArmingPreventionBlinkMask(void)
     if (isSystemOverloaded()) {
         return ARM_PREV_OVERLOAD;
     }
+
+    if (navigationBlockArming()) {
+    	return ARM_PREV_NAVBLOCK;
+    }
+
     return ARM_PREV_NONE;
 }
 
@@ -307,6 +319,13 @@ static void updateLEDs(void)
         if (!imuIsAircraftArmable(armingConfig()->max_arm_angle)) {
             DISABLE_ARMING_FLAG(OK_TO_ARM);
         }
+
+#if defined(NAV)
+		if (navigationBlockArming()) {
+	//        ENABLE_ARMING_FLAG(BLOCKED_NAVIGATION_SAFETY);
+			DISABLE_ARMING_FLAG(OK_TO_ARM);
+		}
+#endif
 
         if (isCalibrating() || isSystemOverloaded()) {
             DISABLE_ARMING_FLAG(OK_TO_ARM);
@@ -374,8 +393,10 @@ void mwArm(void)
             disarmAt = millis() + armingConfig()->auto_disarm_delay * 1000;   // start disarm timeout, will be extended when throttle is nonzero
 
             //beep to indicate arming
-#ifdef GPS
-            if (feature(FEATURE_GPS) && STATE(GPS_FIX) && GPS_numSat >= 5)
+//#ifdef GPS
+#ifdef NAV
+            //if (feature(FEATURE_GPS) && STATE(GPS_FIX) && GPS_numSat >= 5)
+            if(navigationPositionEstimateIsHealthy())
                 beeper(BEEPER_ARMING_GPS_FIX);
             else
                 beeper(BEEPER_ARMING);
@@ -680,7 +701,6 @@ void filterRc(void){
             lastCommand[channel] = rcCommand[channel];
         }
 
-        isRXDataNew = false;
         factor = rcInterpolationFactor - 1;
     } else {
         factor--;
@@ -706,7 +726,7 @@ void processRcCommand(void)
 
 void subTaskPidController(void)
 {
-    const uint32_t startTime = micros();
+//    const uint32_t startTime = micros();
 
     // PID - note this is function pointer set by setPIDController()
     pid_controller(
@@ -722,7 +742,7 @@ void subTaskPidController(void)
 
 void subTaskMainSubprocesses(void)
 {
-    const uint32_t startTime = micros();
+//    const uint32_t startTime = micros();
 
     // Read out gyro temperature. can use it for something somewhere. maybe get MCU temperature instead? lots of fun possibilities.
     if (gyro.temperature) {
@@ -778,12 +798,25 @@ void subTaskMainSubprocesses(void)
     processRcCommand();
 
 #ifdef GPS
-    if (sensors(SENSOR_GPS)) {
+//dammstanger OLDNAV
+//    if (sensors(SENSOR_GPS)) {
 //       if ((FLIGHT_MODE(GPS_HOME_MODE) || FLIGHT_MODE(GPS_HOLD_MODE)) && STATE(GPS_FIX_HOME)) {
-        	//dammstanger OLDNAV
 //            updateGpsStateForHomeAndHoldMode();
 //        }
+//    }
+#endif
+
+#if defined(NAV)
+    if (isRXDataNew) {
+        updateWaypointsAndNavigationMode();				//遥控数据周期或者 20ms 更新一次
     }
+#endif
+
+    isRXDataNew = false;
+
+#if defined(NAV)
+    updatePositionEstimator();
+    applyWaypointNavigationAndAltitudeHold();
 #endif
 
 #ifdef USE_SDCARD

@@ -463,11 +463,30 @@ static const char * const lookupTableDebug[DEBUG_MODE_COUNT] = {
 #endif
 };
 
+#ifdef NAV
+static const char * const lookupTableNavControlMode[] = {
+    "ATTI", "CRUISE"
+};
+
+static const char * const lookupTableNavRthAltMode[] = {
+    "CURRENT", "EXTRA", "FIXED", "MAX", "AT_LEAST"
+};
+
+static const char * const lookupTableNavResetAltitude[] = {
+    "NEVER", "FIRST_ARM", "EACH_ARM"
+};
+
+#endif
+
 typedef struct lookupTableEntry_s {
     const char * const *values;
     const uint8_t valueCount;
 } lookupTableEntry_t;
 
+
+/*----
+ * 枚举的数量和顺序要与lookupTables数组对应上，不然就会出现数组访问越界 导致硬件错误
+ */
 typedef enum {
     TABLE_OFF_ON = 0,
     TABLE_DEBUG,
@@ -491,6 +510,11 @@ typedef enum {
     TABLE_PID_DELTA_METHOD,
     TABLE_LOWPASS_TYPE,
     TABLE_HORIZON_TILT_MODE,
+#ifdef NAV							//新增的TABLE插在中间就会出现问题 放在末尾
+    TABLE_NAV_USER_CTL_MODE,
+    TABLE_NAV_RTH_ALT_MODE,
+    TABLE_NAV_RESET_ALTITUDE,
+#endif
 } lookupTableIndex_e;
 
 static const lookupTableEntry_t lookupTables[] = {
@@ -516,6 +540,11 @@ static const lookupTableEntry_t lookupTables[] = {
     { lookupTablePidDeltaMethod, sizeof(lookupTablePidDeltaMethod) / sizeof(char *) },
     { lookupTableLowpassType, sizeof(lookupTableLowpassType) / sizeof(char *) },
     { lookupTableHorizonTiltMode, sizeof(lookupTableHorizonTiltMode) / sizeof(char *) },
+#ifdef NAV
+    { lookupTableNavControlMode, sizeof(lookupTableNavControlMode) / sizeof(char *) },
+    { lookupTableNavRthAltMode, sizeof(lookupTableNavRthAltMode) / sizeof(char *) },
+    { lookupTableNavResetAltitude, sizeof(lookupTableNavResetAltitude) / sizeof(char *) },
+#endif
 };
 
 #define VALUE_TYPE_OFFSET 0
@@ -538,7 +567,8 @@ typedef enum {
 
     // value mode
     MODE_DIRECT = (0 << VALUE_MODE_OFFSET),
-    MODE_LOOKUP = (1 << VALUE_MODE_OFFSET)
+    MODE_LOOKUP = (1 << VALUE_MODE_OFFSET),
+	MODE_MAX = (2 << VALUE_MODE_OFFSET)
 } cliValueFlag_e;
 
 #define VALUE_TYPE_MASK (0x0F)
@@ -550,6 +580,10 @@ typedef struct cliMinMaxConfig_s {
     const int32_t max;
 } cliMinMaxConfig_t;
 
+typedef struct cliMaxConfig_s {
+    const uint32_t max;
+} cliMaxConfig_t;
+
 typedef struct cliLookupTableConfig_s {
     const lookupTableIndex_e tableIndex;
 } cliLookupTableConfig_t;
@@ -557,7 +591,7 @@ typedef struct cliLookupTableConfig_s {
 typedef union {
     cliLookupTableConfig_t lookup;
     cliMinMaxConfig_t minmax;
-
+    cliMaxConfig_t max;
 } cliValueConfig_t;
 
 typedef struct {
@@ -567,7 +601,7 @@ typedef struct {
 
     pgn_t pgn;
     uint16_t offset;
-} __attribute__((packed)) clivalue_t;
+} __attribute__((packed)) clivalue_t;		//告诉GCC编译器此结构体成员存储时不对齐
 
 const clivalue_t valueTable[] = {
     { "debug_mode",                 VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_DEBUG }, PG_DEBUG_CONFIG, offsetof(debugConfig_t, debug_mode)},
@@ -623,6 +657,7 @@ const clivalue_t valueTable[] = {
     { "gps_sbas_mode",              VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_GPS_SBAS_MODE }, PG_GPS_CONFIG, offsetof(gpsConfig_t, sbasMode)},
     { "gps_auto_config",            VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_GPS_CONFIG, offsetof(gpsConfig_t, autoConfig)},
     { "gps_auto_baud",              VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_GPS_CONFIG, offsetof(gpsConfig_t, autoBaud)},
+	//dammstanger OLDNAV
 	//    { "gps_pos_p",                  VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  200 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_mc.pid[PID_POS_XY].P) },
 	//    { "gps_pos_i",                  VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  200 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_mc.pid[PID_POS_XY].I) },
 	//    { "gps_pos_d",                  VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  200 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_mc.pid[PID_POS_XY].D) },
@@ -634,7 +669,6 @@ const clivalue_t valueTable[] = {
 	//    { "gps_nav_p",                 VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  200 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_mc.pid[PID_SURFACE].P) },
 	//    { "gps_nav_i",                 VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  200 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_mc.pid[PID_SURFACE].I) },
 	//    { "gps_nav_d",                 VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  200 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_mc.pid[PID_SURFACE].D) },
-	//dammstanger OLDNAV
 	//    { "gps_wp_radius",              VAR_UINT16 | PROFILE_VALUE, .config.minmax = { 0,  2000 }, PG_NAVIGATION_CONFIG, offsetof(gpsProfile_t, gps_wp_radius) },
 	//
 	//    { "nav_controls_heading",       VAR_UINT8  | PROFILE_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_NAVIGATION_CONFIG, offsetof(gpsProfile_t, nav_controls_heading) },
@@ -659,14 +693,98 @@ const clivalue_t valueTable[] = {
     { "nav_mc_vel_xy_i",            VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_mc.pid[PID_VEL_XY].I) },
     { "nav_mc_vel_xy_d",            VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_mc.pid[PID_VEL_XY].D) },
 
-    { "nav_fw_pos_z_p",             VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_fw.pid[PID_POS_Z].P) },
-    { "nav_fw_pos_z_i",             VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_fw.pid[PID_POS_Z].I) },
-    { "nav_fw_pos_z_d",             VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_fw.pid[PID_POS_Z].D) },
-
-    { "nav_fw_pos_xy_p",            VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_fw.pid[PID_POS_XY].P) },
-    { "nav_fw_pos_xy_i",            VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_fw.pid[PID_POS_XY].I) },
-    { "nav_fw_pos_xy_d",            VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_fw.pid[PID_POS_XY].D) },
+//    { "nav_fw_pos_z_p",             VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_fw.pid[PID_POS_Z].P) },
+//    { "nav_fw_pos_z_i",             VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_fw.pid[PID_POS_Z].I) },
+//    { "nav_fw_pos_z_d",             VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_fw.pid[PID_POS_Z].D) },
+//
+//    { "nav_fw_pos_xy_p",            VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_fw.pid[PID_POS_XY].P) },
+//    { "nav_fw_pos_xy_i",            VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_fw.pid[PID_POS_XY].I) },
+//    { "nav_fw_pos_xy_d",            VAR_UINT8  | PROFILE_VALUE, .config.minmax = { 0,  255 }, PG_PID_PROFILE, offsetof(pidProfile_t, bank_fw.pid[PID_POS_XY].D) },
+//// PG_PID_AUTOTUNE_CONFIG
+//	{ "fw_autotune_overshoot_time", VAR_UINT16 | PROFILE_VALUE, .config.minmax = { 50,  500 }, PG_PID_AUTOTUNE_CONFIG, offsetof(pidAutotuneConfig_t, fw_overshoot_time) },
+//	{ "fw_autotune_undershoot_time",VAR_UINT16 | PROFILE_VALUE, .config.minmax = { 50,  500 }, PG_PID_AUTOTUNE_CONFIG, offsetof(pidAutotuneConfig_t, fw_undershoot_time) },
+//	{ "fw_autotune_threshold",      VAR_UINT8 | PROFILE_VALUE, .config.minmax = { 0,  100 }, PG_PID_AUTOTUNE_CONFIG, offsetof(pidAutotuneConfig_t, fw_max_rate_threshold) },
+//	{ "fw_autotune_ff_to_p_gain",   VAR_UINT8 | PROFILE_VALUE, .config.minmax = { 0,  100 }, PG_PID_AUTOTUNE_CONFIG, offsetof(pidAutotuneConfig_t, fw_ff_to_p_gain) },
+//	{ "fw_autotune_ff_to_i_tc",     VAR_UINT16 | PROFILE_VALUE, .config.minmax = { 100,  5000 }, PG_PID_AUTOTUNE_CONFIG, offsetof(pidAutotuneConfig_t, fw_ff_to_i_time_constant) },
+// PG_POSITION_ESTIMATION_CONFIG
+#if defined(NAV_AUTO_MAG_DECLINATION)
+	{ "inav_auto_mag_decl",         VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, automatic_mag_declination) },
 #endif
+    { "inav_gravity_cal_tolerance", VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0,  255 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, gravity_calibration_tolerance) },
+    { "inav_use_gps_velned",        VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, use_gps_velned) },
+    { "inav_gps_delay",             VAR_UINT16 | MASTER_VALUE, .config.minmax = { 0,  500 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, gps_delay_ms) },
+    { "inav_reset_altitude",        VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_NAV_RESET_ALTITUDE }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, reset_altitude_type) },
+
+    { "inav_max_surface_altitude",  VAR_UINT16  | MASTER_VALUE, .config.minmax = { 0,  1000 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, max_surface_altitude) },
+
+    { "inav_w_z_surface_p",         VAR_FLOAT  | MASTER_VALUE, .config.minmax = { 0,  10 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, w_z_surface_p) },
+    { "inav_w_z_surface_v",         VAR_FLOAT  | MASTER_VALUE, .config.minmax = { 0,  10 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, w_z_surface_v) },
+    { "inav_w_z_baro_p",            VAR_FLOAT  | MASTER_VALUE, .config.minmax = { 0,  10 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, w_z_baro_p) },
+    { "inav_w_z_gps_p",             VAR_FLOAT  | MASTER_VALUE, .config.minmax = { 0,  10 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, w_z_gps_p) },
+    { "inav_w_z_gps_v",             VAR_FLOAT  | MASTER_VALUE, .config.minmax = { 0,  10 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, w_z_gps_v) },
+    { "inav_w_xy_gps_p",            VAR_FLOAT  | MASTER_VALUE, .config.minmax = { 0,  10 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, w_xy_gps_p) },
+    { "inav_w_xy_gps_v",            VAR_FLOAT  | MASTER_VALUE, .config.minmax = { 0,  10 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, w_xy_gps_v) },
+    { "inav_w_z_res_v",             VAR_FLOAT  | MASTER_VALUE, .config.minmax = { 0,  10 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, w_z_res_v) },
+    { "inav_w_xy_res_v",            VAR_FLOAT  | MASTER_VALUE, .config.minmax = { 0,  10 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, w_xy_res_v) },
+    { "inav_w_acc_bias",            VAR_FLOAT  | MASTER_VALUE, .config.minmax = { 0,  1 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, w_acc_bias) },
+
+    { "inav_max_eph_epv",           VAR_FLOAT  | MASTER_VALUE, .config.minmax = { 0,  9999 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, max_eph_epv) },
+    { "inav_baro_epv",              VAR_FLOAT  | MASTER_VALUE, .config.minmax = { 0,  9999 }, PG_POSITION_ESTIMATION_CONFIG, offsetof(positionEstimationConfig_t, baro_epv) },
+
+// PG_NAV_CONFIG
+    { "nav_disarm_on_landing",      VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_NAV_CONFIG, offsetof(navConfig_t, general.flags.disarm_on_landing) },
+    { "nav_use_midthr_for_althold", VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_NAV_CONFIG, offsetof(navConfig_t, general.flags.use_thr_mid_for_althold) },
+    { "nav_extra_arming_safety",    VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_NAV_CONFIG, offsetof(navConfig_t, general.flags.extra_arming_safety) },
+    { "nav_user_control_mode",      VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_NAV_USER_CTL_MODE }, PG_NAV_CONFIG, offsetof(navConfig_t, general.flags.user_control_mode) },
+    { "nav_position_timeout",       VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0,  10 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.pos_failure_timeout) },
+    { "nav_wp_radius",              VAR_UINT16 | MASTER_VALUE, .config.minmax = { 10,  10000 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.waypoint_radius) },
+    { "nav_wp_safe_distance",       VAR_UINT16 | MASTER_VALUE | MODE_MAX, .config.max = { 65000 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.waypoint_safe_distance) },
+    { "nav_auto_speed",             VAR_UINT16 | MASTER_VALUE, .config.minmax = { 10,  2000 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.max_auto_speed) },
+    { "nav_auto_climb_rate",        VAR_UINT16 | MASTER_VALUE, .config.minmax = { 10,  2000 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.max_auto_climb_rate) },
+    { "nav_manual_speed",           VAR_UINT16 | MASTER_VALUE, .config.minmax = { 10,  2000 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.max_manual_speed) },
+    { "nav_manual_climb_rate",      VAR_UINT16 | MASTER_VALUE, .config.minmax = { 10,  2000 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.max_manual_climb_rate ) },
+    { "nav_landing_speed",          VAR_UINT16 | MASTER_VALUE, .config.minmax = { 100,  2000 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.land_descent_rate) },
+    { "nav_land_slowdown_minalt",   VAR_UINT16 | MASTER_VALUE, .config.minmax = { 50,  1000 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.land_slowdown_minalt) },
+    { "nav_land_slowdown_maxalt",   VAR_UINT16 | MASTER_VALUE, .config.minmax = { 500,  4000 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.land_slowdown_maxalt) },
+    { "nav_emerg_landing_speed",    VAR_UINT16 | MASTER_VALUE, .config.minmax = { 100,  2000 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.emerg_descent_rate) },
+    { "nav_min_rth_distance",       VAR_UINT16 | MASTER_VALUE, .config.minmax = { 0,  5000 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.min_rth_distance) },
+    { "nav_rth_climb_first",        VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_NAV_CONFIG, offsetof(navConfig_t, general.flags.rth_climb_first) },
+    { "nav_rth_climb_ignore_emerg", VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_NAV_CONFIG, offsetof(navConfig_t, general.flags.rth_climb_ignore_emerg) },
+    { "nav_rth_tail_first",         VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_NAV_CONFIG, offsetof(navConfig_t, general.flags.rth_tail_first) },
+    { "nav_rth_allow_landing",      VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_NAV_CONFIG, offsetof(navConfig_t, general.flags.rth_allow_landing) },
+    { "nav_rth_alt_mode",           VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_NAV_RTH_ALT_MODE }, PG_NAV_CONFIG, offsetof(navConfig_t, general.flags.rth_alt_control_mode) },
+    { "nav_rth_abort_threshold",    VAR_UINT16 | MASTER_VALUE | MODE_MAX, .config.max = { 65000 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.rth_abort_threshold) },
+    { "nav_rth_altitude",           VAR_UINT16 | MASTER_VALUE | MODE_MAX, .config.max = { 65000 }, PG_NAV_CONFIG, offsetof(navConfig_t, general.rth_altitude) },
+
+    { "nav_mc_bank_angle",          VAR_UINT8  | MASTER_VALUE, .config.minmax = { 15,  45 }, PG_NAV_CONFIG, offsetof(navConfig_t, mc.max_bank_angle) },
+    { "nav_mc_hover_thr",           VAR_UINT16 | MASTER_VALUE, .config.minmax = { 1000,  2000 }, PG_NAV_CONFIG, offsetof(navConfig_t, mc.hover_throttle) },
+    { "nav_mc_auto_disarm_delay",   VAR_UINT16 | MASTER_VALUE, .config.minmax = { 100,  10000 }, PG_NAV_CONFIG, offsetof(navConfig_t, mc.auto_disarm_delay) },
+
+//    { "nav_fw_cruise_thr",          VAR_UINT16 | MASTER_VALUE, .config.minmax = { 1000,  2000 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.cruise_throttle) },
+//    { "nav_fw_min_thr",             VAR_UINT16 | MASTER_VALUE, .config.minmax = { 1000,  2000 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.min_throttle) },
+//    { "nav_fw_max_thr",             VAR_UINT16 | MASTER_VALUE, .config.minmax = { 1000,  2000 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.max_throttle) },
+//    { "nav_fw_bank_angle",          VAR_UINT8  | MASTER_VALUE, .config.minmax = { 5,  80 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.max_bank_angle) },
+//    { "nav_fw_climb_angle",         VAR_UINT8  | MASTER_VALUE, .config.minmax = { 5,  80 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.max_climb_angle) },
+//    { "nav_fw_dive_angle",          VAR_UINT8  | MASTER_VALUE, .config.minmax = { 5,  80 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.max_dive_angle) },
+//    { "nav_fw_pitch2thr",           VAR_UINT8  | MASTER_VALUE, .config.minmax = { 0,  100 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.pitch_to_throttle) },
+//    { "nav_fw_loiter_radius",       VAR_UINT16 | MASTER_VALUE, .config.minmax = { 0,  10000 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.loiter_radius) },
+
+#ifdef FIXED_WING_LANDING
+    { "nav_fw_land_dive_angle",     VAR_INT8  | MASTER_VALUE, .config.minmax = { -20,  20 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.land_dive_angle) },
+#endif
+
+//    { "nav_fw_launch_velocity",     VAR_UINT16 | MASTER_VALUE, .config.minmax = { 100,  10000 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.launch_velocity_thresh) },
+//    { "nav_fw_launch_accel",        VAR_UINT16 | MASTER_VALUE, .config.minmax = { 1000,  20000 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.launch_accel_thresh) },
+//    { "nav_fw_launch_max_angle",    VAR_UINT8  | MASTER_VALUE, .config.minmax = { 5,  180 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.launch_max_angle) },
+//    { "nav_fw_launch_detect_time",  VAR_UINT16 | MASTER_VALUE, .config.minmax = { 10,  1000 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.launch_time_thresh) },
+//    { "nav_fw_launch_thr",          VAR_UINT16 | MASTER_VALUE, .config.minmax = { 1000,  2000 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.launch_throttle) },
+//    { "nav_fw_launch_idle_thr",     VAR_UINT16 | MASTER_VALUE, .config.minmax = { 1000,  2000 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.launch_idle_throttle) },
+//    { "nav_fw_launch_motor_delay",  VAR_UINT16 | MASTER_VALUE, .config.minmax = { 0,  5000 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.launch_motor_timer) },
+//    { "nav_fw_launch_spinup_time",  VAR_UINT16 | MASTER_VALUE, .config.minmax = { 0,  1000 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.launch_motor_spinup_time) },
+//    { "nav_fw_launch_timeout",      VAR_UINT16 | MASTER_VALUE | MODE_MAX , .config.max = { 60000 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.launch_timeout) },
+//    { "nav_fw_launch_climb_angle",  VAR_UINT8  | MASTER_VALUE, .config.minmax = { 5,  45 }, PG_NAV_CONFIG, offsetof(navConfig_t, fw.launch_climb_angle) },
+
+	#endif
 
 #ifdef TELEMETRY
     { "telemetry_switch",           VAR_UINT8  | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON } , PG_TELEMETRY_CONFIG, offsetof(telemetryConfig_t, telemetry_switch)},
@@ -878,6 +996,7 @@ const clivalue_t valueTable[] = {
 };
 
 typedef union {
+    uint32_t uint_value;
     int32_t int_value;
     float float_value;
 } int_float_value_t;
@@ -2517,16 +2636,28 @@ static void cliPrintVar(const clivalue_t *var, uint32_t full)
             if (full && (var->type & VALUE_MODE_MASK) == MODE_DIRECT) {
                 cliPrintf(" %s", ftoa((float)var->config.minmax.min, ftoaBuffer));
                 cliPrintf(" %s", ftoa((float)var->config.minmax.max, ftoaBuffer));
-            }
+			} else if ((var->type & VALUE_MODE_MASK) == MODE_MAX) {
+				cliPrintf("0 %s", ftoa((float)var->config.max.max, ftoaBuffer));
+			}
             return; // return from case for float only
     }
 
     switch(var->type & VALUE_MODE_MASK) {
+    	case MODE_MAX:
         case MODE_DIRECT:
-            cliPrintf("%d", value);
+            if ((var->type & VALUE_TYPE_MASK) == VAR_UINT32)
+                cliPrintf("%u", value);
+            else
+            	cliPrintf("%d", value);
             if (full) {
-                cliPrintf(" %d %d", var->config.minmax.min, var->config.minmax.max);
-            }
+                if ((var->type & VALUE_MODE_MASK) == MODE_DIRECT) {
+                    cliPrintf(" %d %d", var->config.minmax.min, var->config.minmax.max);
+                } else {
+                    if ((var->type & VALUE_TYPE_MASK) == VAR_UINT32)
+                        cliPrintf(" 0 %u", var->config.max.max);
+                    else
+                        cliPrintf(" 0 %d", var->config.max.max);
+                }            }
             break;
         case MODE_LOOKUP:
             cliPrintf(lookupTables[var->config.lookup.tableIndex].values[value]);
@@ -2603,17 +2734,22 @@ static void cliSet(char *cmdline)
                 bool changeValue = false;
                 int_float_value_t tmp;
                 switch (valueTable[i].type & VALUE_MODE_MASK) {
+                	case MODE_MAX:
                     case MODE_DIRECT: {
                             int32_t value = 0;
+                            uint32_t uvalue = 0;
                             float valuef = 0;
 
                             value = atoi(eqptr);
                             valuef = fastA2F(eqptr);
+                            uvalue = strtoul(eqptr, NULL, 10);
 
-                            if (valuef >= valueTable[i].config.minmax.min && valuef <= valueTable[i].config.minmax.max) { // note: compare float value
-
+                            if (valuef >= valueTable[i].config.minmax.min && valuef <= valueTable[i].config.minmax.max  // note: compare float value
+                            	|| (valuef >= 0 && valuef <= valueTable[i].config.max.max)) {
                                 if ((valueTable[i].type & VALUE_TYPE_MASK) == VAR_FLOAT)
                                     tmp.float_value = valuef;
+                                else if ((valueTable[i].type & VALUE_TYPE_MASK) == VAR_UINT32)
+                                    tmp.uint_value = uvalue;
                                 else
                                     tmp.int_value = value;
 
