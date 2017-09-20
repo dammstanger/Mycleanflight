@@ -812,7 +812,7 @@ void configureScheduler(void)
     rescheduleTask(TASK_GYRO, gyroPeriodUs);
     setTaskEnabled(TASK_GYRO, true);
 
-    rescheduleTask(TASK_PID, 1000);			//gyroPeriodUs dammstanger 20170607
+    rescheduleTask(TASK_PID, gyroPeriodUs * gyroConfig()->pid_process_denom);			//gyroPeriodUs dammstanger 20170920
     setTaskEnabled(TASK_PID, true);
 
     if (sensors(SENSOR_ACC)) {
