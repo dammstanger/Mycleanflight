@@ -452,6 +452,7 @@ void updatePositionEstimator_BaroTopic(timeUs_t currentTimeUs)
         posEstimator.baro.alt = 0;
         posEstimator.baro.lastUpdateTime = 0;
     }
+    debug_baroAlt = newBaroAlt;
 }
 #endif
 
@@ -566,6 +567,7 @@ static void updateIMUTopic(void)
     }
 }
 
+//更新估计位置误差
 static float updateEPE(const float oldEPE, const float dt, const float newEPE, const float w)
 {
     return oldEPE + (newEPE - oldEPE) * w * dt;

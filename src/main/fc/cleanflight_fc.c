@@ -278,7 +278,7 @@ typedef enum {
     ARM_PREV_FAILSAFE   = 0x00815, //       0b100000010101  3 flashes - Failsafe mode
     ARM_PREV_ANGLE      = 0x02055, //     0b10000001010101  4 flashes - Maximum arming angle exceeded
     ARM_PREV_CALIB      = 0x08155, //   0b1000000101010101  5 flashes - Calibration active
-    ARM_PREV_OVERLOAD   = 0x20555,  // 0b100000010101010101  6 flashes - System overload
+    ARM_PREV_OVERLOAD   = 0x20555, // 0b100000010101010101  6 flashes - System overload
 	ARM_PREV_NAVBLOCK	= 0x81555  //						7 flashes - Nav has problem
 } armingPreventedReason_e;
 
@@ -726,7 +726,7 @@ void processRcCommand(void)
 
 void subTaskPidController(void)
 {
-//    const uint32_t startTime = micros();
+    const uint32_t startTime = micros();
 
     // PID - note this is function pointer set by setPIDController()
     pid_controller(
@@ -737,12 +737,12 @@ void subTaskPidController(void)
         rxConfig()
     );
 
-//    if (debugMode == DEBUG_PIDLOOP) {debug[2] = micros() - startTime;}
+    if (debugMode == DEBUG_PIDLOOP) {debug[2] = micros() - startTime;}
 }
 
 void subTaskMainSubprocesses(void)
 {
-//    const uint32_t startTime = micros();
+    const uint32_t startTime = micros();
 
     // Read out gyro temperature. can use it for something somewhere. maybe get MCU temperature instead? lots of fun possibilities.
     if (gyro.temperature) {
@@ -828,7 +828,7 @@ void subTaskMainSubprocesses(void)
         handleBlackbox();
     }
 #endif
-//    if (debugMode == DEBUG_PIDLOOP) {debug[1] = micros() - startTime;}
+    if (debugMode == DEBUG_PIDLOOP) {debug[1] = micros() - startTime;}
 }
 
 void subTaskMotorUpdate(void)
@@ -852,7 +852,7 @@ void subTaskMotorUpdate(void)
     if (motorControlEnable) {
         writeMotors();
     }
-//    if (debugMode == DEBUG_PIDLOOP) {debug[3] = micros() - startTime;}
+    if (debugMode == DEBUG_PIDLOOP) {debug[3] = micros() - startTime;}
 }
 
 uint32_t gyroUpdateAt = 0;
@@ -940,7 +940,7 @@ void taskPid(void)
     pidDeltaUs = currentTime - previousPidUpdateTime;
     previousPidUpdateTime = currentTime;
 
-//    if (debugMode == DEBUG_PIDLOOP) {debug[0] = pidDeltaUs;}
+    if (debugMode == DEBUG_PIDLOOP) {debug[0] = pidDeltaUs;}
 
     subTaskMainSubprocesses();
     subTaskPidController();

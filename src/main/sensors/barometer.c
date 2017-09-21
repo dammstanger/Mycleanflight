@@ -173,7 +173,8 @@ int32_t baroCalculateAltitude(void)
     if (isBaroCalibrationComplete()) {
         BaroAlt_tmp = lrintf((1.0f - powf((float)(baroPressureSum / PRESSURE_SAMPLE_COUNT) / 101325.0f, 0.190295f)) * 4433000.0f); // in cm
         BaroAlt_tmp -= baroGroundAltitude;
-        BaroAlt = lrintf((float)BaroAlt * barometerConfig()->baro_noise_lpf + (float)BaroAlt_tmp * (1.0f - barometerConfig()->baro_noise_lpf)); // additional LPF to reduce baro noise
+//        BaroAlt = lrintf((float)BaroAlt * barometerConfig()->baro_noise_lpf + (float)BaroAlt_tmp * (1.0f - barometerConfig()->baro_noise_lpf)); // additional LPF to reduce baro noise
+        BaroAlt = BaroAlt_tmp;
     }
     else {
     	performBaroCalibrationCycle();

@@ -243,7 +243,7 @@ void pidInit(uint32_t pidLooptime)
 
 	pidInitFilters(pidProfile());
 
-	u8 maxRollPtichangle = 45;
+	const u8 maxRollPtichangle = 45;
     // Calculate max overall tilt (max pitch + max roll combined) as a limit to heading hold
     headingHoldCosZLimit = cos_approx(DECIDEGREES_TO_RADIANS(maxRollPtichangle)) *
                            cos_approx(DECIDEGREES_TO_RADIANS(maxRollPtichangle));

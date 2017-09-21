@@ -205,7 +205,7 @@ void pidLuxFloat(const pidProfile_t *pidProfile, const controlRateConfig_t *cont
         if (axis == FD_YAW) {
             // YAW is always gyro-controlled (MAG correction is applied to rcCommand) 100dps to 1100dps max yaw rate
             angleRate = (float)((rate + 27) * rcCommand[YAW]) / 32.0f;
-            angleRate = constrainf(angleRate, -50, 50);							//旋转速度限制在+-50度
+            angleRate = constrainf(angleRate, -luxGyroScale * 30, luxGyroScale * 30);							//旋转速度限制在+-300度
 
         } else {
             // control is GYRO based for ACRO and HORIZON - direct sticks control is applied to rate PID

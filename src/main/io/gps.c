@@ -449,6 +449,7 @@ static void gpsNewData(uint16_t c)
 #endif
 //dammstanger OLDNAV
 //    onGpsNewData();
+    onNewGPSData();
 }
 
 bool gpsNewFrame(uint8_t c)

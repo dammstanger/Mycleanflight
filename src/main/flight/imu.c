@@ -699,15 +699,6 @@ static void imuUpdateMeasuredRotationRate(void)
         imuMeasuredRotationBF.A[axis] = imuAccumulatedRate[axis] / imuAccumulatedRateTime;
         imuAccumulatedRate[axis] = 0.0f;
     }
-//    if (debugMode == DEBUG_PIDLOOP) {debug[0] = RADIANS_TO_DEGREES(imuMeasuredRotationBF.A[0]);
-//									 debug[1] = RADIANS_TO_DEGREES(gyroADC[0] * gyroScale_Adc2Rad);
-//									 debug[2] = RADIANS_TO_DEGREES(imuMeasuredRotationBF.A[1]);
-//									 debug[3] = RADIANS_TO_DEGREES(gyroADC[1] * gyroScale_Adc2Rad);
-//    }
-//
-//    debuggyro[0] = gyroADC[0] * gyroScale_Adc2Rad;
-//    debuggyro[1] = gyroADC[1] * gyroScale_Adc2Rad;
-//    debuggyro[2] = gyroADC[2] * gyroScale_Adc2Rad;
 #else
     for (axis = 0; axis < 3; axis++) {
         imuMeasuredRotationBF.A[axis] = gyroADCf[axis] * gyroScale_Adc2Rad;
@@ -734,8 +725,6 @@ static void imuUpdateMeasuredAcceleration(void)
         imuMeasuredAccelBF.A[axis] = accSmooth[axis] * (GRAVITY_CMS2 / acc.acc_1G);
     }
 #endif
-
-//    if (debugMode == DEBUG_PIDLOOP) {debug[3] = imuMeasuredAccelBF.A[2];}
 
 }
 

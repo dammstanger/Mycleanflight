@@ -938,12 +938,15 @@ static void loadMainState(void)
 
     blackboxCurrent->time = currentTime;
 
-    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
-        blackboxCurrent->axisPID_P[i] = axisPID_P[i];
-    }
+//    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
+//        blackboxCurrent->axisPID_P[i] = axisPID_P[i];
+//    }
 //    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
 //        blackboxCurrent->axisPID_I[i] = axisPID_I[i];
 //    }
+    blackboxCurrent->axisPID_P[0] = navLatestActualPosition[0];
+    blackboxCurrent->axisPID_P[1] = navLatestActualPosition[1];
+    blackboxCurrent->axisPID_P[2] = navLatestActualPosition[2];
     if (1) {
         blackboxCurrent->axisPID_I[0] = debug_GetantiWindupScaler10();
         blackboxCurrent->axisPID_I[1] = debug_GetITerm();
@@ -958,9 +961,9 @@ static void loadMainState(void)
 //        blackboxCurrent->axisPID_D[i] = axisPID_D[i];
 //    }
 
-//    blackboxCurrent->axisPID_D[0] = altitudeGetAltHold();
-//    blackboxCurrent->axisPID_D[1] = zbMw_get_distance();
-//    blackboxCurrent->axisPID_D[2] = altitudeGetsetVel();
+    blackboxCurrent->axisPID_D[0] = navLatestActualPosition[0];
+    blackboxCurrent->axisPID_D[1] = navLatestActualPosition[1];
+    blackboxCurrent->axisPID_D[2] = navLatestActualPosition[2];
 
     for (i = 0; i < 4; i++) {
         blackboxCurrent->rcCommand[i] = rcCommand[i];
@@ -969,17 +972,17 @@ static void loadMainState(void)
 //    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
 //        blackboxCurrent->gyroADC[i] = gyroADC[i];
 //    }
-//    blackboxCurrent->gyroADC[0] = debugGetGyroX100();
-//    blackboxCurrent->gyroADC[1] = debugGetGyroY100();
-//    blackboxCurrent->gyroADC[2] = debugGetGyroZ100();
+    blackboxCurrent->gyroADC[0] = navActualVelocity[0];
+    blackboxCurrent->gyroADC[1] = navActualVelocity[1];
+    blackboxCurrent->gyroADC[2] = navActualVelocity[2];
 
 
 //    for (i = 0; i < XYZ_AXIS_COUNT; i++) {
 //        blackboxCurrent->accSmooth[i] = accSmooth[i];
 //    }
-//    blackboxCurrent->accSmooth[0] = debugGetGyroAcclX100();
-//    blackboxCurrent->accSmooth[1] = debugGetGyroAcclY100();
-//    blackboxCurrent->accSmooth[2] = debugGetGyroAcclZ100();
+    blackboxCurrent->accSmooth[0] = navAccNEU[0];
+    blackboxCurrent->accSmooth[1] = navAccNEU[1];
+    blackboxCurrent->accSmooth[2] = navAccNEU[2];
 
 //    blackboxCurrent->accSmooth[0] = altitudeGetImuBasedVel();
 //    blackboxCurrent->accSmooth[1] = altitudeGetNoneImuVel();
@@ -1006,7 +1009,7 @@ static void loadMainState(void)
 #endif
 
 #ifdef BARO
-//    blackboxCurrent->BaroAlt = altitudeGetBaroAlt();
+    blackboxCurrent->BaroAlt = debug_baroAlt;//altitudeGetBaroAlt();
 #endif
 
 #ifdef SONAR

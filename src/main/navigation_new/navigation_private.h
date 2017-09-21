@@ -140,6 +140,7 @@ typedef struct {
     float       surface;
 } navigationDesiredState_t;
 
+//有限状态机事件项目
 typedef enum {
     NAV_FSM_EVENT_NONE = 0,
     NAV_FSM_EVENT_TIMEOUT,

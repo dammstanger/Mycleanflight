@@ -455,6 +455,7 @@ static const char * const lookupTableDebug[DEBUG_MODE_COUNT] = {
     "GYROSYNC",
 	"IRRANGFD",
 	"MWRADAR",
+	"NAV",
 	"ALT_HOLD",
 	"GPS",
 #ifdef OSD

@@ -314,6 +314,7 @@ extern uint16_t navFlags;
 extern uint16_t navEPH;
 extern uint16_t navEPV;
 extern int16_t navAccNEU[3];
+extern float debug_baroAlt;
 
 #else
 
