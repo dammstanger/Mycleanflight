@@ -1885,35 +1885,36 @@ void updateClimbRateToAltitudeController(float desiredClimbRate, climbRateToAlti
     static timeUs_t lastUpdateTimeUs;
     timeUs_t currentTimeUs = micros();
 
-    if (mode == ROC_TO_ALT_RESET) {
-        lastUpdateTimeUs = currentTimeUs;
-        posControl.desiredState.pos.V.Z = posControl.actualState.pos.V.Z;
-    }
-    else {
-        if (STATE(FIXED_WING)) {
-            // Fixed wing climb rate controller is open-loop. We simply move the known altitude target
-            float timeDelta = US2S(currentTimeUs - lastUpdateTimeUs);
+//    if (mode == ROC_TO_ALT_RESET) {
+//        lastUpdateTimeUs = currentTimeUs;
+//        posControl.desiredState.pos.V.Z = posControl.actualState.pos.V.Z;
+//    }
+//    else {
+//        if (STATE(FIXED_WING)) {
+//            // Fixed wing climb rate controller is open-loop. We simply move the known altitude target
+//            float timeDelta = US2S(currentTimeUs - lastUpdateTimeUs);
+//
+////            DEBUG_SET(DEBUG_FW_CLIMB_RATE_TO_ALTITUDE, 0, desiredClimbRate);
+////            DEBUG_SET(DEBUG_FW_CLIMB_RATE_TO_ALTITUDE, 1, timeDelta * 1000);
+//
+//            if (timeDelta <= HZ2S(MIN_POSITION_UPDATE_RATE_HZ)) {
+//                posControl.desiredState.pos.V.Z += desiredClimbRate * timeDelta;
+//                posControl.desiredState.pos.V.Z = constrainf(posControl.desiredState.pos.V.Z,           // FIXME: calculate sanity limits in a smarter way
+//                                                             posControl.actualState.pos.V.Z - 500,
+//                                                             posControl.actualState.pos.V.Z + 500);
+//            }
+//        }
+//        else {
+//            // Multicopter climb-rate control is closed-loop, it's possible to directly calculate desired altitude setpoint to yield the required RoC/RoD
+//            posControl.desiredState.pos.V.Z = posControl.actualState.pos.V.Z + (desiredClimbRate / posControl.pids.pos[Z].param.kP);
+//        }
+//
+//        lastUpdateTimeUs = currentTimeUs;
+//    }
 
-//            DEBUG_SET(DEBUG_FW_CLIMB_RATE_TO_ALTITUDE, 0, desiredClimbRate);
-//            DEBUG_SET(DEBUG_FW_CLIMB_RATE_TO_ALTITUDE, 1, timeDelta * 1000);
+	posControl.desiredState.pos.V.Z = desiredClimbRate;
+	if(debugMode==DEBUG_NAV){debug[1] = posControl.desiredState.pos.V.Z; }
 
-            if (timeDelta <= HZ2S(MIN_POSITION_UPDATE_RATE_HZ)) {
-                posControl.desiredState.pos.V.Z += desiredClimbRate * timeDelta;
-                posControl.desiredState.pos.V.Z = constrainf(posControl.desiredState.pos.V.Z,           // FIXME: calculate sanity limits in a smarter way
-                                                             posControl.actualState.pos.V.Z - 500,
-                                                             posControl.actualState.pos.V.Z + 500);
-            }
-        }
-        else {
-            // Multicopter climb-rate control is closed-loop, it's possible to directly calculate desired altitude setpoint to yield the required RoC/RoD
-            posControl.desiredState.pos.V.Z = posControl.actualState.pos.V.Z + (desiredClimbRate / posControl.pids.pos[Z].param.kP);
-        }
-    	if(debugMode==DEBUG_NAV){
-    		debug[1] = posControl.desiredState.pos.V.Z;
-    	}
-
-        lastUpdateTimeUs = currentTimeUs;
-    }
 }
 
 static void resetAltitudeController(void)

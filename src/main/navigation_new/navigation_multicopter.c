@@ -73,9 +73,11 @@ static void updateAltitudeVelocityController_MC(timeDelta_t deltaMicros)
 
     // hard limit desired target velocity to max_climb_rate
     if (posControl.flags.isAdjustingAltitude) {
+    	targetVel = posControl.desiredState.pos.V.Z;
         targetVel = constrainf(targetVel, -navConfig()->general.max_manual_climb_rate, navConfig()->general.max_manual_climb_rate);
     }
     else {
+    	targetVel = 0;
         targetVel = constrainf(targetVel, -navConfig()->general.max_auto_climb_rate, navConfig()->general.max_auto_climb_rate);
     }
 
@@ -101,7 +103,7 @@ static void updateAltitudeThrottleController_MC(timeDelta_t deltaMicros)
     // Calculate min and max throttle boundaries (to compensate for integral windup)
     const int16_t thrAdjustmentMin = (int16_t)motorConfig()->minthrottle - (int16_t)navConfig()->mc.hover_throttle;
     const int16_t thrAdjustmentMax = (int16_t)motorConfig()->maxthrottle - (int16_t)navConfig()->mc.hover_throttle;
-
+    if(debugMode==DEBUG_NAV) { debug[3] = posControl.actualState.vel.V.Z;}
     posControl.rcAdjustment[THROTTLE] = navPidApply2(&posControl.pids.vel[Z], posControl.desiredState.vel.V.Z, posControl.actualState.vel.V.Z, US2S(deltaMicros), thrAdjustmentMin, thrAdjustmentMax, 0);
 
     posControl.rcAdjustment[THROTTLE] = pt1FilterApply4(&altholdThrottleFilterState, posControl.rcAdjustment[THROTTLE], NAV_THROTTLE_CUTOFF_FREQENCY_HZ, US2S(deltaMicros));
@@ -127,9 +129,7 @@ bool adjustMulticopterAltitudeFromRCInput(void)
 
         updateClimbRateToAltitudeController(rcClimbRate, ROC_TO_ALT_NORMAL);
 
-    	if(debugMode==DEBUG_NAV){
-    		debug[0] = rcClimbRate;
-    	}
+    	if(debugMode==DEBUG_NAV) debug[0] = rcClimbRate;
 
         return true;
     }
@@ -217,7 +217,7 @@ static void applyMulticopterAltitudeController(timeUs_t currentTimeUs)
             updateAltitudeVelocityController_MC(deltaMicrosPositionUpdate);
             updateAltitudeThrottleController_MC(deltaMicrosPositionUpdate);
 
-            if(debugMode==DEBUG_NAV) debug[3]=posControl.rcAdjustment[THROTTLE];
+//            if(debugMode==DEBUG_NAV) debug[3]=posControl.rcAdjustment[THROTTLE];
         }
         else {
             // due to some glitch position update has not occurred in time, reset altitude controller
