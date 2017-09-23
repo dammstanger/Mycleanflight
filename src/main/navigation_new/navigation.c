@@ -159,6 +159,9 @@ uint16_t navEPH;
 uint16_t navEPV;
 int16_t navAccNEU[3];
 float debug_baroAlt;
+float debug_GPSAlt;
+float debug_IMUAlt;
+float debug_IMUZVel;
 #endif
 
 static void updateDesiredRTHAltitude(void);
@@ -1477,10 +1480,10 @@ void updateActualHorizontalPositionAndVelocity(bool hasValidSensor, float newX, 
     navActualVelocity[X] = constrain(newVelX, -32678, 32767);
     navActualVelocity[Y] = constrain(newVelY, -32678, 32767);
 #endif
-	if(debugMode==DEBUG_NAV){
-		debug[0] = newX;
-		debug[1] = newY;
-	}
+//	if(debugMode==DEBUG_NAV){
+//		debug[0] = newX;
+//		debug[1] = newY;
+//	}
 }
 
 /*-----------------------------------------------------------
@@ -1507,10 +1510,10 @@ void updateActualAltitudeAndClimbRate(bool hasValidSensor, float newAltitude, fl
     navLatestActualPosition[Z] = constrain(newAltitude, -32678, 32767);
     navActualVelocity[Z] = constrain(newVelocity, -32678, 32767);
 #endif
-	if(debugMode==DEBUG_NAV){
-		debug[2] = navLatestActualPosition[Z];
-		debug[3] = navActualVelocity[Z];
-	}
+//	if(debugMode==DEBUG_NAV){
+//		debug[2] = navLatestActualPosition[Z];
+//		debug[3] = navActualVelocity[Z];
+//	}
 }
 
 /*-----------------------------------------------------------
@@ -1905,6 +1908,9 @@ void updateClimbRateToAltitudeController(float desiredClimbRate, climbRateToAlti
             // Multicopter climb-rate control is closed-loop, it's possible to directly calculate desired altitude setpoint to yield the required RoC/RoD
             posControl.desiredState.pos.V.Z = posControl.actualState.pos.V.Z + (desiredClimbRate / posControl.pids.pos[Z].param.kP);
         }
+    	if(debugMode==DEBUG_NAV){
+    		debug[1] = posControl.desiredState.pos.V.Z;
+    	}
 
         lastUpdateTimeUs = currentTimeUs;
     }

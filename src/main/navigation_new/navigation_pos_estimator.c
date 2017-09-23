@@ -425,6 +425,7 @@ void onNewGPSData(void)
     else {
         posEstimator.gps.lastUpdateTime = 0;
     }
+    debug_GPSAlt = posEstimator.gps.pos.V.Z;
 }
 #endif
 
@@ -692,6 +693,8 @@ static void updateEstimatedTopic(timeUs_t currentTimeUs)
     /* Prediction step: Z-axis */
     if (isEstZValid) {
         inavFilterPredict(Z, dt, posEstimator.imu.accelNEU.V.Z);
+        debug_IMUAlt = posEstimator.est.pos.V.Z;
+        debug_IMUZVel = posEstimator.est.vel.V.Z;
     }
 
     /* Prediction step: XY-axis */

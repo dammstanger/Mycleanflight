@@ -961,10 +961,6 @@ static void loadMainState(void)
 //        blackboxCurrent->axisPID_D[i] = axisPID_D[i];
 //    }
 
-    blackboxCurrent->axisPID_D[0] = navLatestActualPosition[0];
-    blackboxCurrent->axisPID_D[1] = navLatestActualPosition[1];
-    blackboxCurrent->axisPID_D[2] = navLatestActualPosition[2];
-
     for (i = 0; i < 4; i++) {
         blackboxCurrent->rcCommand[i] = rcCommand[i];
     }
@@ -1002,9 +998,9 @@ static void loadMainState(void)
 //        blackboxCurrent->magADC[i] = magADC[i];
 //    }
 
-//    blackboxCurrent->magADC[0] = altitudeHoldGetEstimatedAltitude();
-//    blackboxCurrent->magADC[1] = altitudeGetCFaccAlt();
-//    blackboxCurrent->magADC[2] = altitudeGetMwradarAlt();
+    blackboxCurrent->magADC[0] = debug_GPSAlt;
+    blackboxCurrent->magADC[1] = debug_IMUAlt;
+    blackboxCurrent->magADC[2] = debug_IMUZVel;
 
 #endif
 

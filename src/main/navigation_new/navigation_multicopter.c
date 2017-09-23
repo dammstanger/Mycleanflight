@@ -46,6 +46,7 @@
 #include "fc/rc_controls.h"
 #include "fc/rc_curves.h"
 #include "fc/runtime_config.h"
+#include "fc/fc_debug.h"
 
 #include "flight/pid.h"
 #include "flight/imu.h"
@@ -91,6 +92,8 @@ static void updateAltitudeVelocityController_MC(timeDelta_t deltaMicros)
 #if defined(NAV_BLACKBOX)
     navDesiredVelocity[Z] = constrain(lrintf(posControl.desiredState.vel.V.Z), -32678, 32767);
 #endif
+
+    if(debugMode==DEBUG_NAV) debug[2] = navDesiredVelocity[Z];
 }
 
 static void updateAltitudeThrottleController_MC(timeDelta_t deltaMicros)
@@ -123,6 +126,10 @@ bool adjustMulticopterAltitudeFromRCInput(void)
         }
 
         updateClimbRateToAltitudeController(rcClimbRate, ROC_TO_ALT_NORMAL);
+
+    	if(debugMode==DEBUG_NAV){
+    		debug[0] = rcClimbRate;
+    	}
 
         return true;
     }
@@ -209,6 +216,8 @@ static void applyMulticopterAltitudeController(timeUs_t currentTimeUs)
         if (deltaMicrosPositionUpdate < HZ2US(MIN_POSITION_UPDATE_RATE_HZ)) {
             updateAltitudeVelocityController_MC(deltaMicrosPositionUpdate);
             updateAltitudeThrottleController_MC(deltaMicrosPositionUpdate);
+
+            if(debugMode==DEBUG_NAV) debug[3]=posControl.rcAdjustment[THROTTLE];
         }
         else {
             // due to some glitch position update has not occurred in time, reset altitude controller

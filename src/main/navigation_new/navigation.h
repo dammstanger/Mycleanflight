@@ -67,9 +67,9 @@ enum {
 };
 
 typedef struct positionEstimationConfig_s {
-    uint8_t automatic_mag_declination;
+    uint8_t automatic_mag_declination;			//自动磁偏角修正
     uint8_t reset_altitude_type;
-    uint8_t gravity_calibration_tolerance;    // Tolerance of gravity calibration (cm/s/s)
+    uint8_t gravity_calibration_tolerance;    	// Tolerance of gravity calibration (cm/s/s)重力校准的允许公差 小于该值表示校准成功
     uint8_t use_gps_velned;
     uint16_t gps_delay_ms;
 
@@ -315,6 +315,9 @@ extern uint16_t navEPH;
 extern uint16_t navEPV;
 extern int16_t navAccNEU[3];
 extern float debug_baroAlt;
+extern float debug_GPSAlt;
+extern float debug_IMUAlt;
+extern float debug_IMUZVel;
 
 #else
 
